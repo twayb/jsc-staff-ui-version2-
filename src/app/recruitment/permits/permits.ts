@@ -67,8 +67,8 @@ export class Permits implements OnInit {
 
   permits: Permit[] = [
     {
-      name: 'Ministry of Justice',
-      permitType: 'Recruitment Permit',
+      name: 'Permit July 2026',
+      permitType: 'New Hire',
       permitNo: 'PR-2026-001',
       numberOfPosts: 1,
       schemes: [{ scheme: 'Legal Officer Scheme', numberOfPosts: 1 }],
@@ -76,8 +76,8 @@ export class Permits implements OnInit {
       endDate: '2026-07-15',
     },
     {
-      name: 'Judiciary Registry',
-      permitType: 'Recruitment Permit',
+      name: 'Replacement july 2026',
+      permitType: 'Replacement',
       permitNo: 'PR-2026-002',
       numberOfPosts: 1,
       schemes: [{ scheme: 'Court Administration Scheme', numberOfPosts: 1 }],
@@ -85,8 +85,8 @@ export class Permits implements OnInit {
       endDate: '2026-08-01',
     },
     {
-      name: 'Office of the Attorney General',
-      permitType: 'Replacement Permit',
+      name: 'Promotion July 2026',
+      permitType: 'Promotion',
       permitNo: 'PR-2026-003',
       numberOfPosts: 1,
       schemes: [{ scheme: 'Legal Officer Scheme', numberOfPosts: 1 }],
@@ -94,8 +94,8 @@ export class Permits implements OnInit {
       endDate: '2026-09-10',
     },
     {
-      name: 'Public Service Commission',
-      permitType: 'Recruitment Permit',
+      name: 'New Hire April 2026',
+      permitType: 'New Hire',
       permitNo: 'PR-2026-004',
       numberOfPosts: 1,
       schemes: [{ scheme: 'HR Officer Scheme', numberOfPosts: 1 }],
@@ -115,9 +115,9 @@ export class Permits implements OnInit {
   viewingPermit: Permit | null = null;
 
   readonly permitTypeOptions = [
-    { label: 'Recruitment Permit', value: 'Recruitment Permit' },
-    { label: 'Replacement Permit', value: 'Replacement Permit' },
-    { label: 'Renewal Permit', value: 'Renewal Permit' },
+    { label: 'New Hire', value: 'New Hire' },
+    { label: 'Replacement', value: 'Replacement' },
+    { label: 'Promotion', value: 'Promotion' },
   ];
 
   readonly schemeOptions = [
@@ -145,11 +145,11 @@ export class Permits implements OnInit {
 
   permitTypeSeverity(permitType: string): PermitTypeSeverity {
     switch (permitType) {
-      case 'Recruitment Permit':
+      case 'New Hire':
         return 'success';
-      case 'Replacement Permit':
+      case 'Replacement':
         return 'warn';
-      case 'Renewal Permit':
+      case 'Promotion':
         return 'info';
       default:
         return 'secondary';
