@@ -1,3 +1,134 @@
 /* You can add global styles to this file, and also import other style files */
 
-@import 'tailwindcss';
+@import 'primeicons/primeicons.css';
+
+@layer tailwind-base, primeng, tailwind-utilities;
+
+@import 'tailwindcss/theme.css' layer(tailwind-base);
+@import 'tailwindcss/preflight.css' layer(tailwind-base);
+@import 'tailwindcss/utilities.css' layer(tailwind-utilities);
+
+@layer tailwind-base {
+  html {
+    font-size: 15px;
+  }
+}
+
+:root {
+  --bg: #eef0f3;
+  --card: #ffffff;
+  --row-a: #ffffff;
+  --row-b: #eef1f6;
+  --label: #98a2b3;
+  --value: #5b6b82;
+  --heading: #54657f;
+  --btn: #56687f;
+  --btn-hover: #475670;
+  --border: #e1e4ea;
+
+  --blue-bg: #dde8fb;   --blue-fg: #3f7fe0;
+  --green-bg: #d9f2e3;  --green-fg: #2fa766;
+  --orange-bg: #fbe6cf; --orange-fg: #e58a2c;
+  --gray-bg: #e6e8ec;   --gray-fg: #7c8696;
+  --red-bg: #fbdfe0;    --red-fg: #e0455a;
+}
+
+:root.dark {
+  --bg: #11141a;
+  --card: #1c2027;
+  --row-a: #1c2027;
+  --row-b: #232830;
+  --label: #8992a3;
+  --value: #c1c8d4;
+  --heading: #eef1f5;
+  --btn: #7c8ba0;
+  --btn-hover: #94a2b5;
+  --border: #2b303a;
+
+  --blue-bg: #1e3a5f;   --blue-fg: #7ab3f5;
+  --green-bg: #1e3f2c;  --green-fg: #6fd99a;
+  --orange-bg: #4a3319; --orange-fg: #f5b56b;
+  --gray-bg: #2a2e36;   --gray-fg: #a8b0bd;
+  --red-bg: #4a1f24;    --red-fg: #f28b96;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-row-a: var(--row-a);
+  --color-row-b: var(--row-b);
+  --color-label: var(--label);
+  --color-value: var(--value);
+  --color-heading: var(--heading);
+  --color-primary: var(--btn);
+  --color-primary-hover: var(--btn-hover);
+  --color-border: var(--border);
+
+  --color-info: var(--blue-fg);
+  --color-info-bg: var(--blue-bg);
+  --color-success: var(--green-fg);
+  --color-success-bg: var(--green-bg);
+  --color-warning: var(--orange-fg);
+  --color-warning-bg: var(--orange-bg);
+  --color-secondary: var(--gray-fg);
+  --color-secondary-bg: var(--gray-bg);
+  --color-danger: var(--red-fg);
+  --color-danger-bg: var(--red-bg);
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(20px, 30px);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out both;
+}
+
+.animate-float {
+  animation: float 9s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float 13s ease-in-out infinite reverse;
+}
+
+.stagger-1 {
+  animation-delay: 0.08s;
+}
+
+.stagger-2 {
+  animation-delay: 0.16s;
+}
+
+.stagger-3 {
+  animation-delay: 0.24s;
+}
+
+.stagger-4 {
+  animation-delay: 0.32s;
+}
+
+.stagger-5 {
+  animation-delay: 0.4s;
+}
+
+.stagger-6 {
+  animation-delay: 0.48s;
+}
+

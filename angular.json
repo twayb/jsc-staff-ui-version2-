@@ -33,8 +33,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "800kB",
+                  "maximumError": "1.5MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -54,6 +54,12 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "host": "jsc-staff-ui",
+            "allowedHosts": [
+              "jsc-staff-ui"
+            ]
+          },
           "configurations": {
             "production": {
               "buildTarget": "jsc-staff-ui-version2:build:production"

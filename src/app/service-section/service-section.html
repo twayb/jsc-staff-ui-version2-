@@ -1,0 +1,28 @@
+<div class="max-w-6xl w-full mx-auto px-4 sm:px-8 py-10">
+  <div class="mb-8 animate-fade-in-up">
+    <h1 class="text-2xl font-semibold text-heading animate-slide-mask">Welcome back</h1>
+    <p class="text-sm text-value mt-1">Select a service to get started</p>
+  </div>
+
+  @if (loading()) {
+    <app-skeleton variant="cards" [count]="6" [cardCols]="3" />
+  } @else {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      @for (service of services; track service.title; let i = $index) {
+        <a
+          [routerLink]="service.route"
+          class="group text-left bg-card border border-border rounded-2xl p-6 flex flex-col gap-4 transition-all duration-200 animate-fade-in-up"
+          [class]="['stagger-' + (i + 1), service.route ? 'hover:shadow-lg hover:-translate-y-1 cursor-pointer' : 'opacity-50 cursor-not-allowed pointer-events-none']"
+        >
+          <span class="flex items-center justify-center w-12 h-12 rounded-xl" [class]="service.bgClass">
+            <i class="pi text-xl" [class]="[service.icon, service.fgClass]"></i>
+          </span>
+          <div>
+            <h3 class="text-base font-semibold text-heading group-hover:text-primary transition-colors">{{ service.title }}</h3>
+            <p class="text-sm text-value mt-1">{{ service.description }}</p>
+          </div>
+        </a>
+      }
+    </div>
+  }
+</div>

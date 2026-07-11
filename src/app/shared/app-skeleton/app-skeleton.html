@@ -1,0 +1,33 @@
+@switch (variant) {
+  @case ('table') {
+    <div class="flex flex-col gap-3">
+      @for (r of rowsArray; track $index) {
+        <div class="flex items-center gap-4">
+          @for (c of columnsArray; track $index) {
+            <p-skeleton height="1rem" class="flex-1" />
+          }
+        </div>
+      }
+    </div>
+  }
+  @case ('cards') {
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6" [class]="'lg:grid-cols-' + cardCols">
+      @for (c of countArray; track $index) {
+        <div class="bg-card border border-border rounded-2xl p-6 flex items-center gap-4">
+          <p-skeleton shape="circle" size="3rem" />
+          <div class="flex-1 flex flex-col gap-2">
+            <p-skeleton height="1rem" width="60%" />
+            <p-skeleton height="0.75rem" width="40%" />
+          </div>
+        </div>
+      }
+    </div>
+  }
+  @case ('list') {
+    <div class="flex flex-col gap-3">
+      @for (r of rowsArray; track $index) {
+        <p-skeleton height="1.25rem" />
+      }
+    </div>
+  }
+}

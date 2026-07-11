@@ -1,0 +1,222 @@
+<div class="w-full px-4 sm:px-6 py-10">
+  <app-breadcrumb [items]="breadcrumbItems" />
+
+  <app-data-table
+    class="block animate-fade-in-up stagger-1"
+    title="Permits"
+    subtitle="Manage recruitment permits"
+    [data]="permits"
+    [loading]="loading()"
+    [searchFields]="['name', 'permitType', 'permitNo']"
+    addLabel="Add Permit"
+    dataKey="permitNo"
+    (add)="openAddDialog()"
+  >
+    <ng-template #headerTpl>
+      <tr>
+        <th class="pl-6">No</th>
+        <th>Name</th>
+        <th>Permit Type</th>
+        <th>Permit No</th>
+        <th>Posts</th>
+        <th>Start Date</th>
+        <th>End Date</th>
+        <th class="text-center pr-6">Action</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #bodyTpl let-permit let-rowIndex="rowIndex">
+      <tr>
+        <td class="pl-6">{{ rowIndex + 1 }}</td>
+        <td>{{ permit.name }}</td>
+        <td>
+          <p-tag [value]="permit.permitType" [severity]="permitTypeSeverity(permit.permitType)" />
+        </td>
+        <td>{{ permit.permitNo }}</td>
+        <td>{{ permit.numberOfPosts }}</td>
+        <td>{{ permit.startDate }}</td>
+        <td>{{ permit.endDate }}</td>
+        <td class="text-center pr-6">
+          <button
+            type="button"
+            (click)="openActionMenu($event, permit, actionMenu)"
+            class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors mx-auto"
+            aria-label="Row actions"
+          >
+            <i class="pi pi-ellipsis-v text-sm"></i>
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+  </app-data-table>
+
+  <p-menu
+    #actionMenu
+    class="text-sm"
+    [model]="actionMenuItems"
+    [popup]="true"
+    appendTo="body"
+    [motionOptions]="{ duration: { enter: 200, leave: 150 } }"
+  />
+
+  <p-dialog
+    [(visible)]="showFormDialog"
+    [header]="dialogMode === 'edit' ? 'Edit Permit' : 'Add Permit'"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '44rem' }"
+  >
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="custom-scrollbar flex flex-col gap-4 pt-2 max-h-[80vh] overflow-y-auto overflow-x-hidden pr-4">
+      <div class="flex flex-col gap-1.5">
+        <label for="name" class="text-sm font-medium text-heading">Name</label>
+        <input pInputText id="name" formControlName="name" fluid placeholder="Name" />
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="permitType" class="text-sm font-medium text-heading">Permit Type</label>
+        <p-select
+          inputId="permitType"
+          formControlName="permitType"
+          [options]="permitTypeOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select type"
+          class="w-full"
+        />
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="permitNo" class="text-sm font-medium text-heading">Permit No</label>
+        <input pInputText id="permitNo" formControlName="permitNo" fluid placeholder="e.g. PR-2026-005" />
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="flex flex-col gap-1.5">
+          <label for="startDate" class="text-sm font-medium text-heading">Start Date</label>
+          <p-datepicker inputId="startDate" formControlName="startDate" dateFormat="yy-mm-dd" [showIcon]="true" class="w-full" />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label for="endDate" class="text-sm font-medium text-heading">End Date</label>
+          <p-datepicker inputId="endDate" formControlName="endDate" dateFormat="yy-mm-dd" [showIcon]="true" class="w-full" />
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="numberOfPosts" class="text-sm font-medium text-heading">Number of Posts</label>
+        <p-inputnumber inputId="numberOfPosts" formControlName="numberOfPosts" [min]="1" [showButtons]="true" class="w-full" />
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-sm font-medium text-heading">Upload File</label>
+        <p-fileupload mode="basic" chooseLabel="Choose File" [auto]="false" [multiple]="false" (onSelect)="onFileSelect($event)" />
+        @if (selectedFile) {
+          <span class="text-xs text-value">{{ selectedFile.name }}</span>
+        }
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <label class="text-sm font-medium text-heading">Schemes</label>
+          <p-button label="Add Scheme" icon="pi pi-plus" [text]="true" size="small" type="button" (onClick)="addScheme()" />
+        </div>
+
+        <div formArrayName="schemes" class="flex flex-col gap-3">
+          @for (schemeGroup of schemes.controls; track $index; let i = $index) {
+            <div [formGroupName]="i" class="flex items-end gap-2 border border-border rounded-lg p-3">
+              <div class="flex-[2] min-w-0 flex flex-col gap-1.5">
+                <label class="text-xs font-medium text-heading">Scheme</label>
+                <p-select
+                  formControlName="scheme"
+                  [options]="schemeOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Select scheme"
+                  class="w-full"
+                />
+              </div>
+              <div class="flex-1 min-w-0 flex flex-col gap-1.5">
+                <label class="text-xs font-medium text-heading">No. of Posts</label>
+                <p-inputnumber formControlName="numberOfPosts" [min]="1" class="w-full" />
+              </div>
+              <button
+                type="button"
+                (click)="removeScheme(i)"
+                class="flex items-center justify-center w-9 h-9 rounded-lg text-danger hover:bg-danger-bg transition-colors shrink-0 ml-6"
+                aria-label="Remove scheme"
+              >
+                <i class="pi pi-trash text-sm"></i>
+              </button>
+            </div>
+          }
+          @if (schemes.length === 0) {
+            <p class="text-xs text-value">No schemes added yet.</p>
+          }
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <p-button label="Cancel" severity="secondary" [text]="true" type="button" (onClick)="showFormDialog = false" />
+        <p-button [label]="dialogMode === 'edit' ? 'Update' : 'Save'" type="submit" />
+      </div>
+    </form>
+  </p-dialog>
+
+  <p-dialog
+    [(visible)]="showViewDialog"
+    header="Permit Details"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '32rem' }"
+  >
+    @if (viewingPermit) {
+      <div class="flex flex-col gap-4 pt-2">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-xs font-medium text-label">Name</p>
+            <p class="text-sm text-heading">{{ viewingPermit.name }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">Permit Type</p>
+            <p-tag [value]="viewingPermit.permitType" [severity]="permitTypeSeverity(viewingPermit.permitType)" />
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">Permit No</p>
+            <p class="text-sm text-heading">{{ viewingPermit.permitNo }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">Number of Posts</p>
+            <p class="text-sm text-heading">{{ viewingPermit.numberOfPosts }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">Start Date</p>
+            <p class="text-sm text-heading">{{ viewingPermit.startDate }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">End Date</p>
+            <p class="text-sm text-heading">{{ viewingPermit.endDate }}</p>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-xs font-medium text-label mb-2">Schemes</p>
+          @if (viewingPermit.schemes.length) {
+            <div class="flex flex-col gap-2">
+              @for (scheme of viewingPermit.schemes; track scheme.scheme) {
+                <div class="flex items-center justify-between border border-border rounded-lg px-3 py-2">
+                  <span class="text-sm text-heading">{{ scheme.scheme }}</span>
+                  <span class="text-sm text-value">{{ scheme.numberOfPosts }} posts</span>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="text-sm text-value">No schemes recorded.</p>
+          }
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <p-button label="Close" severity="secondary" [text]="true" type="button" (onClick)="showViewDialog = false" />
+        </div>
+      </div>
+    }
+  </p-dialog>
+</div>

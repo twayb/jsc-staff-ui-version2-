@@ -1,0 +1,50 @@
+<header class="sticky top-0 z-10 bg-card/80 backdrop-blur-md border-b border-border h-14 px-4 sm:px-6 flex items-center gap-2">
+  @if (showSidebarToggle) {
+    <button
+      type="button"
+      (click)="sidebarToggle.emit()"
+      class="hidden md:flex items-center justify-center w-8 h-8 rounded-lg text-value hover:scale-110 transition-transform"
+      aria-label="Toggle sidebar"
+    >
+      <i class="pi pi-bars text-sm"></i>
+    </button>
+  }
+
+  @if (showLogo) {
+    <img src="/tume.png" alt="JSC" class="w-8 h-8 object-contain" />
+    <span class="text-base font-semibold text-heading">REDMIS</span>
+  } @else {
+    <span class="text-base font-semibold text-heading md:hidden">REDMIS</span>
+  }
+
+  <div class="ml-auto flex items-center gap-1.5">
+    <button
+      type="button"
+      (click)="theme.toggle()"
+      class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:scale-110 transition-transform"
+      [attr.aria-label]="theme.isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
+    >
+      <i class="pi text-sm" [class]="theme.isDark() ? 'pi-moon' : 'pi-sun'"></i>
+    </button>
+
+    <div class="w-px h-5 bg-border mx-1"></div>
+
+    <button
+      type="button"
+      class="flex items-center gap-2 rounded-lg pl-1 pr-2 py-1 hover:scale-105 transition-transform"
+      (click)="userMenu.toggle($event)"
+    >
+      <p-avatar icon="pi pi-user" shape="circle" class="w-8 h-8 bg-primary/10 text-primary" />
+      <span class="text-sm font-medium text-heading hidden sm:inline">{{ userName }}</span>
+      <i class="pi pi-chevron-down text-xs text-value"></i>
+    </button>
+    <p-menu
+      #userMenu
+      class="text-sm"
+      [model]="userMenuItems"
+      [popup]="true"
+      appendTo="body"
+      [motionOptions]="{ duration: { enter: 200, leave: 150 } }"
+    />
+  </div>
+</header>
