@@ -4,24 +4,23 @@ import { Tag } from 'primeng/tag';
 import { Tooltip } from 'primeng/tooltip';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
 
-interface NotShortlistedApplicant {
+interface PendingApplicant {
   name: string;
   nin: string;
   applicationDate: string;
-  remark: string;
 }
 
 @Component({
-  selector: 'app-not-shortlist',
+  selector: 'app-pending',
   imports: [Tag, Tooltip, AppDataTable],
-  templateUrl: './not-shortlist.html',
-  styleUrl: './not-shortlist.css',
+  templateUrl: './pending.html',
+  styleUrl: './pending.css',
 })
-export class NotShortlist implements OnInit {
+export class Pending implements OnInit {
   private readonly router = inject(Router);
 
   @Input() referenceNo = '';
-  @Input() origin: 'longlist' | 'assigned' = 'longlist';
+  @Input() origin: 'longlist' | 'assigned' = 'assigned';
 
   readonly loading = signal(true);
 
@@ -29,22 +28,13 @@ export class NotShortlist implements OnInit {
     setTimeout(() => this.loading.set(false), 800);
   }
 
-  applicants: NotShortlistedApplicant[] = [
-    {
-      name: 'Grace Kileo',
-      nin: '19881034567890000345',
-      applicationDate: '2026-01-18',
-      remark: 'Does not meet minimum qualification requirements',
-    },
-    {
-      name: 'Peter Mushi',
-      nin: '19921045678900000456',
-      applicationDate: '2026-01-20',
-      remark: 'Incomplete application documents',
-    },
+  applicants: PendingApplicant[] = [
+    { name: 'Amina Hassan', nin: '19990531111020000125', applicationDate: '2026-01-15' },
+    { name: 'Peter Mushi', nin: '19921045678900000456', applicationDate: '2026-01-20' },
+    { name: 'Fatma Salim', nin: '19870056789010000567', applicationDate: '2026-01-22' },
   ];
 
-  onView(applicant: NotShortlistedApplicant): void {
+  onView(applicant: PendingApplicant): void {
     this.router.navigate(['/recruitment/applications', this.origin, this.referenceNo, 'applicant', applicant.nin]);
   }
 }

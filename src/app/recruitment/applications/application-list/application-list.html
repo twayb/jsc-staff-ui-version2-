@@ -52,43 +52,4 @@
     appendTo="body"
     [motionOptions]="{ duration: { enter: 200, leave: 150 } }"
   />
-
-  <p-dialog
-    [(visible)]="showViewDialog"
-    header="Application Details"
-    [modal]="true"
-    [draggable]="false"
-    [style]="{ width: '28rem' }"
-  >
-    @if (viewingApplication) {
-      <div class="flex flex-col gap-4 pt-2">
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <p class="text-xs font-medium text-label">Reference No</p>
-            <p class="text-sm text-heading">{{ viewingApplication.referenceNo }}</p>
-          </div>
-          <div>
-            <p class="text-xs font-medium text-label">Cadre</p>
-            <p class="text-sm text-heading">{{ viewingApplication.cadre }}</p>
-          </div>
-          <div>
-            <p class="text-xs font-medium text-label">Posts</p>
-            <p class="text-sm text-heading">{{ viewingApplication.posts }}</p>
-          </div>
-          <div>
-            <p class="text-xs font-medium text-label">Closing Date</p>
-            <p class="text-sm text-heading">{{ viewingApplication.closingDate }}</p>
-          </div>
-          <div>
-            <p class="text-xs font-medium text-label">Applicants</p>
-            <p class="text-sm text-heading">{{ viewingApplication.applicants }}</p>
-          </div>
-        </div>
-
-        <div class="flex justify-end pt-2">
-          <p-button label="Close" severity="secondary" [text]="true" type="button" (onClick)="showViewDialog = false" />
-        </div>
-      </div>
-    }
-  </p-dialog>
 </div>

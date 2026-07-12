@@ -7,6 +7,7 @@ import { MenuItem } from 'primeng/api';
 import { ThemeService } from '../../core/theme/theme.service';
 import { SessionLockService } from '../../core/session-lock/session-lock.service';
 import { LayoutService } from '../../core/layout/layout.service';
+import { TextSizeService } from '../../core/text-size/text-size.service';
 
 @Component({
   selector: 'app-header',
@@ -20,6 +21,7 @@ export class AppHeader {
 
   readonly theme = inject(ThemeService);
   readonly layout = inject(LayoutService);
+  readonly textSize = inject(TextSizeService);
   private readonly router = inject(Router);
   private readonly sessionLock = inject(SessionLockService);
 

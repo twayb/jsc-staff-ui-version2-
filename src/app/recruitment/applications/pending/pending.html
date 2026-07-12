@@ -1,14 +1,11 @@
 <app-data-table
   [card]="false"
-  title="Shortlist"
-  subtitle="Applicants shortlisted for interview"
+  title="Pending"
+  subtitle="Applicants awaiting assignment"
   [data]="applicants"
   [loading]="loading()"
-  [searchFields]="['name', 'nin', 'state']"
-  [addLabel]="showApproval ? 'Approve' : null"
-  addIcon="pi pi-check-circle"
+  [searchFields]="['name', 'nin']"
   dataKey="nin"
-  (add)="onApprove()"
 >
   <ng-template #headerTpl>
     <tr>
@@ -16,9 +13,6 @@
       <th>Applicant</th>
       <th>NIN</th>
       <th>Application Date</th>
-      @if (showApproval) {
-        <th>State</th>
-      }
       <th>Status</th>
       <th class="text-center pr-6">Action</th>
     </tr>
@@ -30,13 +24,8 @@
       <td>{{ applicant.name }}</td>
       <td>{{ applicant.nin }}</td>
       <td>{{ applicant.applicationDate }}</td>
-      @if (showApproval) {
-        <td>
-          <p-tag [value]="applicant.state" [severity]="approvalStateSeverity(applicant.state)" />
-        </td>
-      }
       <td>
-        <p-tag value="Shortlist" severity="success" />
+        <p-tag value="Pending" severity="warn" />
       </td>
       <td class="text-center pr-6">
         <button

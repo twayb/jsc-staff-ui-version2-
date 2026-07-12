@@ -2,8 +2,6 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Menu } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
-import { Dialog } from 'primeng/dialog';
-import { Button } from 'primeng/button';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
 
@@ -17,7 +15,7 @@ interface ApplicationListing {
 
 @Component({
   selector: 'app-application-list',
-  imports: [Menu, Dialog, Button, AppBreadcrumb, AppDataTable],
+  imports: [Menu, AppBreadcrumb, AppDataTable],
   templateUrl: './application-list.html',
   styleUrl: './application-list.css',
 })
@@ -68,9 +66,6 @@ export class ApplicationList implements OnInit {
 
   actionMenuItems: MenuItem[] = [];
 
-  showViewDialog = false;
-  viewingApplication: ApplicationListing | null = null;
-
   openActionMenu(event: Event, application: ApplicationListing, menu: Menu): void {
     this.actionMenuItems = [
       { label: 'Longlist', icon: 'pi pi-list', command: () => this.onLonglist(application) },
@@ -84,7 +79,6 @@ export class ApplicationList implements OnInit {
   }
 
   onView(application: ApplicationListing): void {
-    this.viewingApplication = application;
-    this.showViewDialog = true;
+    this.router.navigate(['/recruitment/applications/assigned', application.referenceNo]);
   }
 }

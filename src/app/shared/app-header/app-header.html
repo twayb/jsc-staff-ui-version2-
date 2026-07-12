@@ -18,6 +18,48 @@
   }
 
   <div class="ml-auto flex items-center gap-1.5">
+    <div class="flex items-center gap-0.5 rounded-lg border border-border px-1 py-1">
+      <span class="flex items-center justify-center w-6 h-6 text-sm font-bold text-label select-none" aria-hidden="true">A</span>
+
+      <button
+        type="button"
+        (click)="textSize.decrease()"
+        [disabled]="!textSize.canDecrease()"
+        pTooltip="Decrease content text size"
+        tooltipPosition="bottom"
+        class="flex items-center justify-center w-7 h-7 rounded-md text-value hover:bg-row-b hover:text-heading transition-colors disabled:opacity-40 disabled:pointer-events-none"
+        aria-label="Decrease content text size"
+      >
+        <i class="pi pi-search-minus text-xs"></i>
+      </button>
+
+      <button
+        type="button"
+        (click)="textSize.reset()"
+        [disabled]="!textSize.canReset()"
+        pTooltip="Reset content text size"
+        tooltipPosition="bottom"
+        class="flex items-center justify-center w-7 h-7 rounded-md text-value hover:bg-row-b hover:text-heading transition-colors disabled:opacity-40 disabled:pointer-events-none"
+        aria-label="Reset content text size"
+      >
+        <i class="pi pi-refresh text-xs"></i>
+      </button>
+
+      <button
+        type="button"
+        (click)="textSize.increase()"
+        [disabled]="!textSize.canIncrease()"
+        pTooltip="Increase content text size"
+        tooltipPosition="bottom"
+        class="flex items-center justify-center w-7 h-7 rounded-md text-value hover:bg-row-b hover:text-heading transition-colors disabled:opacity-40 disabled:pointer-events-none"
+        aria-label="Increase content text size"
+      >
+        <i class="pi pi-search-plus text-xs"></i>
+      </button>
+    </div>
+
+    <div class="w-px h-5 bg-border mx-1"></div>
+
     <button
       type="button"
       (click)="layout.toggle()"

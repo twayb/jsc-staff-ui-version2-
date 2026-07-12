@@ -1,9 +1,9 @@
-<div class="min-h-screen flex bg-bg">
+<div class="h-screen flex bg-bg overflow-hidden">
   @if (layout.mode() === 'vertical') {
     <app-sidebar [collapsed]="sidebarCollapsed()" />
   }
 
-  <div class="flex-1 flex flex-col min-w-0">
+  <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
     <app-header
       [showLogo]="layout.mode() === 'horizontal'"
       [showSidebarToggle]="layout.mode() === 'vertical'"
@@ -14,7 +14,7 @@
       <app-topnav />
     }
 
-    <main class="flex-1">
+    <main class="flex-1 overflow-y-auto scrollbar-hide" [style.zoom.%]="textSize.scale()">
       <router-outlet />
     </main>
 

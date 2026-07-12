@@ -4,21 +4,21 @@
   <div class="bg-card border border-border rounded-2xl overflow-hidden animate-fade-in-up stagger-1 mt-6">
     <p-tabs [(value)]="activeTab" class="block">
       <p-tablist>
-        <p-tab value="longlist"><i class="pi pi-list mr-2"></i>Longlist</p-tab>
-        <p-tab value="distribution"><i class="pi pi-share-alt mr-2"></i>Longlist Distribution</p-tab>
+        <p-tab value="assigned"><i class="pi pi-user-plus mr-2"></i>Applicant Assigned</p-tab>
+        <p-tab value="pending"><i class="pi pi-clock mr-2"></i>Pending</p-tab>
         <p-tab value="shortlist"><i class="pi pi-check-circle mr-2"></i>Shortlist</p-tab>
         <p-tab value="not-shortlist"><i class="pi pi-times-circle mr-2"></i>Not Shortlisted</p-tab>
       </p-tablist>
 
       <p-tabpanels>
-        <p-tabpanel value="longlist" class="block animate-tab-slide">
+        <p-tabpanel value="assigned" class="block animate-tab-slide">
           <app-data-table
             [card]="false"
-            title="Longlisted Applicants"
-            subtitle="Applicants who passed initial screening for this advert"
+            title="Applicant Assigned"
+            subtitle="Applicants assigned for this advert"
             [data]="applicants()"
             [loading]="loading()"
-            [searchFields]="['name', 'nin', 'status']"
+            [searchFields]="['name', 'nin']"
             dataKey="nin"
           >
             <ng-template #headerTpl>
@@ -58,16 +58,16 @@
           </app-data-table>
         </p-tabpanel>
 
-        <p-tabpanel value="distribution" class="block animate-tab-slide">
-          <app-longlist-distribution [referenceNo]="referenceNo" />
+        <p-tabpanel value="pending" class="block animate-tab-slide">
+          <app-pending [referenceNo]="referenceNo" />
         </p-tabpanel>
 
         <p-tabpanel value="shortlist" class="block animate-tab-slide">
-          <app-shortlist [referenceNo]="referenceNo" />
+          <app-shortlist [showApproval]="false" [referenceNo]="referenceNo" origin="assigned" />
         </p-tabpanel>
 
         <p-tabpanel value="not-shortlist" class="block animate-tab-slide">
-          <app-not-shortlist [referenceNo]="referenceNo" />
+          <app-not-shortlist [referenceNo]="referenceNo" origin="assigned" />
         </p-tabpanel>
       </p-tabpanels>
     </p-tabs>

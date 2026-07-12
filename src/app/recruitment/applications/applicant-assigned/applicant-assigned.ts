@@ -6,7 +6,7 @@ import { Tooltip } from 'primeng/tooltip';
 import { Tabs, TabList, Tab, TabPanels, TabPanel } from 'primeng/tabs';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
-import { LonglistDistribution } from '../longlist-distribution/longlist-distribution';
+import { Pending } from '../pending/pending';
 import { Shortlist } from '../shortlist/shortlist';
 import { NotShortlist } from '../not-shortlist/not-shortlist';
 import { ApplicantStatus, LonglistApplicant, LonglistDataService } from '../longlist-data.service';
@@ -14,7 +14,7 @@ import { ApplicantStatus, LonglistApplicant, LonglistDataService } from '../long
 type ApplicantStatusSeverity = 'warn' | 'success' | 'danger';
 
 @Component({
-  selector: 'app-longlist-list',
+  selector: 'app-applicant-assigned',
   imports: [
     Tag,
     Tooltip,
@@ -25,14 +25,14 @@ type ApplicantStatusSeverity = 'warn' | 'success' | 'danger';
     TabPanel,
     AppBreadcrumb,
     AppDataTable,
-    LonglistDistribution,
+    Pending,
     Shortlist,
     NotShortlist,
   ],
-  templateUrl: './longlist-list.html',
-  styleUrl: './longlist-list.css',
+  templateUrl: './applicant-assigned.html',
+  styleUrl: './applicant-assigned.css',
 })
-export class LonglistList implements OnInit {
+export class ApplicantAssigned implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly longlistData = inject(LonglistDataService);
@@ -42,10 +42,10 @@ export class LonglistList implements OnInit {
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
     { label: 'Applications', routerLink: '/recruitment/applications' },
-    { label: 'Longlist' },
+    { label: 'Applicant Assigned' },
   ];
 
-  readonly activeTab = signal('longlist');
+  readonly activeTab = signal('assigned');
   readonly loading = signal(true);
 
   readonly applicants = this.longlistData.applicants;
@@ -61,6 +61,6 @@ export class LonglistList implements OnInit {
   }
 
   onView(applicant: LonglistApplicant): void {
-    this.router.navigate(['/recruitment/applications/longlist', this.referenceNo, 'applicant', applicant.nin]);
+    this.router.navigate(['/recruitment/applications/assigned', this.referenceNo, 'applicant', applicant.nin]);
   }
 }

@@ -1,0 +1,351 @@
+<div class="w-full px-4 sm:px-6 py-10 flex flex-col gap-6 max-w-5xl mx-auto">
+  <app-breadcrumb [items]="breadcrumbItems" />
+
+  <div
+    class="sticky top-0 z-10 bg-card border border-border rounded-2xl px-4 py-3 flex items-center justify-between gap-4 shadow-sm"
+  >
+    <button
+      type="button"
+      (click)="goToPrevious()"
+      [disabled]="!hasPrevious()"
+      class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-value hover:bg-row-b hover:text-heading transition-colors disabled:opacity-40 disabled:pointer-events-none"
+    >
+      <i class="pi pi-chevron-left text-xs"></i>
+      <span class="hidden sm:inline">Previous</span>
+    </button>
+
+    <div class="flex-1 flex flex-col items-center gap-1.5 max-w-xs mx-auto">
+      <span class="text-xs font-medium text-value select-none">Candidate {{ currentIndex() + 1 }} of {{ total() }}</span>
+      <div class="w-full h-1.5 rounded-full bg-row-b overflow-hidden">
+        <div class="h-full bg-primary rounded-full transition-[width] duration-300" [style.width.%]="progress()"></div>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      (click)="goToNext()"
+      [disabled]="!hasNext()"
+      class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-value hover:bg-row-b hover:text-heading transition-colors disabled:opacity-40 disabled:pointer-events-none"
+    >
+      <span class="hidden sm:inline">Next</span>
+      <i class="pi pi-chevron-right text-xs"></i>
+    </button>
+  </div>
+
+  @for (a of [applicant()]; track a.nin) {
+    <div class="flex flex-col gap-6 animate-tab-slide">
+      <div class="bg-card border border-border rounded-2xl p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div class="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary shrink-0">
+            <i class="pi pi-user text-3xl"></i>
+          </div>
+          <div class="flex-1">
+            <div class="flex flex-wrap items-center gap-3">
+              <h1 class="text-xl font-semibold text-heading">{{ a.name }}</h1>
+              <p-tag [value]="a.status" [severity]="statusSeverity(a.status)" />
+            </div>
+            <p class="text-sm text-value mt-1">{{ a.position }}</p>
+            <div class="flex flex-wrap gap-x-6 gap-y-1 mt-2 text-xs text-label">
+              <span>Applicant ID: <span class="text-value">{{ a.applicantId }}</span></span>
+              <span>Applied Date: <span class="text-value">{{ a.applicationDate }}</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-2xl p-6">
+        <h2 class="text-sm font-semibold text-heading mb-4">Personal Details</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div>
+            <p class="text-xs font-medium text-label">NIN</p>
+            <p class="text-sm text-heading">{{ a.nin }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">Email</p>
+            <p class="text-sm text-heading">{{ a.email }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">Gender</p>
+            <p class="text-sm text-heading">{{ a.gender }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">Date of Birth</p>
+            <p class="text-sm text-heading">{{ a.dateOfBirth }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">Marital Status</p>
+            <p class="text-sm text-heading">{{ a.maritalStatus }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">Address</p>
+            <p class="text-sm text-heading">{{ a.address }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">Region</p>
+            <p class="text-sm text-heading">{{ a.region }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">Mobile</p>
+            <p class="text-sm text-heading">{{ a.mobile }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">Employment Status</p>
+            <p class="text-sm text-heading">{{ a.employmentStatus }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-6">
+        <div class="bg-card border border-border rounded-2xl p-6">
+          <h2 class="text-sm font-semibold text-heading mb-4">Education Details</h2>
+          <div class="flex flex-col divide-y divide-border">
+            @for (edu of a.education; track edu.degree) {
+              <div class="py-3 first:pt-0 last:pb-0 flex flex-col gap-1">
+                <p class="text-sm font-medium text-heading">{{ edu.degree }}</p>
+                <p class="text-xs text-value">{{ edu.college }}</p>
+                <p class="text-xs text-label">{{ edu.startYear }} - {{ edu.endYear }}</p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="bg-card border border-border rounded-2xl p-6">
+          <h2 class="text-sm font-semibold text-heading mb-4">Referees</h2>
+          <div class="flex flex-col gap-3">
+            @for (referee of a.referees; track referee.email) {
+              <div class="rounded-lg bg-row-b p-4">
+                <p class="text-sm font-medium text-heading">{{ referee.name }}</p>
+                <p class="text-xs text-value">{{ referee.position }}</p>
+                <p class="text-xs text-label mt-2">{{ referee.phone }}</p>
+                <p class="text-xs text-label">{{ referee.email }}</p>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-2xl p-6">
+        <h2 class="text-sm font-semibold text-heading mb-4">Attachments</h2>
+        <p-button
+          label="Preview Attachments"
+          icon="pi pi-paperclip"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="onPreviewAttachments()"
+        />
+
+        @if (a.status === 'Pending') {
+          <div class="flex justify-end gap-2 pt-6 mt-6 border-t border-border">
+            <p-button
+              label="Not Shortlist"
+              icon="pi pi-times-circle"
+              severity="danger"
+              [outlined]="true"
+              (onClick)="onNotShortlist()"
+            />
+            <p-button label="Shortlist" icon="pi pi-check-circle" (onClick)="onShortlist()" />
+          </div>
+        } @else if (origin === 'longlist') {
+          <div class="flex justify-end gap-2 pt-6 mt-6 border-t border-border">
+            <p-button label="Revert to Pending" icon="pi pi-undo" severity="secondary" [outlined]="true" (onClick)="onRevert()" />
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>
+
+<p-dialog
+  [(visible)]="showNotShortlistDialog"
+  header="Not Shortlist Applicant"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: '26rem' }"
+>
+  <div class="flex flex-col gap-4 pt-2">
+    <p class="text-sm text-value">Select a reason for not shortlisting "{{ applicant().name }}".</p>
+
+    <div class="flex flex-col gap-1.5">
+      <label class="text-sm font-medium text-heading">Reason</label>
+      <p-select
+        [(ngModel)]="notShortlistReason"
+        [options]="notShortlistReasons"
+        placeholder="Select reason"
+        class="w-full"
+        [fluid]="true"
+        appendTo="body"
+      />
+    </div>
+
+    <div class="flex justify-end gap-2 pt-2">
+      <p-button
+        label="Cancel"
+        severity="secondary"
+        [outlined]="true"
+        type="button"
+        (onClick)="showNotShortlistDialog = false"
+      />
+      <p-button
+        label="Not Shortlist"
+        severity="danger"
+        type="button"
+        [disabled]="!notShortlistReason"
+        (onClick)="onConfirmNotShortlist()"
+      />
+    </div>
+  </div>
+</p-dialog>
+
+<p-dialog
+  [(visible)]="showRevertDialog"
+  header="Revert Applicant"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: '26rem' }"
+>
+  <div class="flex flex-col gap-4 pt-2">
+    <p class="text-sm text-value">Select a reason for reverting "{{ applicant().name }}" back to pending.</p>
+
+    <div class="flex flex-col gap-1.5">
+      <label class="text-sm font-medium text-heading">Reason</label>
+      <p-select
+        [(ngModel)]="revertReason"
+        [options]="revertReasons"
+        placeholder="Select reason"
+        class="w-full"
+        [fluid]="true"
+        appendTo="body"
+      />
+    </div>
+
+    <div class="flex justify-end gap-2 pt-2">
+      <p-button
+        label="Cancel"
+        severity="secondary"
+        [outlined]="true"
+        type="button"
+        (onClick)="showRevertDialog = false"
+      />
+      <p-button
+        label="Revert"
+        severity="secondary"
+        type="button"
+        [disabled]="!revertReason"
+        (onClick)="onConfirmRevert()"
+      />
+    </div>
+  </div>
+</p-dialog>
+
+<p-dialog
+  [(visible)]="showAttachmentsDialog"
+  header="Attachments"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: '80rem', maxWidth: '95vw', height: '85vh' }"
+  [contentStyle]="{ padding: '0', overflow: 'hidden' }"
+>
+  <div class="flex h-full overflow-hidden">
+    <div class="w-64 shrink-0 flex flex-col overflow-hidden border-r border-t border-border">
+      @for (file of applicant().attachments; track file) {
+        <button
+          type="button"
+          (click)="onSelectAttachment(file)"
+          [ngClass]="
+            file === selectedAttachment
+              ? 'bg-primary/10 text-primary'
+              : 'text-value hover:bg-row-b hover:text-heading'
+          "
+          class="flex items-center gap-2 px-4 py-3 text-left text-sm transition-colors border-b border-border last:border-b-0"
+        >
+          <i class="pi pi-file-pdf text-danger shrink-0"></i>
+          <span class="truncate">{{ file }}</span>
+        </button>
+      }
+    </div>
+
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div class="shrink-0 flex items-center justify-between gap-3 border-t border-b border-border px-4 py-2.5">
+        <div class="flex items-center gap-2 min-w-0">
+          <i class="pi pi-file-pdf text-danger shrink-0"></i>
+          <span class="text-sm font-medium text-heading truncate">{{ selectedAttachment }}</span>
+        </div>
+
+        <div class="flex items-center gap-1 shrink-0">
+          <span class="text-xs text-value select-none mr-1">Page {{ currentPage() }} of {{ pages.length }}</span>
+
+          <div class="w-px h-5 bg-border mx-1"></div>
+
+          <button
+            type="button"
+            (click)="onZoomOut()"
+            class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors"
+            aria-label="Zoom out"
+            pTooltip="Zoom Out"
+            tooltipPosition="bottom"
+          >
+            <i class="pi pi-search-minus text-sm"></i>
+          </button>
+          <span class="text-xs text-value w-10 text-center select-none">{{ zoom() }}%</span>
+          <button
+            type="button"
+            (click)="onZoomIn()"
+            class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors"
+            aria-label="Zoom in"
+            pTooltip="Zoom In"
+            tooltipPosition="bottom"
+          >
+            <i class="pi pi-search-plus text-sm"></i>
+          </button>
+
+          <div class="w-px h-5 bg-border mx-1"></div>
+
+          <button
+            type="button"
+            (click)="onPrintAttachment()"
+            class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors"
+            aria-label="Print"
+            pTooltip="Print"
+            tooltipPosition="bottom"
+          >
+            <i class="pi pi-print text-sm"></i>
+          </button>
+          <button
+            type="button"
+            (click)="onDownloadAttachment()"
+            class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors"
+            aria-label="Download"
+            pTooltip="Download"
+            tooltipPosition="bottom"
+          >
+            <i class="pi pi-download text-sm"></i>
+          </button>
+        </div>
+      </div>
+
+      <div #docScroll (scroll)="onDocScroll()" class="flex-1 overflow-auto bg-row-b p-6">
+        <div class="flex flex-col items-center gap-6">
+          @for (page of pages; track page) {
+            <div
+              #pageEl
+              class="flex flex-col gap-3 shrink-0 rounded-sm border border-border bg-white p-8 text-gray-900 shadow-md transition-[width]"
+              [style.width.px]="480 * (zoom() / 100)"
+            >
+              <div class="h-3 w-2/3 rounded bg-gray-200"></div>
+              <div class="mt-2 h-2.5 w-full rounded bg-gray-100"></div>
+              <div class="h-2.5 w-full rounded bg-gray-100"></div>
+              <div class="h-2.5 w-5/6 rounded bg-gray-100"></div>
+              <div class="mt-4 h-2.5 w-full rounded bg-gray-100"></div>
+              <div class="h-2.5 w-full rounded bg-gray-100"></div>
+              <div class="h-2.5 w-4/6 rounded bg-gray-100"></div>
+              <div class="mt-4 h-2.5 w-full rounded bg-gray-100"></div>
+              <div class="h-2.5 w-full rounded bg-gray-100"></div>
+              <div class="h-2.5 w-3/6 rounded bg-gray-100"></div>
+              <p class="mt-6 text-center text-xs text-gray-400">Page {{ page }} of {{ pages.length }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</p-dialog>

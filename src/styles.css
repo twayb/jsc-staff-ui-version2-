@@ -140,6 +140,15 @@
   animation: tab-slide-in 0.3s ease-out both;
 }
 
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 .stagger-1 {
   animation-delay: 0.08s;
 }

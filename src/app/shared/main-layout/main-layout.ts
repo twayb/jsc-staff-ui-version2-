@@ -8,6 +8,7 @@ import { AppTopNav } from '../app-topnav/app-topnav';
 import { AppFooter } from '../app-footer/app-footer';
 import { SessionLockService } from '../../core/session-lock/session-lock.service';
 import { LayoutService } from '../../core/layout/layout.service';
+import { TextSizeService } from '../../core/text-size/text-size.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -17,6 +18,7 @@ import { LayoutService } from '../../core/layout/layout.service';
 export class MainLayout implements OnInit, OnDestroy {
   private readonly sessionLock = inject(SessionLockService);
   readonly layout = inject(LayoutService);
+  readonly textSize = inject(TextSizeService);
 
   readonly sidebarCollapsed = signal(false);
 

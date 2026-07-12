@@ -60,6 +60,18 @@ export const routes: Routes = [
             (m) => m.AttendedUnattended,
           ),
       },
+      {
+        path: 'recruitment/applications/assigned/:referenceNo',
+        loadComponent: () =>
+          import('./recruitment/applications/applicant-assigned/applicant-assigned').then(
+            (m) => m.ApplicantAssigned,
+          ),
+      },
+      {
+        path: 'recruitment/applications/:origin/:referenceNo/applicant/:nin',
+        loadComponent: () =>
+          import('./recruitment/applications/applicant-preview/applicant-preview').then((m) => m.ApplicantPreview),
+      },
     ],
   },
 ];
