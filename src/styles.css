@@ -127,6 +127,19 @@
   animation: slide-mask-reveal 5s ease-in-out infinite;
 }
 
+@keyframes tab-slide-in {
+  from {
+    transform: translateX(24px);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-tab-slide {
+  animation: tab-slide-in 0.3s ease-out both;
+}
+
 .stagger-1 {
   animation-delay: 0.08s;
 }

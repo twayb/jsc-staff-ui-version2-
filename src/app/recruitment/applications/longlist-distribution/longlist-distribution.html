@@ -1,0 +1,86 @@
+<app-data-table
+  [card]="false"
+  title="Longlist Distribution"
+  subtitle="Distribution of longlisted applicants to interview panels"
+  [data]="rows"
+  [loading]="loading()"
+  [searchFields]="['name']"
+  addLabel="Distribute Longlist"
+  addIcon="pi pi-share-alt"
+  dataKey="name"
+  (add)="onDistribute()"
+>
+  <ng-template #headerTpl>
+    <tr>
+      <th class="pl-6">No</th>
+      <th>Name</th>
+      <th>Applications</th>
+      <th>Shortlist</th>
+      <th>Unshortlisted</th>
+      <th>Pending</th>
+      <th class="text-center pr-6">Action</th>
+    </tr>
+  </ng-template>
+
+  <ng-template #bodyTpl let-row let-rowIndex="rowIndex">
+    <tr>
+      <td class="pl-6">{{ rowIndex + 1 }}</td>
+      <td>{{ row.name }}</td>
+      <td>{{ row.applications }}</td>
+      <td>{{ row.shortlist }}</td>
+      <td>{{ row.unshortlisted }}</td>
+      <td>{{ row.pending }}</td>
+      <td class="text-center pr-6">
+        <button
+          type="button"
+          (click)="onView(row)"
+          class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors mx-auto"
+          aria-label="View distribution"
+          pTooltip="View"
+          tooltipPosition="top"
+        >
+          <i class="pi pi-eye text-sm"></i>
+        </button>
+      </td>
+    </tr>
+  </ng-template>
+</app-data-table>
+
+<p-dialog
+  [(visible)]="showViewDialog"
+  header="Distribution Details"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: '28rem' }"
+>
+  @if (viewingRow) {
+    <div class="flex flex-col gap-4 pt-2">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <p class="text-xs font-medium text-label">Name</p>
+          <p class="text-sm text-heading">{{ viewingRow.name }}</p>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-label">Applications</p>
+          <p class="text-sm text-heading">{{ viewingRow.applications }}</p>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-label">Shortlist</p>
+          <p class="text-sm text-heading">{{ viewingRow.shortlist }}</p>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-label">Unshortlisted</p>
+          <p class="text-sm text-heading">{{ viewingRow.unshortlisted }}</p>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-label">Pending</p>
+          <p class="text-sm text-heading">{{ viewingRow.pending }}</p>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <p-button label="Close" severity="secondary" [text]="true" type="button" (onClick)="showViewDialog = false" />
+      </div>
+    </div>
+  }
+</p-dialog>

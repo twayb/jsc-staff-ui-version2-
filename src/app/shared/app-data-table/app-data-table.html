@@ -1,11 +1,11 @@
-<div class="bg-card border border-border rounded-2xl">
+<div [ngClass]="card ? 'bg-card border border-border rounded-2xl' : ''">
   @if (loading) {
     <div class="!border-0 !border-b !border-border px-4 py-3">
       <app-skeleton variant="list" [rows]="1" class="block max-w-xs" />
     </div>
     <app-skeleton variant="table" [rows]="skeletonRows" [columns]="skeletonColumns" class="block p-6" />
   } @else {
-    <p-toolbar class="!border-0 !border-b !border-border !rounded-b-none !bg-transparent">
+    <p-toolbar [ngClass]="card ? '!border-0 !border-b !border-border !rounded-b-none !bg-transparent' : '!border-0 !border-b !border-border !rounded-none !bg-transparent'">
       <ng-template #start>
         <div>
           <h1 class="text-lg font-semibold text-heading">{{ title }}</h1>
@@ -14,28 +14,30 @@
           }
         </div>
       </ng-template>
-      @if (searchFields.length) {
-        <ng-template #center>
-          <p-iconfield>
-            <p-inputicon class="pi pi-search" />
-            <input
-              pInputText
-              type="text"
-              placeholder="Search"
-              (input)="dt.filterGlobal($any($event.target).value, 'contains')"
-            />
-          </p-iconfield>
-        </ng-template>
-      }
-      @if (addLabel) {
+      @if (searchFields.length || addLabel) {
         <ng-template #end>
-          <p-button
-            [label]="addLabel"
-            icon="pi pi-plus"
-            (onClick)="add.emit()"
-            [text]="true"
-            class="transition-transform duration-150 hover:scale-105 active:scale-95"
-          />
+          <div class="flex items-center gap-2">
+            @if (searchFields.length) {
+              <p-iconfield>
+                <p-inputicon class="pi pi-search" />
+                <input
+                  pInputText
+                  type="text"
+                  placeholder="Search"
+                  (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+                />
+              </p-iconfield>
+            }
+            @if (addLabel) {
+              <p-button
+                [label]="addLabel"
+                [icon]="addIcon"
+                (onClick)="add.emit()"
+                [text]="true"
+                class="transition-transform duration-150 hover:scale-105 active:scale-95"
+              />
+            }
+          </div>
         </ng-template>
       }
     </p-toolbar>

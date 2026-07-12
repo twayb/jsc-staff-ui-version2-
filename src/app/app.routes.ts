@@ -43,6 +43,16 @@ export const routes: Routes = [
         path: 'recruitment/adverts',
         loadComponent: () => import('./recruitment/adverts/adverts').then((m) => m.Adverts),
       },
+      {
+        path: 'recruitment/applications',
+        loadComponent: () =>
+          import('./recruitment/applications/application-list/application-list').then((m) => m.ApplicationList),
+      },
+      {
+        path: 'recruitment/applications/longlist/:referenceNo',
+        loadComponent: () =>
+          import('./recruitment/applications/longlist-list/longlist-list').then((m) => m.LonglistList),
+      },
     ],
   },
 ];

@@ -1,5 +1,5 @@
 import { Component, ContentChild, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { TableModule } from 'primeng/table';
 import { Toolbar } from 'primeng/toolbar';
 import { Button } from 'primeng/button';
@@ -10,7 +10,7 @@ import { AppSkeleton } from '../app-skeleton/app-skeleton';
 
 @Component({
   selector: 'app-data-table',
-  imports: [NgTemplateOutlet, TableModule, Toolbar, Button, InputText, IconField, InputIcon, AppSkeleton],
+  imports: [NgClass, NgTemplateOutlet, TableModule, Toolbar, Button, InputText, IconField, InputIcon, AppSkeleton],
   templateUrl: './app-data-table.html',
 })
 export class AppDataTable<T = unknown> {
@@ -18,8 +18,10 @@ export class AppDataTable<T = unknown> {
   @Input() subtitle = '';
   @Input() data: T[] = [];
   @Input() loading = false;
+  @Input() card = true;
   @Input() searchFields: string[] = [];
   @Input() addLabel: string | null = null;
+  @Input() addIcon = 'pi pi-plus';
   @Input() rows = 5;
   @Input() rowsPerPageOptions = [5, 10, 20];
   @Input() scrollHeight = '400px';

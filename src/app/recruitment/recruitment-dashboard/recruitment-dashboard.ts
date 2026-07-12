@@ -32,7 +32,7 @@ export class RecruitmentDashboard implements OnInit {
       icon: 'pi-inbox',
       bgClass: 'bg-primary/10',
       fgClass: 'text-primary',
-      route: null,
+      route: '/recruitment/applications',
     },
     {
       label: 'Available Vacancies',
