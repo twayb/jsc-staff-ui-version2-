@@ -1,4 +1,5 @@
 import { Component, OnInit, signal } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AppSkeleton } from '../../shared/app-skeleton/app-skeleton';
 
@@ -13,7 +14,7 @@ interface Stat {
 
 @Component({
   selector: 'app-recruitment-dashboard',
-  imports: [RouterLink, AppSkeleton],
+  imports: [RouterLink, NgClass, AppSkeleton],
   templateUrl: './recruitment-dashboard.html',
   styleUrl: './recruitment-dashboard.css',
 })

@@ -15,7 +15,11 @@
         <a
           [routerLink]="stat.route"
           class="bg-card border border-border rounded-2xl p-6 flex items-center gap-4 transition-all duration-200 animate-fade-in-up"
-          [class]="['stagger-' + (i + 1), stat.route ? 'hover:shadow-lg hover:-translate-y-1 cursor-pointer' : 'pointer-events-none']"
+          [class]="'stagger-' + (i + 1)"
+          [ngClass]="{
+            'hover:shadow-lg hover:-translate-y-1 cursor-pointer': stat.route,
+            'pointer-events-none': !stat.route
+          }"
         >
           <span class="flex items-center justify-center w-12 h-12 rounded-xl shrink-0" [class]="stat.bgClass">
             <i class="pi text-xl" [class]="[stat.icon, stat.fgClass]"></i>

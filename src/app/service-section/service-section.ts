@@ -1,4 +1,5 @@
 import { Component, OnInit, signal } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AppSkeleton } from '../shared/app-skeleton/app-skeleton';
 
@@ -13,7 +14,7 @@ interface Service {
 
 @Component({
   selector: 'app-service-section',
-  imports: [RouterLink, AppSkeleton],
+  imports: [RouterLink, NgClass, AppSkeleton],
   templateUrl: './service-section.html',
   styleUrl: './service-section.css',
 })

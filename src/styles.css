@@ -108,6 +108,25 @@
   animation: float 13s ease-in-out infinite reverse;
 }
 
+@keyframes slide-mask-reveal {
+  0% {
+    clip-path: inset(0 100% 0 0);
+  }
+  40% {
+    clip-path: inset(0 0% 0 0);
+  }
+  60% {
+    clip-path: inset(0 0% 0 0);
+  }
+  100% {
+    clip-path: inset(0 100% 0 0);
+  }
+}
+
+.animate-slide-mask {
+  animation: slide-mask-reveal 5s ease-in-out infinite;
+}
+
 .stagger-1 {
   animation-delay: 0.08s;
 }
