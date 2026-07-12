@@ -39,6 +39,10 @@ export const routes: Routes = [
         path: 'recruitment/permits',
         loadComponent: () => import('./recruitment/permits/permits').then((m) => m.Permits),
       },
+      {
+        path: 'recruitment/adverts',
+        loadComponent: () => import('./recruitment/adverts/adverts').then((m) => m.Adverts),
+      },
     ],
   },
 ];

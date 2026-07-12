@@ -1,0 +1,123 @@
+<div class="w-full px-4 sm:px-6 py-10">
+  <app-breadcrumb [items]="breadcrumbItems" />
+
+  <app-data-table
+    class="block animate-fade-in-up stagger-1"
+    title="Adverts"
+    subtitle="Manage recruitment adverts"
+    [data]="adverts"
+    [loading]="loading()"
+    [searchFields]="['referenceNo', 'cadre', 'status']"
+    dataKey="referenceNo"
+  >
+    <ng-template #headerTpl>
+      <tr>
+        <th class="pl-6">No</th>
+        <th>Reference No</th>
+        <th>Cadre</th>
+        <th>Posts</th>
+        <th>Opening Date</th>
+        <th>Closing Date</th>
+        <th>Status</th>
+        <th class="text-center pr-6">Action</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #bodyTpl let-advert let-rowIndex="rowIndex">
+      <tr>
+        <td class="pl-6">{{ rowIndex + 1 }}</td>
+        <td>{{ advert.referenceNo }}</td>
+        <td>{{ advert.cadre }}</td>
+        <td>{{ advert.posts }}</td>
+        <td>{{ advert.openingDate }}</td>
+        <td>{{ advert.closingDate }}</td>
+        <td>
+          <p-tag [value]="advert.status" [severity]="advertStatusSeverity(advert.status)" />
+        </td>
+        <td class="text-center pr-6">
+          <button
+            type="button"
+            (click)="openActionMenu($event, advert, actionMenu)"
+            class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors mx-auto"
+            aria-label="Row actions"
+          >
+            <i class="pi pi-ellipsis-v text-sm"></i>
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+  </app-data-table>
+
+  <p-menu
+    #actionMenu
+    class="text-sm"
+    [model]="actionMenuItems"
+    [popup]="true"
+    appendTo="body"
+    [motionOptions]="{ duration: { enter: 200, leave: 150 } }"
+  />
+
+  <p-dialog
+    [(visible)]="showEditDialog"
+    header="Update Advert"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '28rem' }"
+  >
+    @if (editingAdvert) {
+      <form [formGroup]="editForm" (ngSubmit)="onSaveEdit()" class="flex flex-col gap-4 pt-2">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-medium text-heading">Reference No</label>
+          <p class="text-sm text-value bg-row-b rounded-lg px-3 py-2">{{ editingAdvert.referenceNo }}</p>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-medium text-heading">Cadre</label>
+          <p class="text-sm text-value bg-row-b rounded-lg px-3 py-2">{{ editingAdvert.cadre }}</p>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label for="posts" class="text-sm font-medium text-heading">Number of Posts</label>
+          <p-inputnumber inputId="posts" formControlName="posts" [min]="1" [showButtons]="true" class="w-full" />
+          @if (editForm.controls.posts.invalid && editForm.controls.posts.touched) {
+            <span class="text-xs text-danger">Number of posts is required</span>
+          }
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="flex flex-col gap-1.5">
+            <label for="openingDate" class="text-sm font-medium text-heading">Opening Date</label>
+            <p-datepicker
+              inputId="openingDate"
+              formControlName="openingDate"
+              dateFormat="yy-mm-dd"
+              [showIcon]="true"
+              class="w-full"
+            />
+            @if (editForm.controls.openingDate.invalid && editForm.controls.openingDate.touched) {
+              <span class="text-xs text-danger">Required</span>
+            }
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="closingDate" class="text-sm font-medium text-heading">Closing Date</label>
+            <p-datepicker
+              inputId="closingDate"
+              formControlName="closingDate"
+              dateFormat="yy-mm-dd"
+              [showIcon]="true"
+              class="w-full"
+            />
+            @if (editForm.controls.closingDate.invalid && editForm.controls.closingDate.touched) {
+              <span class="text-xs text-danger">Required</span>
+            }
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <p-button label="Cancel" severity="secondary" [text]="true" type="button" (onClick)="showEditDialog = false" />
+          <p-button label="Save" type="submit" />
+        </div>
+      </form>
+    }
+  </p-dialog>
+</div>

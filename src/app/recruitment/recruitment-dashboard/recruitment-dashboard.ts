@@ -40,7 +40,7 @@ export class RecruitmentDashboard implements OnInit {
       icon: 'pi-briefcase',
       bgClass: 'bg-info-bg',
       fgClass: 'text-info',
-      route: null,
+      route: '/recruitment/adverts',
     },
     {
       label: 'New Permits',
