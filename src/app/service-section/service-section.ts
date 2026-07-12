@@ -74,5 +74,13 @@ export class ServiceSection implements OnInit {
       fgClass: 'text-warning',
       route: null,
     },
+    {
+      title: 'Asset Management',
+      description: 'Track and manage office assets and equipment.',
+      icon: 'pi-box',
+      bgClass: 'bg-primary/10',
+      fgClass: 'text-primary',
+      route: null,
+    },
   ];
 }

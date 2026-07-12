@@ -1,13 +1,16 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Avatar } from 'primeng/avatar';
 import { Menu } from 'primeng/menu';
+import { Tooltip } from 'primeng/tooltip';
 import { MenuItem } from 'primeng/api';
 import { ThemeService } from '../../core/theme/theme.service';
+import { SessionLockService } from '../../core/session-lock/session-lock.service';
+import { LayoutService } from '../../core/layout/layout.service';
 
 @Component({
   selector: 'app-header',
-  imports: [Avatar, Menu],
+  imports: [Avatar, Menu, Tooltip],
   templateUrl: './app-header.html',
 })
 export class AppHeader {
@@ -16,20 +19,27 @@ export class AppHeader {
   @Output() sidebarToggle = new EventEmitter<void>();
 
   readonly theme = inject(ThemeService);
+  readonly layout = inject(LayoutService);
   private readonly router = inject(Router);
+  private readonly sessionLock = inject(SessionLockService);
 
   readonly userName = 'Staff Member';
   readonly userTitle = 'ICT Officer';
 
-  readonly userMenuItems: MenuItem[] = [
+  readonly userMenuItems = computed<MenuItem[]>(() => [
     {
       label: this.userTitle,
       disabled: true,
     },
     { separator: true },
     {
-      label: 'Change Password',
+      label: 'Lock Screen',
       icon: 'pi pi-lock',
+      command: () => this.sessionLock.lockNow(),
+    },
+    {
+      label: 'Change Password',
+      icon: 'pi pi-key',
       command: () => this.router.navigateByUrl('/password-change'),
     },
     { separator: true },
@@ -38,7 +48,7 @@ export class AppHeader {
       icon: 'pi pi-sign-out',
       command: () => this.logout(),
     },
-  ];
+  ]);
 
   logout(): void {
     this.router.navigateByUrl('/login');

@@ -5,13 +5,13 @@
   </div>
 
   @if (loading()) {
-    <app-skeleton variant="cards" [count]="6" [cardCols]="3" />
+    <app-skeleton variant="cards" [count]="7" [cardCols]="3" />
   } @else {
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       @for (service of services; track service.title; let i = $index) {
         <a
           [routerLink]="service.route"
-          class="group text-left bg-card border border-border rounded-2xl p-6 flex flex-col gap-4 transition-all duration-200 animate-fade-in-up"
+          class="group text-left bg-card border border-border rounded-2xl p-6 flex flex-col gap-4 h-full transition-all duration-200 animate-fade-in-up"
           [class]="'stagger-' + (i + 1)"
           [ngClass]="{
             'hover:shadow-lg hover:-translate-y-1 cursor-pointer': service.route,
@@ -23,7 +23,7 @@
           </span>
           <div>
             <h3 class="text-base font-semibold text-heading group-hover:text-primary transition-colors">{{ service.title }}</h3>
-            <p class="text-sm text-value mt-1">{{ service.description }}</p>
+            <p class="text-sm text-value mt-1 line-clamp-2 min-h-[2.5rem]">{{ service.description }}</p>
           </div>
         </a>
       }

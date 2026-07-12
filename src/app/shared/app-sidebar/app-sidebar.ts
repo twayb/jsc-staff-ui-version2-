@@ -1,11 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-
-interface NavItem {
-  label: string;
-  icon: string;
-  route: string | null;
-}
+import { NAV_ITEMS } from '../nav-items';
 
 @Component({
   selector: 'app-sidebar',
@@ -17,9 +12,5 @@ export class AppSidebar {
 
   readonly appVersion = 'v2.0.0';
 
-  readonly navItems: NavItem[] = [
-    { label: 'Services', icon: 'pi-th-large', route: '/services' },
-    { label: 'Dashboard', icon: 'pi-user-plus', route: '/recruitment' },
-    { label: 'Permits', icon: 'pi-id-card', route: '/recruitment/permits' },
-  ];
+  readonly navItems = NAV_ITEMS;
 }

@@ -1,8 +1,18 @@
 <div class="min-h-screen flex bg-bg">
-  <app-sidebar [collapsed]="sidebarCollapsed()" />
+  @if (layout.mode() === 'vertical') {
+    <app-sidebar [collapsed]="sidebarCollapsed()" />
+  }
 
   <div class="flex-1 flex flex-col min-w-0">
-    <app-header [showLogo]="false" [showSidebarToggle]="true" (sidebarToggle)="toggleSidebar()" />
+    <app-header
+      [showLogo]="layout.mode() === 'horizontal'"
+      [showSidebarToggle]="layout.mode() === 'vertical'"
+      (sidebarToggle)="toggleSidebar()"
+    />
+
+    @if (layout.mode() === 'horizontal') {
+      <app-topnav />
+    }
 
     <main class="flex-1">
       <router-outlet />

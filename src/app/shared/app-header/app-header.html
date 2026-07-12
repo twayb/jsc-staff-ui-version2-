@@ -20,6 +20,17 @@
   <div class="ml-auto flex items-center gap-1.5">
     <button
       type="button"
+      (click)="layout.toggle()"
+      pTooltip="{{ layout.mode() === 'vertical' ? 'Switch to horizontal layout' : 'Switch to vertical layout' }}"
+      tooltipPosition="bottom"
+      class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:scale-110 transition-transform"
+      [attr.aria-label]="layout.mode() === 'vertical' ? 'Switch to horizontal layout' : 'Switch to vertical layout'"
+    >
+      <i class="pi text-sm" [class]="layout.mode() === 'vertical' ? 'pi-arrows-h' : 'pi-arrows-v'"></i>
+    </button>
+
+    <button
+      type="button"
       (click)="theme.toggle()"
       class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:scale-110 transition-transform"
       [attr.aria-label]="theme.isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
@@ -41,7 +52,7 @@
     <p-menu
       #userMenu
       class="text-sm"
-      [model]="userMenuItems"
+      [model]="userMenuItems()"
       [popup]="true"
       appendTo="body"
       [motionOptions]="{ duration: { enter: 200, leave: 150 } }"

@@ -1,0 +1,20 @@
+<nav class="mx-4 sm:mx-6 mt-4 bg-card border border-border rounded-xl shadow-sm px-3 py-2 flex items-center gap-1 overflow-x-auto animate-fade-in-up">
+  @for (item of navItems; track item.label) {
+    @if (item.route) {
+      <a
+        [routerLink]="item.route"
+        routerLinkActive="bg-primary/10 text-primary"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-value hover:bg-row-b hover:text-heading transition-colors whitespace-nowrap"
+      >
+        <i class="pi text-sm" [class]="item.icon"></i>
+        <span>{{ item.label }}</span>
+      </a>
+    } @else {
+      <span class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-label opacity-50 cursor-not-allowed whitespace-nowrap">
+        <i class="pi text-sm" [class]="item.icon"></i>
+        <span>{{ item.label }}</span>
+      </span>
+    }
+  }
+</nav>

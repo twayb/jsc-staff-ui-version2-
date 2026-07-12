@@ -13,6 +13,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/password-change/password-change').then((m) => m.PasswordChange),
   },
   {
+    path: 'screen-lock',
+    loadComponent: () => import('./pages/screen-lock/screen-lock').then((m) => m.ScreenLock),
+  },
+  {
     path: '',
     loadComponent: () => import('./shared/service-layout/service-layout').then((m) => m.ServiceLayout),
     children: [
