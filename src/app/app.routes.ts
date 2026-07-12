@@ -53,6 +53,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./recruitment/applications/longlist-list/longlist-list').then((m) => m.LonglistList),
       },
+      {
+        path: 'recruitment/applications/longlist/:referenceNo/attended-unattended/:panel',
+        loadComponent: () =>
+          import('./recruitment/applications/attended-unattended/attended-unattended').then(
+            (m) => m.AttendedUnattended,
+          ),
+      },
     ],
   },
 ];

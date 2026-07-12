@@ -1,0 +1,153 @@
+<div class="w-full px-4 sm:px-6 py-10">
+  <app-breadcrumb [items]="breadcrumbItems" />
+
+  <div class="mb-4 mt-6 flex items-center gap-3 animate-fade-in-up">
+    <div class="flex items-center justify-center w-11 h-11 rounded-full bg-primary/10 text-primary shrink-0">
+      <i class="pi pi-user text-lg"></i>
+    </div>
+    <div>
+      <p class="text-xs font-medium text-label">Staff</p>
+      <p class="text-xl font-semibold text-heading">{{ panel }}</p>
+    </div>
+  </div>
+
+  <div class="bg-card border border-border rounded-2xl overflow-hidden animate-fade-in-up stagger-1">
+    <p-tabs [(value)]="activeTab" class="block">
+      <p-tablist>
+        <p-tab value="attended"><i class="pi pi-user-edit mr-2"></i>Attended</p-tab>
+        <p-tab value="unattended"><i class="pi pi-user-minus mr-2"></i>Unattended</p-tab>
+      </p-tablist>
+
+      <p-tabpanels>
+        <p-tabpanel value="attended" class="block animate-tab-slide">
+          <app-data-table
+            [card]="false"
+            title="Attended"
+            subtitle="Applicants who attended the interview"
+            [data]="attended"
+            [loading]="loading()"
+            [searchFields]="['name', 'gender', 'address']"
+            dataKey="name"
+          >
+            <ng-template #headerTpl>
+              <tr>
+                <th class="pl-6">No</th>
+                <th>Applicant</th>
+                <th>Gender</th>
+                <th>Address</th>
+                <th>Status</th>
+                <th class="text-center pr-6">Action</th>
+              </tr>
+            </ng-template>
+
+            <ng-template #bodyTpl let-applicant let-rowIndex="rowIndex">
+              <tr>
+                <td class="pl-6">{{ rowIndex + 1 }}</td>
+                <td>{{ applicant.name }}</td>
+                <td>{{ applicant.gender }}</td>
+                <td>{{ applicant.address }}</td>
+                <td>
+                  <p-tag [value]="applicant.status" [severity]="attendanceStatusSeverity(applicant.status)" />
+                </td>
+                <td class="text-center pr-6">
+                  <button
+                    type="button"
+                    (click)="onView(applicant)"
+                    class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors mx-auto"
+                    aria-label="View applicant"
+                    pTooltip="View"
+                    tooltipPosition="top"
+                  >
+                    <i class="pi pi-eye text-sm"></i>
+                  </button>
+                </td>
+              </tr>
+            </ng-template>
+          </app-data-table>
+        </p-tabpanel>
+
+        <p-tabpanel value="unattended" class="block animate-tab-slide">
+          <app-data-table
+            [card]="false"
+            title="Unattended"
+            subtitle="Applicants who did not attend the interview"
+            [data]="unattended"
+            [loading]="loading()"
+            [searchFields]="['name', 'gender', 'address']"
+            dataKey="name"
+          >
+            <ng-template #headerTpl>
+              <tr>
+                <th class="pl-6">No</th>
+                <th>Applicant</th>
+                <th>Gender</th>
+                <th>Address</th>
+                <th>Status</th>
+                <th class="text-center pr-6">Action</th>
+              </tr>
+            </ng-template>
+
+            <ng-template #bodyTpl let-applicant let-rowIndex="rowIndex">
+              <tr>
+                <td class="pl-6">{{ rowIndex + 1 }}</td>
+                <td>{{ applicant.name }}</td>
+                <td>{{ applicant.gender }}</td>
+                <td>{{ applicant.address }}</td>
+                <td>
+                  <p-tag [value]="applicant.status" [severity]="attendanceStatusSeverity(applicant.status)" />
+                </td>
+                <td class="text-center pr-6">
+                  <button
+                    type="button"
+                    (click)="onView(applicant)"
+                    class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors mx-auto"
+                    aria-label="View applicant"
+                    pTooltip="View"
+                    tooltipPosition="top"
+                  >
+                    <i class="pi pi-eye text-sm"></i>
+                  </button>
+                </td>
+              </tr>
+            </ng-template>
+          </app-data-table>
+        </p-tabpanel>
+      </p-tabpanels>
+    </p-tabs>
+  </div>
+
+  <p-dialog
+    [(visible)]="showViewDialog"
+    header="Applicant Details"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '28rem' }"
+  >
+    @if (viewingApplicant) {
+      <div class="flex flex-col gap-4 pt-2">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-xs font-medium text-label">Applicant</p>
+            <p class="text-sm text-heading">{{ viewingApplicant.name }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">Gender</p>
+            <p class="text-sm text-heading">{{ viewingApplicant.gender }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">Address</p>
+            <p class="text-sm text-heading">{{ viewingApplicant.address }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">Status</p>
+            <p-tag [value]="viewingApplicant.status" [severity]="attendanceStatusSeverity(viewingApplicant.status)" />
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <p-button label="Close" severity="secondary" [text]="true" type="button" (onClick)="showViewDialog = false" />
+        </div>
+      </div>
+    }
+  </p-dialog>
+</div>

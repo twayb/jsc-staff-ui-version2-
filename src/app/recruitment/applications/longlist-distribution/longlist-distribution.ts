@@ -1,7 +1,6 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, Input, OnInit, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { Dialog } from 'primeng/dialog';
-import { Button } from 'primeng/button';
 import { Tooltip } from 'primeng/tooltip';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
 
@@ -15,13 +14,16 @@ interface DistributionRow {
 
 @Component({
   selector: 'app-longlist-distribution',
-  imports: [Dialog, Button, Tooltip, AppDataTable],
+  imports: [Tooltip, AppDataTable],
   templateUrl: './longlist-distribution.html',
   styleUrl: './longlist-distribution.css',
 })
 export class LonglistDistribution implements OnInit {
+  private readonly router = inject(Router);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
+
+  @Input() referenceNo = '';
 
   readonly loading = signal(true);
 
@@ -34,9 +36,6 @@ export class LonglistDistribution implements OnInit {
     { name: 'Fatuma Mwafujo', applications: 12, shortlist: 6, unshortlisted: 4, pending: 2 },
     { name: 'Rebbeca Mwakaje', applications: 10, shortlist: 5, unshortlisted: 3, pending: 2 },
   ];
-
-  showViewDialog = false;
-  viewingRow: DistributionRow | null = null;
 
   onDistribute(): void {
     this.confirmationService.confirm({
@@ -56,7 +55,6 @@ export class LonglistDistribution implements OnInit {
   }
 
   onView(row: DistributionRow): void {
-    this.viewingRow = row;
-    this.showViewDialog = true;
+    this.router.navigate(['/recruitment/applications/longlist', this.referenceNo, 'attended-unattended', row.name]);
   }
 }
