@@ -1,0 +1,46 @@
+<div class="w-full px-4 sm:px-6 py-10">
+  <app-breadcrumb [items]="breadcrumbItems" />
+
+  <app-data-table
+    class="block animate-fade-in-up stagger-1"
+    title="Selection by Cadre"
+    subtitle="Manage candidate selection per cadre"
+    [data]="cadres"
+    [loading]="loading()"
+    [searchFields]="['referenceNo', 'cadre']"
+    dataKey="referenceNo"
+  >
+    <ng-template #headerTpl>
+      <tr>
+        <th class="pl-6">No</th>
+        <th>Ref No</th>
+        <th>Cadre</th>
+        <th>Close Date</th>
+        <th>Total Selection</th>
+        <th class="text-center pr-6">Action</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #bodyTpl let-cadre let-rowIndex="rowIndex">
+      <tr>
+        <td class="pl-6">{{ rowIndex + 1 }}</td>
+        <td>{{ cadre.referenceNo }}</td>
+        <td>{{ cadre.cadre }}</td>
+        <td>{{ cadre.closeDate }}</td>
+        <td>{{ cadre.totalSelection }}</td>
+        <td class="text-center pr-6">
+          <button
+            type="button"
+            (click)="onView(cadre)"
+            class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors mx-auto"
+            aria-label="View selection"
+            pTooltip="View Selection"
+            tooltipPosition="top"
+          >
+            <i class="pi pi-eye text-sm"></i>
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+  </app-data-table>
+</div>

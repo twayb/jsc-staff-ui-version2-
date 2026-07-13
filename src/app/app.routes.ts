@@ -116,6 +116,36 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./recruitment/interview-managment/panelists/panelists').then((m) => m.Panelists),
       },
+      {
+        path: 'recruitment/selection',
+        loadComponent: () =>
+          import('./recruitment/selection/selection-by-cadre/selection-by-cadre').then((m) => m.SelectionByCadre),
+      },
+      {
+        path: 'recruitment/selection/:referenceNo',
+        loadComponent: () =>
+          import('./recruitment/selection/selection-list/selection-list').then((m) => m.SelectionList),
+      },
+      {
+        path: 'recruitment/databank',
+        loadComponent: () =>
+          import('./recruitment/Databank/databank-by-cadre/databank-by-cadre').then((m) => m.DatabankByCadre),
+      },
+      {
+        path: 'recruitment/databank/:referenceNo',
+        loadComponent: () =>
+          import('./recruitment/Databank/databank-list/databank-list').then((m) => m.DatabankList),
+      },
+      {
+        path: 'recruitment/scheme-of-service/cadre',
+        loadComponent: () =>
+          import('./recruitment/Scheme-of-service/cadre/cadre').then((m) => m.Cadre),
+      },
+      {
+        path: 'recruitment/scheme-of-service/categories',
+        loadComponent: () =>
+          import('./recruitment/Scheme-of-service/cadre-categories/cadre-categories').then((m) => m.CadreCategories),
+      },
     ],
   },
 ];

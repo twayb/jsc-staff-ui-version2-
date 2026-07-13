@@ -1,0 +1,11 @@
+@if (ready()) {
+  <quill-editor
+    theme="snow"
+    [placeholder]="placeholder"
+    [modules]="modules"
+    [ngModel]="value"
+    (ngModelChange)="onModelChange($event)"
+    [readOnly]="disabled()"
+    (onBlur)="onBlur()"
+  />
+}

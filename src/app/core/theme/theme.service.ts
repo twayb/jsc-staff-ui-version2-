@@ -20,9 +20,6 @@ export class ThemeService {
 
   private getInitialTheme(): boolean {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return stored === 'dark';
-    }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return stored === 'dark';
   }
 }

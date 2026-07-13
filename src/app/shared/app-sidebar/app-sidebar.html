@@ -13,7 +13,36 @@
 
   <nav class="flex-1 px-3 py-3 flex flex-col gap-0.5">
     @for (item of navItems; track item.label) {
-      @if (item.route) {
+      @if (item.children) {
+        <button
+          type="button"
+          (click)="toggle(item)"
+          class="flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium text-value hover:bg-row-b hover:text-heading transition-colors w-full"
+        >
+          <i class="pi text-sm shrink-0 w-4 text-center" [class]="item.icon"></i>
+          <span class="flex-1 text-left whitespace-nowrap transition-opacity duration-200" [class.opacity-0]="collapsed">{{ item.label }}</span>
+          <i
+            class="pi pi-chevron-down text-xs shrink-0 transition-transform duration-200"
+            [class.rotate-180]="isExpanded(item)"
+            [class.opacity-0]="collapsed"
+          ></i>
+        </button>
+        @if (isExpanded(item) && !collapsed) {
+          <div class="flex flex-col gap-0.5 pl-6">
+            @for (child of item.children; track child.label) {
+              <a
+                [routerLink]="child.route"
+                routerLinkActive="bg-primary/10 text-primary"
+                [routerLinkActiveOptions]="{ exact: true }"
+                class="flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium text-value hover:bg-row-b hover:text-heading transition-colors"
+              >
+                <i class="pi text-sm shrink-0 w-4 text-center" [class]="child.icon"></i>
+                <span class="whitespace-nowrap">{{ child.label }}</span>
+              </a>
+            }
+          </div>
+        }
+      } @else if (item.route) {
         <a
           [routerLink]="item.route"
           routerLinkActive="bg-primary/10 text-primary"

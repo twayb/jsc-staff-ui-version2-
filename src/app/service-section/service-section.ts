@@ -51,9 +51,17 @@ export class ServiceSection implements OnInit {
       route: null,
     },
     {
-      title: 'Question Bank & Interview',
+      title: 'Question Bank',
       description: 'Add questions and set interviews.',
       icon: 'pi-book',
+      bgClass: 'bg-info-bg',
+      fgClass: 'text-info',
+      route: null,
+    },
+    {
+      title: 'Online Interview',
+      description: 'Conduct and manage online aptitude tests.',
+      icon: 'pi-desktop',
       bgClass: 'bg-info-bg',
       fgClass: 'text-info',
       route: null,

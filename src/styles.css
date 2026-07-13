@@ -177,3 +177,74 @@
   animation-delay: 0.56s;
 }
 
+/* Quill renders its toolbar/container via direct DOM APIs, not Angular's
+   template compiler, so component-scoped styles never reach it — these rules
+   have to live globally to match the app's card/border theme. */
+quill-editor {
+  display: block;
+  width: 100%;
+}
+
+.ql-toolbar.ql-snow {
+  border: 1px solid var(--border);
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+  background: var(--row-b);
+}
+
+.ql-container.ql-snow {
+  border: 1px solid var(--border);
+  border-top: none;
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+  background: var(--card);
+  font-family: inherit;
+  font-size: 0.875rem;
+  /* Quill's own .ql-editor already sets height:100% + overflow-y:auto, but
+     100% only constrains anything once this container has a real height —
+     without it, both the container and editor just grow with content. */
+  height: 6rem;
+}
+
+.ql-container.ql-snow .ql-editor {
+  color: var(--value);
+}
+
+.ql-editor.ql-blank::before {
+  color: var(--label);
+  font-style: normal;
+}
+
+.ql-snow .ql-stroke {
+  stroke: var(--value);
+}
+
+.ql-snow .ql-fill {
+  fill: var(--value);
+}
+
+.ql-snow .ql-picker {
+  color: var(--value);
+}
+
+.ql-snow.ql-toolbar button:hover,
+.ql-snow .ql-toolbar button:hover,
+.ql-snow.ql-toolbar button.ql-active,
+.ql-snow .ql-toolbar button.ql-active {
+  color: var(--btn);
+}
+
+.ql-snow.ql-toolbar button:hover .ql-stroke,
+.ql-snow .ql-toolbar button:hover .ql-stroke,
+.ql-snow.ql-toolbar button.ql-active .ql-stroke,
+.ql-snow .ql-toolbar button.ql-active .ql-stroke {
+  stroke: var(--btn);
+}
+
+.ql-snow.ql-toolbar button:hover .ql-fill,
+.ql-snow .ql-toolbar button:hover .ql-fill,
+.ql-snow.ql-toolbar button.ql-active .ql-fill,
+.ql-snow .ql-toolbar button.ql-active .ql-fill {
+  fill: var(--btn);
+}
+

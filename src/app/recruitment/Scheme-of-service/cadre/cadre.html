@@ -1,0 +1,269 @@
+<div class="w-full px-4 sm:px-6 py-10">
+  <app-breadcrumb [items]="breadcrumbItems" />
+
+  <app-data-table
+    class="block animate-fade-in-up stagger-1"
+    title="Cadre"
+    subtitle="Manage cadres and their scheme of service categories"
+    [data]="cadres"
+    [loading]="loading()"
+    [searchFields]="['name', 'category']"
+    addLabel="Add Cadre"
+    addIcon="pi pi-plus"
+    dataKey="name"
+    (add)="openAddDialog()"
+  >
+    <ng-template #headerTpl>
+      <tr>
+        <th class="pl-6">No</th>
+        <th>Cadre Name</th>
+        <th>Category</th>
+        <th class="text-center pr-6">Action</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #bodyTpl let-cadre let-rowIndex="rowIndex">
+      <tr>
+        <td class="pl-6">{{ rowIndex + 1 }}</td>
+        <td>{{ cadre.name }}</td>
+        <td>{{ cadre.category }}</td>
+        <td class="text-center pr-6">
+          <button
+            type="button"
+            (click)="openActionMenu($event, cadre, actionMenu)"
+            class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors mx-auto"
+            aria-label="Row actions"
+          >
+            <i class="pi pi-ellipsis-v text-sm"></i>
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+  </app-data-table>
+
+  <p-menu
+    #actionMenu
+    class="text-sm"
+    [model]="actionMenuItems"
+    [popup]="true"
+    appendTo="body"
+    [motionOptions]="{ duration: { enter: 200, leave: 150 } }"
+  />
+
+  <p-dialog
+    [(visible)]="showFormDialog"
+    [header]="dialogMode === 'edit' ? 'Edit Cadre' : 'Add Cadre'"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '52rem' }"
+  >
+    <form
+      [formGroup]="form"
+      (ngSubmit)="onSubmit()"
+      class="custom-scrollbar flex flex-col gap-4 pt-2 max-h-[75vh] overflow-y-auto overflow-x-hidden pr-4"
+    >
+      <div class="flex flex-col gap-1.5">
+        <label for="name" class="text-sm font-medium text-heading">Cadre Name</label>
+        <input pInputText id="name" formControlName="name" fluid placeholder="e.g. Magistrate" />
+        @if (form.controls.name.invalid && form.controls.name.touched) {
+          <span class="text-xs text-danger">Cadre name is required</span>
+        }
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="flex flex-col gap-1.5">
+          <label for="category" class="text-sm font-medium text-heading">Category</label>
+          <p-select
+            inputId="category"
+            formControlName="category"
+            [options]="categoryOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select category"
+            class="w-full"
+          />
+          @if (form.controls.category.invalid && form.controls.category.touched) {
+            <span class="text-xs text-danger">Category is required</span>
+          }
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label for="educationLevel" class="text-sm font-medium text-heading">Education Level</label>
+          <p-select
+            inputId="educationLevel"
+            formControlName="educationLevel"
+            [options]="educationLevelOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select education level"
+            class="w-full"
+          />
+          @if (form.controls.educationLevel.invalid && form.controls.educationLevel.touched) {
+            <span class="text-xs text-danger">Education level is required</span>
+          }
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="flex flex-col gap-1.5">
+          <label for="course" class="text-sm font-medium text-heading">Course</label>
+          <p-select
+            inputId="course"
+            formControlName="course"
+            [options]="courseOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select course"
+            class="w-full"
+          />
+          @if (form.controls.course.invalid && form.controls.course.touched) {
+            <span class="text-xs text-danger">Course is required</span>
+          }
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label for="profession" class="text-sm font-medium text-heading">Profession</label>
+          <p-select
+            inputId="profession"
+            formControlName="profession"
+            [options]="professionOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select profession"
+            class="w-full"
+          />
+          @if (form.controls.profession.invalid && form.controls.profession.touched) {
+            <span class="text-xs text-danger">Profession is required</span>
+          }
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-sm font-medium text-heading">Duties</label>
+        <app-rich-text-editor formControlName="duties" placeholder="Describe the key duties for this cadre" />
+        @if (form.controls.duties.invalid && form.controls.duties.touched) {
+          <span class="text-xs text-danger">Duties are required</span>
+        }
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="flex flex-col gap-1.5">
+          <label for="workExperienceYears" class="text-sm font-medium text-heading">Work Experience (Years)</label>
+          <p-inputnumber inputId="workExperienceYears" formControlName="workExperienceYears" [min]="0" [showButtons]="true" class="w-full" />
+          @if (form.controls.workExperienceYears.invalid && form.controls.workExperienceYears.touched) {
+            <span class="text-xs text-danger">Work experience is required</span>
+          }
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label for="salaryScale" class="text-sm font-medium text-heading">Salary Scale</label>
+          <p-select
+            inputId="salaryScale"
+            formControlName="salaryScale"
+            [options]="salaryScaleOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="e.g. TGS E"
+            class="w-full"
+          />
+          @if (form.controls.salaryScale.invalid && form.controls.salaryScale.touched) {
+            <span class="text-xs text-danger">Salary scale is required</span>
+          }
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="flex flex-col gap-1.5">
+          <label for="minAge" class="text-sm font-medium text-heading">Min Age</label>
+          <p-inputnumber inputId="minAge" formControlName="minAge" [min]="0" [showButtons]="true" class="w-full" />
+          @if (form.controls.minAge.invalid && form.controls.minAge.touched) {
+            <span class="text-xs text-danger">Min age is required</span>
+          }
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label for="maxAge" class="text-sm font-medium text-heading">Max Age</label>
+          <p-inputnumber inputId="maxAge" formControlName="maxAge" [min]="0" [showButtons]="true" class="w-full" />
+          @if (form.controls.maxAge.invalid && form.controls.maxAge.touched) {
+            <span class="text-xs text-danger">Max age is required</span>
+          }
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <p-button label="Cancel" severity="secondary" [text]="true" type="button" (onClick)="showFormDialog = false" />
+        <p-button [label]="dialogMode === 'edit' ? 'Update' : 'Save'" type="submit" />
+      </div>
+    </form>
+  </p-dialog>
+
+  <p-dialog
+    [(visible)]="showViewDialog"
+    header="Cadre Details"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '36rem' }"
+  >
+    @if (viewingCadre) {
+      <div class="custom-scrollbar flex flex-col gap-4 pt-2 max-h-[75vh] overflow-y-auto overflow-x-hidden pr-2">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-medium text-heading">Cadre Name</label>
+          <p class="text-sm text-value bg-row-b rounded-lg px-3 py-2">{{ viewingCadre.name }}</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-heading">Category</label>
+            <p class="text-sm text-value bg-row-b rounded-lg px-3 py-2">{{ viewingCadre.category }}</p>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-heading">Education Level</label>
+            <p class="text-sm text-value bg-row-b rounded-lg px-3 py-2">{{ viewingCadre.educationLevel }}</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-heading">Course</label>
+            <p class="text-sm text-value bg-row-b rounded-lg px-3 py-2">{{ viewingCadre.course }}</p>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-heading">Profession</label>
+            <p class="text-sm text-value bg-row-b rounded-lg px-3 py-2">{{ viewingCadre.profession }}</p>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-medium text-heading">Duties</label>
+          <div class="text-sm text-value bg-row-b rounded-lg px-3 py-2" [innerHTML]="viewingCadre.duties"></div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-heading">Work Experience</label>
+            <p class="text-sm text-value bg-row-b rounded-lg px-3 py-2">{{ viewingCadre.workExperienceYears }} years</p>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-heading">Salary Scale</label>
+            <p class="text-sm text-value bg-row-b rounded-lg px-3 py-2">{{ viewingCadre.salaryScale }}</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-heading">Min Age</label>
+            <p class="text-sm text-value bg-row-b rounded-lg px-3 py-2">{{ viewingCadre.minAge }}</p>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-heading">Max Age</label>
+            <p class="text-sm text-value bg-row-b rounded-lg px-3 py-2">{{ viewingCadre.maxAge }}</p>
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <p-button label="Close" severity="secondary" [text]="true" type="button" (onClick)="showViewDialog = false" />
+        </div>
+      </div>
+    }
+  </p-dialog>
+</div>

@@ -1,6 +1,16 @@
 <nav class="mx-4 sm:mx-6 mt-4 bg-card border border-border rounded-xl shadow-sm px-3 py-2 flex items-center gap-1 overflow-x-auto animate-fade-in-up">
   @for (item of navItems; track item.label) {
-    @if (item.route) {
+    @if (item.children) {
+      <button
+        type="button"
+        (click)="toggle(item, $event)"
+        class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-value hover:bg-row-b hover:text-heading transition-colors whitespace-nowrap"
+      >
+        <i class="pi text-sm" [class]="item.icon"></i>
+        <span>{{ item.label }}</span>
+        <i class="pi pi-chevron-down text-xs transition-transform duration-200" [class.rotate-180]="isOpen(item)"></i>
+      </button>
+    } @else if (item.route) {
       <a
         [routerLink]="item.route"
         routerLinkActive="bg-primary/10 text-primary"
@@ -18,3 +28,26 @@
     }
   }
 </nav>
+
+@for (item of navItems; track item.label) {
+  @if (item.children && isOpen(item)) {
+    <div
+      class="fixed min-w-[12rem] bg-card border border-border rounded-lg shadow-md py-1 z-50 flex flex-col"
+      [style.top.px]="menuPosition().top"
+      [style.left.px]="menuPosition().left"
+    >
+      @for (child of item.children; track child.label) {
+        <a
+          [routerLink]="child.route"
+          routerLinkActive="bg-primary/10 text-primary"
+          [routerLinkActiveOptions]="{ exact: true }"
+          (click)="close()"
+          class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-value hover:bg-row-b hover:text-heading transition-colors whitespace-nowrap"
+        >
+          <i class="pi text-sm" [class]="child.icon"></i>
+          <span>{{ child.label }}</span>
+        </a>
+      }
+    </div>
+  }
+}
