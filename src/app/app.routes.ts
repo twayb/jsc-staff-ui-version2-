@@ -72,6 +72,50 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./recruitment/applications/applicant-preview/applicant-preview').then((m) => m.ApplicantPreview),
       },
+      {
+        path: 'recruitment/interview-management',
+        loadComponent: () =>
+          import('./recruitment/interview-managment/interview-list-by-cadre/interview-list-by-cadre').then(
+            (m) => m.InterviewListByCadre,
+          ),
+      },
+      {
+        path: 'recruitment/interview-management/:permitNo',
+        loadComponent: () =>
+          import('./recruitment/interview-managment/interview-list/interview-list').then((m) => m.InterviewList),
+      },
+      {
+        path: 'recruitment/interview-management/:permitNo/distribute-by-region',
+        loadComponent: () =>
+          import('./recruitment/interview-managment/distribute-by-region/distribute-by-region').then(
+            (m) => m.DistributeByRegion,
+          ),
+      },
+      {
+        path: 'recruitment/interview-management/:permitNo/venue-by-region',
+        loadComponent: () =>
+          import('./recruitment/interview-managment/venue-by-region/venue-by-region').then((m) => m.VenueByRegion),
+      },
+      {
+        path: 'recruitment/interview-management/:permitNo/candidate-by-venue',
+        loadComponent: () =>
+          import('./recruitment/interview-managment/candidate-by-venue/candidate-by-venue').then(
+            (m) => m.CandidateByVenue,
+          ),
+      },
+      {
+        path: 'recruitment/interview-management/:permitNo/results',
+        loadComponent: () => import('./recruitment/interview-managment/result/result').then((m) => m.Result),
+      },
+      {
+        path: 'recruitment/interview-management/:permitNo/panel',
+        loadComponent: () => import('./recruitment/interview-managment/panel/panel').then((m) => m.Panel),
+      },
+      {
+        path: 'recruitment/interview-management/:permitNo/panelists',
+        loadComponent: () =>
+          import('./recruitment/interview-managment/panelists/panelists').then((m) => m.Panelists),
+      },
     ],
   },
 ];

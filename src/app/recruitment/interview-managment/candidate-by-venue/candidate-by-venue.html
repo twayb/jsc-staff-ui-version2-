@@ -1,0 +1,36 @@
+<div class="w-full px-4 sm:px-6 py-10">
+  <app-breadcrumb [items]="breadcrumbItems" />
+
+  <app-data-table
+    class="block animate-fade-in-up stagger-1"
+    title="Candidates by Venue"
+    [subtitle]="venue ? 'Candidates assigned to ' + venue : 'Candidates assigned to this venue'"
+    [data]="candidates"
+    [loading]="loading()"
+    [searchFields]="['name', 'interviewNo', 'phone']"
+    addLabel="Export"
+    addIcon="pi pi-download"
+    dataKey="interviewNo"
+    (add)="onExport()"
+  >
+    <ng-template #headerTpl>
+      <tr>
+        <th class="pl-6">No</th>
+        <th>Name</th>
+        <th>Interview No</th>
+        <th>Gender</th>
+        <th class="pr-6">Phone</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #bodyTpl let-candidate let-rowIndex="rowIndex">
+      <tr>
+        <td class="pl-6">{{ rowIndex + 1 }}</td>
+        <td>{{ candidate.name }}</td>
+        <td>{{ candidate.interviewNo }}</td>
+        <td>{{ candidate.gender }}</td>
+        <td class="pr-6">{{ candidate.phone }}</td>
+      </tr>
+    </ng-template>
+  </app-data-table>
+</div>

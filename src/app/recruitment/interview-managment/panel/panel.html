@@ -1,0 +1,201 @@
+<div class="w-full px-4 sm:px-6 py-10">
+  <app-breadcrumb [items]="breadcrumbItems" />
+
+  <app-data-table
+    class="block animate-fade-in-up stagger-1"
+    title="Interview Panels"
+    [subtitle]="interviewTitle ? 'Panels for ' + interviewTitle : 'Panels for this interview'"
+    [data]="panels"
+    [loading]="loading()"
+    [searchFields]="['panel']"
+    dataKey="panel"
+  >
+    <p-button
+      tableAction
+      label="Distribute"
+      icon="pi pi-share-alt"
+      [text]="true"
+      (onClick)="onDistribute()"
+      class="transition-transform duration-150 hover:scale-105 active:scale-95"
+    />
+    <p-button
+      tableAction
+      label="Add Panel"
+      icon="pi pi-plus"
+      [text]="true"
+      (onClick)="openAddPanelDialog()"
+      class="transition-transform duration-150 hover:scale-105 active:scale-95"
+    />
+
+    <ng-template #headerTpl>
+      <tr>
+        <th class="pl-6">No</th>
+        <th>Panel</th>
+        <th class="text-center pr-6">Action</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #bodyTpl let-panel let-rowIndex="rowIndex">
+      <tr>
+        <td class="pl-6">{{ rowIndex + 1 }}</td>
+        <td>{{ panel.panel }}</td>
+        <td class="text-center pr-6">
+          <button
+            type="button"
+            (click)="openActionMenu($event, panel, actionMenu)"
+            class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors mx-auto"
+            aria-label="Row actions"
+          >
+            <i class="pi pi-ellipsis-v text-sm"></i>
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+  </app-data-table>
+
+  <p-menu
+    #actionMenu
+    class="text-sm"
+    [model]="actionMenuItems"
+    [popup]="true"
+    appendTo="body"
+    [motionOptions]="{ duration: { enter: 200, leave: 150 } }"
+  />
+
+  <p-dialog
+    [(visible)]="showAddPanelDialog"
+    header="Add Panel"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '24rem' }"
+  >
+    <form [formGroup]="addPanelForm" (ngSubmit)="onSaveAddPanel()" class="flex flex-col gap-4 pt-2">
+      <div class="flex flex-col gap-1.5">
+        <label for="panel" class="text-sm font-medium text-heading">Panel Name</label>
+        <input pInputText id="panel" formControlName="panel" fluid placeholder="e.g. Panel C" />
+        @if (addPanelForm.controls.panel.invalid && addPanelForm.controls.panel.touched) {
+          <span class="text-xs text-danger">Panel name is required</span>
+        }
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <p-button
+          label="Cancel"
+          severity="secondary"
+          [text]="true"
+          type="button"
+          (onClick)="showAddPanelDialog = false"
+        />
+        <p-button label="Save" type="submit" />
+      </div>
+    </form>
+  </p-dialog>
+
+  <p-dialog
+    [(visible)]="showPanelistDialog"
+    header="Set Panelist"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '34rem' }"
+  >
+    @if (panelistPanel) {
+      <form [formGroup]="panelistForm" (ngSubmit)="onSavePanelist()" class="flex flex-col gap-4 pt-2">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-medium text-heading">Panel</label>
+          <p class="text-sm text-value bg-row-b rounded-lg px-3 py-2">{{ panelistPanel.panel }}</p>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <label class="text-sm font-medium text-heading">Panelists</label>
+            <p-button label="Add Member" icon="pi pi-plus" [text]="true" size="small" type="button" (onClick)="addMember()" />
+          </div>
+
+          <div formArrayName="members" class="flex flex-col gap-3">
+            @for (memberGroup of members.controls; track $index; let i = $index) {
+              <div [formGroupName]="i" class="flex flex-col gap-2 border border-border rounded-lg p-3">
+                <div class="flex items-end gap-2">
+                  <div class="flex-1 min-w-0 flex flex-col gap-1.5">
+                    <label class="text-xs font-medium text-heading">Member Type</label>
+                    <p-select
+                      formControlName="type"
+                      [options]="memberTypeOptions"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Select type"
+                      appendTo="body"
+                      class="w-full"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    (click)="removeMember(i)"
+                    class="flex items-center justify-center w-9 h-9 rounded-lg text-danger hover:bg-danger-bg transition-colors shrink-0"
+                    aria-label="Remove member"
+                  >
+                    <i class="pi pi-trash text-sm"></i>
+                  </button>
+                </div>
+                <div class="flex flex-col gap-1.5">
+                  <label class="text-xs font-medium text-heading">Member Name</label>
+                  <input pInputText formControlName="name" fluid placeholder="e.g. Hon. Justice Mkude" />
+                </div>
+                <div class="flex flex-col gap-1.5">
+                  <label class="text-xs font-medium text-heading">Email</label>
+                  <input pInputText type="email" formControlName="email" fluid placeholder="e.g. mkude@jsc.go.tz" />
+                </div>
+              </div>
+            }
+            @if (members.length === 0) {
+              <p class="text-xs text-value">No panelists added yet.</p>
+            }
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <p-button
+            label="Cancel"
+            severity="secondary"
+            [text]="true"
+            type="button"
+            (onClick)="showPanelistDialog = false"
+          />
+          <p-button label="Save" type="submit" />
+        </div>
+      </form>
+    }
+  </p-dialog>
+
+  <p-dialog
+    [(visible)]="showUploadDialog"
+    header="Upload"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '24rem' }"
+  >
+    @if (uploadPanel) {
+      <div class="flex flex-col gap-4 pt-2">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-medium text-heading">Panel</label>
+          <p class="text-sm text-value bg-row-b rounded-lg px-3 py-2">{{ uploadPanel.panel }}</p>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-medium text-heading">File</label>
+          <p-fileupload mode="basic" chooseLabel="Choose File" [auto]="false" [multiple]="false" (onSelect)="onFileSelect($event)" />
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <p-button
+            label="Cancel"
+            severity="secondary"
+            [text]="true"
+            type="button"
+            (onClick)="showUploadDialog = false"
+          />
+          <p-button label="Upload" type="button" [disabled]="!selectedFile" (onClick)="onConfirmUpload()" />
+        </div>
+      </div>
+    }
+  </p-dialog>
+</div>

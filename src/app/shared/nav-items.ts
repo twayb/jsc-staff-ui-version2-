@@ -10,4 +10,5 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Permits', icon: 'pi-id-card', route: '/recruitment/permits' },
   { label: 'Adverts', icon: 'pi-megaphone', route: '/recruitment/adverts' },
   { label: 'Applications', icon: 'pi-inbox', route: '/recruitment/applications' },
+  { label: 'Interview Management', icon: 'pi-comments', route: '/recruitment/interview-management' },
 ];

@@ -1,0 +1,50 @@
+<div class="w-full px-4 sm:px-6 py-10">
+  <app-breadcrumb [items]="breadcrumbItems" />
+
+  <app-data-table
+    class="block animate-fade-in-up stagger-1"
+    title="Venue by Region"
+    [subtitle]="interviewTitle ? 'Venues for ' + region + ' — ' + interviewTitle : 'Venues for ' + region"
+    [data]="venues"
+    [loading]="loading()"
+    [searchFields]="['venueName']"
+    dataKey="venueName"
+  >
+    <ng-template #headerTpl>
+      <tr>
+        <th class="pl-6">No</th>
+        <th>Venue Name</th>
+        <th>Capacity</th>
+        <th>Candidates</th>
+        <th>Interview Date</th>
+        <th>Time</th>
+        <th>Sessions</th>
+        <th class="text-center pr-6">Action</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #bodyTpl let-venue let-rowIndex="rowIndex">
+      <tr>
+        <td class="pl-6">{{ rowIndex + 1 }}</td>
+        <td>{{ venue.venueName }}</td>
+        <td>{{ venue.capacity }}</td>
+        <td>{{ venue.candidates }}</td>
+        <td>{{ venue.date }}</td>
+        <td>{{ venue.time }}</td>
+        <td>{{ venue.sessions }}</td>
+        <td class="text-center pr-6">
+          <button
+            type="button"
+            (click)="onViewCandidates(venue)"
+            class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors mx-auto"
+            aria-label="View candidates"
+            pTooltip="View Candidates"
+            tooltipPosition="top"
+          >
+            <i class="pi pi-eye text-sm"></i>
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+  </app-data-table>
+</div>

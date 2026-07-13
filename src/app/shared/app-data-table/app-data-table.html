@@ -14,32 +14,31 @@
           }
         </div>
       </ng-template>
-      @if (searchFields.length || addLabel) {
-        <ng-template #end>
-          <div class="flex items-center gap-2">
-            @if (searchFields.length) {
-              <p-iconfield>
-                <p-inputicon class="pi pi-search" />
-                <input
-                  pInputText
-                  type="text"
-                  placeholder="Search"
-                  (input)="dt.filterGlobal($any($event.target).value, 'contains')"
-                />
-              </p-iconfield>
-            }
-            @if (addLabel) {
-              <p-button
-                [label]="addLabel"
-                [icon]="addIcon"
-                (onClick)="add.emit()"
-                [text]="true"
-                class="transition-transform duration-150 hover:scale-105 active:scale-95"
+      <ng-template #end>
+        <div class="flex items-center gap-2">
+          @if (searchFields.length) {
+            <p-iconfield>
+              <p-inputicon class="pi pi-search" />
+              <input
+                pInputText
+                type="text"
+                placeholder="Search"
+                (input)="dt.filterGlobal($any($event.target).value, 'contains')"
               />
-            }
-          </div>
-        </ng-template>
-      }
+            </p-iconfield>
+          }
+          @if (addLabel) {
+            <p-button
+              [label]="addLabel"
+              [icon]="addIcon"
+              (onClick)="add.emit()"
+              [text]="true"
+              class="transition-transform duration-150 hover:scale-105 active:scale-95"
+            />
+          }
+          <ng-content select="[tableAction]" />
+        </div>
+      </ng-template>
     </p-toolbar>
 
     <p-table
