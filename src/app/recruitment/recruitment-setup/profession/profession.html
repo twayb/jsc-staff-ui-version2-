@@ -3,12 +3,12 @@
 
   <app-data-table
     class="block animate-fade-in-up stagger-1"
-    title="Categories"
-    subtitle="Manage cadre categories"
-    [data]="categories"
+    title="Profession"
+    subtitle="Manage professions"
+    [data]="professions"
     [loading]="loading()"
     [searchFields]="['name']"
-    addLabel="Add Category"
+    addLabel="Add Profession"
     addIcon="pi pi-plus"
     dataKey="name"
     (add)="openAddDialog()"
@@ -21,14 +21,14 @@
       </tr>
     </ng-template>
 
-    <ng-template #bodyTpl let-category let-rowIndex="rowIndex">
+    <ng-template #bodyTpl let-profession let-rowIndex="rowIndex">
       <tr>
         <td class="pl-6">{{ rowIndex + 1 }}</td>
-        <td>{{ category.name }}</td>
+        <td>{{ profession.name }}</td>
         <td class="text-center pr-6">
           <button
             type="button"
-            (click)="openActionMenu($event, category, actionMenu)"
+            (click)="openActionMenu($event, profession, actionMenu)"
             class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors mx-auto"
             aria-label="Row actions"
           >
@@ -50,17 +50,17 @@
 
   <p-dialog
     [(visible)]="showFormDialog"
-    [header]="dialogMode === 'edit' ? 'Edit Category' : 'Add Category'"
+    [header]="dialogMode === 'edit' ? 'Edit Profession' : 'Add Profession'"
     [modal]="true"
     [draggable]="false"
-    [style]="{ width: '32rem' }"
+    [style]="{ width: '28rem' }"
   >
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4 pt-2">
       <div class="flex flex-col gap-1.5">
-        <label for="name" class="text-sm font-medium text-heading">Category Name</label>
-        <input pInputText id="name" formControlName="name" fluid placeholder="e.g. Legal" />
+        <label for="name" class="text-sm font-medium text-heading">Name</label>
+        <input pInputText id="name" formControlName="name" fluid placeholder="e.g. Magistrate" />
         @if (form.controls.name.invalid && form.controls.name.touched) {
-          <span class="text-xs text-danger">Category name is required</span>
+          <span class="text-xs text-danger">Name is required</span>
         }
       </div>
 

@@ -3,7 +3,7 @@
   [class.w-64]="!collapsed"
   [class.w-20]="collapsed"
 >
-  <div class="flex items-center gap-2 h-14 px-4 border-b border-border">
+  <div class="flex items-center gap-2 h-14 px-4 border-b border-border shrink-0">
     <img src="/tume.png" alt="JSC" class="w-8 h-8 object-contain shrink-0" />
     <span
       class="text-base font-semibold text-heading whitespace-nowrap transition-opacity duration-200"
@@ -11,15 +11,15 @@
     >REDMIS</span>
   </div>
 
-  <nav class="flex-1 px-3 py-3 flex flex-col gap-0.5">
+  <nav class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-hide px-3 py-3 flex flex-col gap-0.5">
     @for (item of navItems; track item.label) {
       @if (item.children) {
         <button
           type="button"
           (click)="toggle(item)"
-          class="flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium text-value hover:bg-row-b hover:text-heading transition-colors w-full"
+          class="group flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium text-value hover:bg-row-b hover:text-heading transition-colors w-full"
         >
-          <i class="pi text-sm shrink-0 w-4 text-center" [class]="item.icon"></i>
+          <i class="pi text-sm shrink-0 w-4 text-center group-hover:animate-icon-bounce" [class]="item.icon"></i>
           <span class="flex-1 text-left whitespace-nowrap transition-opacity duration-200" [class.opacity-0]="collapsed">{{ item.label }}</span>
           <i
             class="pi pi-chevron-down text-xs shrink-0 transition-transform duration-200"
@@ -27,19 +27,30 @@
             [class.opacity-0]="collapsed"
           ></i>
         </button>
-        @if (isExpanded(item) && !collapsed) {
-          <div class="flex flex-col gap-0.5 pl-6">
-            @for (child of item.children; track child.label) {
-              <a
-                [routerLink]="child.route"
-                routerLinkActive="bg-primary/10 text-primary"
-                [routerLinkActiveOptions]="{ exact: true }"
-                class="flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium text-value hover:bg-row-b hover:text-heading transition-colors"
+        @if (!collapsed) {
+          <div
+            class="grid transition-[grid-template-rows] duration-300 ease-in-out"
+            [style.grid-template-rows]="isExpanded(item) ? '1fr' : '0fr'"
+          >
+            <div class="overflow-hidden">
+              <div
+                class="flex flex-col gap-0.5 pl-6 pt-0.5 transition-opacity duration-200"
+                [class.opacity-0]="!isExpanded(item)"
+                [class.opacity-100]="isExpanded(item)"
               >
-                <i class="pi text-sm shrink-0 w-4 text-center" [class]="child.icon"></i>
-                <span class="whitespace-nowrap">{{ child.label }}</span>
-              </a>
-            }
+                @for (child of item.children; track child.label) {
+                  <a
+                    [routerLink]="child.route"
+                    routerLinkActive="bg-primary/10 text-primary"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    class="group flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium text-value hover:bg-row-b hover:text-heading transition-colors"
+                  >
+                    <i class="pi text-sm shrink-0 w-4 text-center group-hover:animate-icon-bounce" [class]="child.icon"></i>
+                    <span class="whitespace-nowrap">{{ child.label }}</span>
+                  </a>
+                }
+              </div>
+            </div>
           </div>
         }
       } @else if (item.route) {
@@ -47,9 +58,9 @@
           [routerLink]="item.route"
           routerLinkActive="bg-primary/10 text-primary"
           [routerLinkActiveOptions]="{ exact: true }"
-          class="flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium text-value hover:bg-row-b hover:text-heading transition-colors"
+          class="group flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium text-value hover:bg-row-b hover:text-heading transition-colors"
         >
-          <i class="pi text-sm shrink-0 w-4 text-center" [class]="item.icon"></i>
+          <i class="pi text-sm shrink-0 w-4 text-center group-hover:animate-icon-bounce" [class]="item.icon"></i>
           <span class="whitespace-nowrap transition-opacity duration-200" [class.opacity-0]="collapsed">{{ item.label }}</span>
         </a>
       } @else {
@@ -61,7 +72,7 @@
     }
   </nav>
 
-  <div class="border-t border-border px-4 py-3">
+  <div class="border-t border-border px-4 py-3 shrink-0">
     <p class="text-xs text-heading whitespace-nowrap transition-opacity duration-200" [class.opacity-0]="collapsed">
       REDMIS {{ appVersion }}
     </p>

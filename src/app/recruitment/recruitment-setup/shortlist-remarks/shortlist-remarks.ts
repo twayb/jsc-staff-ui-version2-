@@ -8,25 +8,25 @@ import { Button } from 'primeng/button';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
 
-interface Category {
+interface ShortlistRemark {
   name: string;
 }
 
 @Component({
-  selector: 'app-cadre-categories',
+  selector: 'app-shortlist-remarks',
   imports: [ReactiveFormsModule, Menu, Dialog, InputText, Button, AppBreadcrumb, AppDataTable],
-  templateUrl: './cadre-categories.html',
-  styleUrl: './cadre-categories.css',
+  templateUrl: './shortlist-remarks.html',
+  styleUrl: './shortlist-remarks.css',
 })
-export class CadreCategories implements OnInit {
+export class ShortlistRemarks implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
-    { label: 'Scheme of Service' },
-    { label: 'Categories' },
+    { label: 'Setup' },
+    { label: 'Shortlist Remarks' },
   ];
 
   readonly loading = signal(true);
@@ -35,43 +35,45 @@ export class CadreCategories implements OnInit {
     setTimeout(() => this.loading.set(false), 800);
   }
 
-  categories: Category[] = [
-    { name: 'Legal' },
-    { name: 'Administrative' },
-    { name: 'Technical' },
-    { name: 'Support' },
+  remarks: ShortlistRemark[] = [
+    { name: 'Does not meet minimum qualification requirements' },
+    { name: 'Incomplete application documents' },
+    { name: 'Failed to meet age requirement' },
+    { name: 'Failed interview/assessment criteria' },
+    { name: 'Duplicate application' },
+    { name: 'Other' },
   ];
 
   actionMenuItems: MenuItem[] = [];
 
   showFormDialog = false;
   dialogMode: 'add' | 'edit' = 'add';
-  editingCategory: Category | null = null;
+  editingRemark: ShortlistRemark | null = null;
 
   readonly form = this.fb.nonNullable.group({
     name: ['', Validators.required],
   });
 
-  openActionMenu(event: Event, category: Category, menu: Menu): void {
+  openActionMenu(event: Event, remark: ShortlistRemark, menu: Menu): void {
     this.actionMenuItems = [
-      { label: 'Edit', icon: 'pi pi-pencil', command: () => this.onEdit(category) },
+      { label: 'Edit', icon: 'pi pi-pencil', command: () => this.onEdit(remark) },
       { separator: true },
-      { label: 'Delete', icon: 'pi pi-trash', command: () => this.onDelete(category) },
+      { label: 'Delete', icon: 'pi pi-trash', command: () => this.onDelete(remark) },
     ];
     menu.toggle(event);
   }
 
   openAddDialog(): void {
     this.dialogMode = 'add';
-    this.editingCategory = null;
+    this.editingRemark = null;
     this.form.reset();
     this.showFormDialog = true;
   }
 
-  onEdit(category: Category): void {
+  onEdit(remark: ShortlistRemark): void {
     this.dialogMode = 'edit';
-    this.editingCategory = category;
-    this.form.reset({ name: category.name });
+    this.editingRemark = remark;
+    this.form.reset({ name: remark.name });
     this.showFormDialog = true;
   }
 
@@ -83,19 +85,19 @@ export class CadreCategories implements OnInit {
 
     const raw = this.form.getRawValue();
 
-    if (this.dialogMode === 'edit' && this.editingCategory) {
-      const target = this.editingCategory;
-      this.categories = this.categories.map((category) => (category === target ? { name: raw.name } : category));
+    if (this.dialogMode === 'edit' && this.editingRemark) {
+      const target = this.editingRemark;
+      this.remarks = this.remarks.map((item) => (item === target ? { name: raw.name } : item));
       this.messageService.add({
         severity: 'success',
-        summary: 'Category Updated',
+        summary: 'Remark Updated',
         detail: `"${raw.name}" was updated successfully.`,
       });
     } else {
-      this.categories = [...this.categories, { name: raw.name }];
+      this.remarks = [...this.remarks, { name: raw.name }];
       this.messageService.add({
         severity: 'success',
-        summary: 'Category Added',
+        summary: 'Remark Added',
         detail: `"${raw.name}" was added successfully.`,
       });
     }
@@ -103,19 +105,19 @@ export class CadreCategories implements OnInit {
     this.showFormDialog = false;
   }
 
-  onDelete(category: Category): void {
+  onDelete(remark: ShortlistRemark): void {
     this.confirmationService.confirm({
-      header: 'Delete Category',
-      message: `Are you sure you want to delete "${category.name}"? This action cannot be undone.`,
+      header: 'Delete Remark',
+      message: `Are you sure you want to delete "${remark.name}"? This action cannot be undone.`,
       icon: 'pi pi-exclamation-triangle',
       acceptButtonProps: { label: 'Delete', severity: 'danger' },
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
       accept: () => {
-        this.categories = this.categories.filter((item) => item !== category);
+        this.remarks = this.remarks.filter((item) => item !== remark);
         this.messageService.add({
           severity: 'success',
-          summary: 'Category Deleted',
-          detail: `"${category.name}" was deleted successfully.`,
+          summary: 'Remark Deleted',
+          detail: `"${remark.name}" was deleted successfully.`,
         });
       },
     });

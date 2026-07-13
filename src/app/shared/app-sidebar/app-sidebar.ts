@@ -16,25 +16,16 @@ export class AppSidebar {
 
   readonly navItems = NAV_ITEMS;
 
-  readonly expandedLabels = signal<Set<string>>(
-    new Set(
-      NAV_ITEMS.filter(
-        (item) => item.children?.some((child) => child.route && this.router.url.startsWith(child.route)),
-      ).map((item) => item.label),
-    ),
+  readonly expandedLabel = signal<string | null>(
+    NAV_ITEMS.find((item) => item.children?.some((child) => child.route && this.router.url.startsWith(child.route)))
+      ?.label ?? null,
   );
 
   isExpanded(item: NavItem): boolean {
-    return this.expandedLabels().has(item.label);
+    return this.expandedLabel() === item.label;
   }
 
   toggle(item: NavItem): void {
-    const expanded = new Set(this.expandedLabels());
-    if (expanded.has(item.label)) {
-      expanded.delete(item.label);
-    } else {
-      expanded.add(item.label);
-    }
-    this.expandedLabels.set(expanded);
+    this.expandedLabel.set(this.isExpanded(item) ? null : item.label);
   }
 }

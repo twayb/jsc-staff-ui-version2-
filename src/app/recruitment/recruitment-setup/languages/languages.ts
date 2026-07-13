@@ -8,25 +8,25 @@ import { Button } from 'primeng/button';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
 
-interface Category {
+interface Language {
   name: string;
 }
 
 @Component({
-  selector: 'app-cadre-categories',
+  selector: 'app-languages',
   imports: [ReactiveFormsModule, Menu, Dialog, InputText, Button, AppBreadcrumb, AppDataTable],
-  templateUrl: './cadre-categories.html',
-  styleUrl: './cadre-categories.css',
+  templateUrl: './languages.html',
+  styleUrl: './languages.css',
 })
-export class CadreCategories implements OnInit {
+export class Languages implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
-    { label: 'Scheme of Service' },
-    { label: 'Categories' },
+    { label: 'Setup' },
+    { label: 'Languages' },
   ];
 
   readonly loading = signal(true);
@@ -35,43 +35,43 @@ export class CadreCategories implements OnInit {
     setTimeout(() => this.loading.set(false), 800);
   }
 
-  categories: Category[] = [
-    { name: 'Legal' },
-    { name: 'Administrative' },
-    { name: 'Technical' },
-    { name: 'Support' },
+  languages: Language[] = [
+    { name: 'Swahili' },
+    { name: 'English' },
+    { name: 'French' },
+    { name: 'Arabic' },
   ];
 
   actionMenuItems: MenuItem[] = [];
 
   showFormDialog = false;
   dialogMode: 'add' | 'edit' = 'add';
-  editingCategory: Category | null = null;
+  editingLanguage: Language | null = null;
 
   readonly form = this.fb.nonNullable.group({
     name: ['', Validators.required],
   });
 
-  openActionMenu(event: Event, category: Category, menu: Menu): void {
+  openActionMenu(event: Event, language: Language, menu: Menu): void {
     this.actionMenuItems = [
-      { label: 'Edit', icon: 'pi pi-pencil', command: () => this.onEdit(category) },
+      { label: 'Edit', icon: 'pi pi-pencil', command: () => this.onEdit(language) },
       { separator: true },
-      { label: 'Delete', icon: 'pi pi-trash', command: () => this.onDelete(category) },
+      { label: 'Delete', icon: 'pi pi-trash', command: () => this.onDelete(language) },
     ];
     menu.toggle(event);
   }
 
   openAddDialog(): void {
     this.dialogMode = 'add';
-    this.editingCategory = null;
+    this.editingLanguage = null;
     this.form.reset();
     this.showFormDialog = true;
   }
 
-  onEdit(category: Category): void {
+  onEdit(language: Language): void {
     this.dialogMode = 'edit';
-    this.editingCategory = category;
-    this.form.reset({ name: category.name });
+    this.editingLanguage = language;
+    this.form.reset({ name: language.name });
     this.showFormDialog = true;
   }
 
@@ -83,19 +83,19 @@ export class CadreCategories implements OnInit {
 
     const raw = this.form.getRawValue();
 
-    if (this.dialogMode === 'edit' && this.editingCategory) {
-      const target = this.editingCategory;
-      this.categories = this.categories.map((category) => (category === target ? { name: raw.name } : category));
+    if (this.dialogMode === 'edit' && this.editingLanguage) {
+      const target = this.editingLanguage;
+      this.languages = this.languages.map((item) => (item === target ? { name: raw.name } : item));
       this.messageService.add({
         severity: 'success',
-        summary: 'Category Updated',
+        summary: 'Language Updated',
         detail: `"${raw.name}" was updated successfully.`,
       });
     } else {
-      this.categories = [...this.categories, { name: raw.name }];
+      this.languages = [...this.languages, { name: raw.name }];
       this.messageService.add({
         severity: 'success',
-        summary: 'Category Added',
+        summary: 'Language Added',
         detail: `"${raw.name}" was added successfully.`,
       });
     }
@@ -103,19 +103,19 @@ export class CadreCategories implements OnInit {
     this.showFormDialog = false;
   }
 
-  onDelete(category: Category): void {
+  onDelete(language: Language): void {
     this.confirmationService.confirm({
-      header: 'Delete Category',
-      message: `Are you sure you want to delete "${category.name}"? This action cannot be undone.`,
+      header: 'Delete Language',
+      message: `Are you sure you want to delete "${language.name}"? This action cannot be undone.`,
       icon: 'pi pi-exclamation-triangle',
       acceptButtonProps: { label: 'Delete', severity: 'danger' },
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
       accept: () => {
-        this.categories = this.categories.filter((item) => item !== category);
+        this.languages = this.languages.filter((item) => item !== language);
         this.messageService.add({
           severity: 'success',
-          summary: 'Category Deleted',
-          detail: `"${category.name}" was deleted successfully.`,
+          summary: 'Language Deleted',
+          detail: `"${language.name}" was deleted successfully.`,
         });
       },
     });

@@ -5,7 +5,7 @@
   </div>
 
   @if (loading()) {
-    <app-skeleton variant="cards" [count]="7" [cardCols]="3" />
+    <app-skeleton variant="cards" [count]="8" [cardCols]="3" />
   } @else {
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       @for (service of services; track service.title; let i = $index) {

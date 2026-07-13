@@ -177,6 +177,10 @@
   animation-delay: 0.56s;
 }
 
+.stagger-8 {
+  animation-delay: 0.64s;
+}
+
 /* Quill renders its toolbar/container via direct DOM APIs, not Angular's
    template compiler, so component-scoped styles never reach it — these rules
    have to live globally to match the app's card/border theme. */
@@ -246,5 +250,24 @@ quill-editor {
 .ql-snow.ql-toolbar button.ql-active .ql-fill,
 .ql-snow .ql-toolbar button.ql-active .ql-fill {
   fill: var(--btn);
+}
+
+@keyframes icon-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-3px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+  70% {
+    transform: translateY(-1.5px);
+  }
+}
+
+@utility animate-icon-bounce {
+  animation: icon-bounce 0.5s ease;
 }
 

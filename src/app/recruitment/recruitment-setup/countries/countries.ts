@@ -8,25 +8,27 @@ import { Button } from 'primeng/button';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
 
-interface Category {
+interface Country {
   name: string;
+  iso: string;
+  phoneCode: string;
 }
 
 @Component({
-  selector: 'app-cadre-categories',
+  selector: 'app-countries',
   imports: [ReactiveFormsModule, Menu, Dialog, InputText, Button, AppBreadcrumb, AppDataTable],
-  templateUrl: './cadre-categories.html',
-  styleUrl: './cadre-categories.css',
+  templateUrl: './countries.html',
+  styleUrl: './countries.css',
 })
-export class CadreCategories implements OnInit {
+export class Countries implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
-    { label: 'Scheme of Service' },
-    { label: 'Categories' },
+    { label: 'Setup' },
+    { label: 'Countries' },
   ];
 
   readonly loading = signal(true);
@@ -35,43 +37,45 @@ export class CadreCategories implements OnInit {
     setTimeout(() => this.loading.set(false), 800);
   }
 
-  categories: Category[] = [
-    { name: 'Legal' },
-    { name: 'Administrative' },
-    { name: 'Technical' },
-    { name: 'Support' },
+  countries: Country[] = [
+    { name: 'Tanzania', iso: 'TZ', phoneCode: '+255' },
+    { name: 'Kenya', iso: 'KE', phoneCode: '+254' },
+    { name: 'Uganda', iso: 'UG', phoneCode: '+256' },
+    { name: 'Rwanda', iso: 'RW', phoneCode: '+250' },
   ];
 
   actionMenuItems: MenuItem[] = [];
 
   showFormDialog = false;
   dialogMode: 'add' | 'edit' = 'add';
-  editingCategory: Category | null = null;
+  editingCountry: Country | null = null;
 
   readonly form = this.fb.nonNullable.group({
     name: ['', Validators.required],
+    iso: ['', Validators.required],
+    phoneCode: ['', Validators.required],
   });
 
-  openActionMenu(event: Event, category: Category, menu: Menu): void {
+  openActionMenu(event: Event, country: Country, menu: Menu): void {
     this.actionMenuItems = [
-      { label: 'Edit', icon: 'pi pi-pencil', command: () => this.onEdit(category) },
+      { label: 'Edit', icon: 'pi pi-pencil', command: () => this.onEdit(country) },
       { separator: true },
-      { label: 'Delete', icon: 'pi pi-trash', command: () => this.onDelete(category) },
+      { label: 'Delete', icon: 'pi pi-trash', command: () => this.onDelete(country) },
     ];
     menu.toggle(event);
   }
 
   openAddDialog(): void {
     this.dialogMode = 'add';
-    this.editingCategory = null;
+    this.editingCountry = null;
     this.form.reset();
     this.showFormDialog = true;
   }
 
-  onEdit(category: Category): void {
+  onEdit(country: Country): void {
     this.dialogMode = 'edit';
-    this.editingCategory = category;
-    this.form.reset({ name: category.name });
+    this.editingCountry = country;
+    this.form.reset({ name: country.name, iso: country.iso, phoneCode: country.phoneCode });
     this.showFormDialog = true;
   }
 
@@ -82,42 +86,51 @@ export class CadreCategories implements OnInit {
     }
 
     const raw = this.form.getRawValue();
+    const country: Country = { name: raw.name, iso: raw.iso, phoneCode: raw.phoneCode };
 
-    if (this.dialogMode === 'edit' && this.editingCategory) {
-      const target = this.editingCategory;
-      this.categories = this.categories.map((category) => (category === target ? { name: raw.name } : category));
+    if (this.dialogMode === 'edit' && this.editingCountry) {
+      const target = this.editingCountry;
+      this.countries = this.countries.map((item) => (item === target ? country : item));
       this.messageService.add({
         severity: 'success',
-        summary: 'Category Updated',
-        detail: `"${raw.name}" was updated successfully.`,
+        summary: 'Country Updated',
+        detail: `"${country.name}" was updated successfully.`,
       });
     } else {
-      this.categories = [...this.categories, { name: raw.name }];
+      this.countries = [...this.countries, country];
       this.messageService.add({
         severity: 'success',
-        summary: 'Category Added',
-        detail: `"${raw.name}" was added successfully.`,
+        summary: 'Country Added',
+        detail: `"${country.name}" was added successfully.`,
       });
     }
 
     this.showFormDialog = false;
   }
 
-  onDelete(category: Category): void {
+  onDelete(country: Country): void {
     this.confirmationService.confirm({
-      header: 'Delete Category',
-      message: `Are you sure you want to delete "${category.name}"? This action cannot be undone.`,
+      header: 'Delete Country',
+      message: `Are you sure you want to delete "${country.name}"? This action cannot be undone.`,
       icon: 'pi pi-exclamation-triangle',
       acceptButtonProps: { label: 'Delete', severity: 'danger' },
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
       accept: () => {
-        this.categories = this.categories.filter((item) => item !== category);
+        this.countries = this.countries.filter((item) => item !== country);
         this.messageService.add({
           severity: 'success',
-          summary: 'Category Deleted',
-          detail: `"${category.name}" was deleted successfully.`,
+          summary: 'Country Deleted',
+          detail: `"${country.name}" was deleted successfully.`,
         });
       },
+    });
+  }
+
+  onSync(): void {
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Countries Synced',
+      detail: 'The country list has been synced successfully.',
     });
   }
 }

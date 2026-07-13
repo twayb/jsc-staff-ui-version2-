@@ -1,0 +1,117 @@
+<div class="w-full px-4 sm:px-6 py-10">
+  <app-breadcrumb [items]="breadcrumbItems" />
+
+  <app-data-table
+    class="block animate-fade-in-up stagger-1"
+    title="Salary Scale"
+    subtitle="Manage salary scales and their pay ranges"
+    [data]="salaryScales"
+    [loading]="loading()"
+    [searchFields]="['name', 'minName', 'maxName']"
+    addLabel="Add Salary Scale"
+    addIcon="pi pi-plus"
+    dataKey="name"
+    (add)="openAddDialog()"
+  >
+    <ng-template #headerTpl>
+      <tr>
+        <th class="pl-6">No</th>
+        <th>Name</th>
+        <th>Min Name</th>
+        <th>Min Amount</th>
+        <th>Max Name</th>
+        <th>Max Amount</th>
+        <th class="text-center pr-6">Action</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #bodyTpl let-salaryScale let-rowIndex="rowIndex">
+      <tr>
+        <td class="pl-6">{{ rowIndex + 1 }}</td>
+        <td>{{ salaryScale.name }}</td>
+        <td>{{ salaryScale.minName }}</td>
+        <td>{{ salaryScale.minAmount | number }} TZS</td>
+        <td>{{ salaryScale.maxName }}</td>
+        <td>{{ salaryScale.maxAmount | number }} TZS</td>
+        <td class="text-center pr-6">
+          <button
+            type="button"
+            (click)="openActionMenu($event, salaryScale, actionMenu)"
+            class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors mx-auto"
+            aria-label="Row actions"
+          >
+            <i class="pi pi-ellipsis-v text-sm"></i>
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+  </app-data-table>
+
+  <p-menu
+    #actionMenu
+    class="text-sm"
+    [model]="actionMenuItems"
+    [popup]="true"
+    appendTo="body"
+    [motionOptions]="{ duration: { enter: 200, leave: 150 } }"
+  />
+
+  <p-dialog
+    [(visible)]="showFormDialog"
+    [header]="dialogMode === 'edit' ? 'Edit Salary Scale' : 'Add Salary Scale'"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '32rem' }"
+  >
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4 pt-2">
+      <div class="flex flex-col gap-1.5">
+        <label for="name" class="text-sm font-medium text-heading">Name</label>
+        <input pInputText id="name" formControlName="name" fluid placeholder="e.g. TGS E" />
+        @if (form.controls.name.invalid && form.controls.name.touched) {
+          <span class="text-xs text-danger">Name is required</span>
+        }
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="flex flex-col gap-1.5">
+          <label for="minName" class="text-sm font-medium text-heading">Min Name</label>
+          <input pInputText id="minName" formControlName="minName" fluid placeholder="e.g. TGS E1" />
+          @if (form.controls.minName.invalid && form.controls.minName.touched) {
+            <span class="text-xs text-danger">Min name is required</span>
+          }
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label for="minAmount" class="text-sm font-medium text-heading">Min Amount (TZS)</label>
+          <p-inputnumber inputId="minAmount" formControlName="minAmount" [min]="0" mode="decimal" class="w-full" />
+          @if (form.controls.minAmount.invalid && form.controls.minAmount.touched) {
+            <span class="text-xs text-danger">Min amount is required</span>
+          }
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="flex flex-col gap-1.5">
+          <label for="maxName" class="text-sm font-medium text-heading">Max Name</label>
+          <input pInputText id="maxName" formControlName="maxName" fluid placeholder="e.g. TGS E5" />
+          @if (form.controls.maxName.invalid && form.controls.maxName.touched) {
+            <span class="text-xs text-danger">Max name is required</span>
+          }
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label for="maxAmount" class="text-sm font-medium text-heading">Max Amount (TZS)</label>
+          <p-inputnumber inputId="maxAmount" formControlName="maxAmount" [min]="0" mode="decimal" class="w-full" />
+          @if (form.controls.maxAmount.invalid && form.controls.maxAmount.touched) {
+            <span class="text-xs text-danger">Max amount is required</span>
+          }
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <p-button label="Cancel" severity="secondary" [text]="true" type="button" (onClick)="showFormDialog = false" />
+        <p-button [label]="dialogMode === 'edit' ? 'Update' : 'Save'" type="submit" />
+      </div>
+    </form>
+  </p-dialog>
+</div>

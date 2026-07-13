@@ -146,6 +146,83 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./recruitment/Scheme-of-service/cadre-categories/cadre-categories').then((m) => m.CadreCategories),
       },
+      {
+        path: 'recruitment/applicants',
+        loadComponent: () =>
+          import('./recruitment/Applicants/applicant-list/applicant-list').then((m) => m.ApplicantList),
+      },
+      {
+        path: 'recruitment/applicants/:nin',
+        loadComponent: () =>
+          import('./recruitment/Applicants/applicant-details/applicant-details').then((m) => m.ApplicantDetails),
+      },
+      {
+        path: 'recruitment/setup/academic-levels',
+        loadComponent: () =>
+          import('./recruitment/recruitment-setup/academic-levels/academic-levels').then((m) => m.AcademicLevels),
+      },
+      {
+        path: 'recruitment/setup/attachment-types',
+        loadComponent: () =>
+          import('./recruitment/recruitment-setup/attachment-types/attachment-types').then((m) => m.AttachmentTypes),
+      },
+      {
+        path: 'recruitment/setup/computer-skills',
+        loadComponent: () =>
+          import('./recruitment/recruitment-setup/computer-skills/computer-skills').then((m) => m.ComputerSkills),
+      },
+      {
+        path: 'recruitment/setup/countries',
+        loadComponent: () =>
+          import('./recruitment/recruitment-setup/countries/countries').then((m) => m.Countries),
+      },
+      {
+        path: 'recruitment/setup/disability',
+        loadComponent: () =>
+          import('./recruitment/recruitment-setup/disability/disability').then((m) => m.Disability),
+      },
+      {
+        path: 'recruitment/setup/institutions',
+        loadComponent: () =>
+          import('./recruitment/recruitment-setup/institution/institution').then((m) => m.Institution),
+      },
+      {
+        path: 'recruitment/setup/interview-types',
+        loadComponent: () =>
+          import('./recruitment/recruitment-setup/interview-types/interview-types').then((m) => m.InterviewTypes),
+      },
+      {
+        path: 'recruitment/setup/interview-venues',
+        loadComponent: () =>
+          import('./recruitment/recruitment-setup/interview-venues/interview-venues').then((m) => m.InterviewVenues),
+      },
+      {
+        path: 'recruitment/setup/languages',
+        loadComponent: () =>
+          import('./recruitment/recruitment-setup/languages/languages').then((m) => m.Languages),
+      },
+      {
+        path: 'recruitment/setup/profession',
+        loadComponent: () =>
+          import('./recruitment/recruitment-setup/profession/profession').then((m) => m.Profession),
+      },
+      {
+        path: 'recruitment/setup/programs',
+        loadComponent: () =>
+          import('./recruitment/recruitment-setup/programs/programs').then((m) => m.Programs),
+      },
+      {
+        path: 'recruitment/setup/salary-scale',
+        loadComponent: () =>
+          import('./recruitment/recruitment-setup/salary-scale/salary-scale').then((m) => m.SalaryScale),
+      },
+      {
+        path: 'recruitment/setup/shortlist-remarks',
+        loadComponent: () =>
+          import('./recruitment/recruitment-setup/shortlist-remarks/shortlist-remarks').then(
+            (m) => m.ShortlistRemarks,
+          ),
+      },
     ],
   },
 ];

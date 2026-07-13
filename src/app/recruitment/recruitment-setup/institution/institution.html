@@ -1,0 +1,109 @@
+<div class="w-full px-4 sm:px-6 py-10">
+  <app-breadcrumb [items]="breadcrumbItems" />
+
+  <app-data-table
+    class="block animate-fade-in-up stagger-1"
+    title="Institutions"
+    subtitle="Manage academic institutions"
+    [data]="institutions"
+    [loading]="loading()"
+    [searchFields]="['name', 'type', 'country']"
+    addLabel="Add Institution"
+    addIcon="pi pi-plus"
+    dataKey="name"
+    (add)="openAddDialog()"
+  >
+    <ng-template #headerTpl>
+      <tr>
+        <th class="pl-6">No</th>
+        <th>Institution Name</th>
+        <th>Type</th>
+        <th>Country</th>
+        <th class="text-center pr-6">Action</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #bodyTpl let-institution let-rowIndex="rowIndex">
+      <tr>
+        <td class="pl-6">{{ rowIndex + 1 }}</td>
+        <td>{{ institution.name }}</td>
+        <td>{{ institution.type }}</td>
+        <td>{{ institution.country }}</td>
+        <td class="text-center pr-6">
+          <button
+            type="button"
+            (click)="openActionMenu($event, institution, actionMenu)"
+            class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors mx-auto"
+            aria-label="Row actions"
+          >
+            <i class="pi pi-ellipsis-v text-sm"></i>
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+  </app-data-table>
+
+  <p-menu
+    #actionMenu
+    class="text-sm"
+    [model]="actionMenuItems"
+    [popup]="true"
+    appendTo="body"
+    [motionOptions]="{ duration: { enter: 200, leave: 150 } }"
+  />
+
+  <p-dialog
+    [(visible)]="showFormDialog"
+    [header]="dialogMode === 'edit' ? 'Edit Institution' : 'Add Institution'"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '28rem' }"
+  >
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4 pt-2">
+      <div class="flex flex-col gap-1.5">
+        <label for="name" class="text-sm font-medium text-heading">Institution Name</label>
+        <input pInputText id="name" formControlName="name" fluid placeholder="e.g. University of Dar es Salaam" />
+        @if (form.controls.name.invalid && form.controls.name.touched) {
+          <span class="text-xs text-danger">Institution name is required</span>
+        }
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="type" class="text-sm font-medium text-heading">Type</label>
+        <p-select
+          inputId="type"
+          formControlName="type"
+          [options]="typeOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select type"
+          class="w-full"
+        />
+        @if (form.controls.type.invalid && form.controls.type.touched) {
+          <span class="text-xs text-danger">Type is required</span>
+        }
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="country" class="text-sm font-medium text-heading">Country</label>
+        <p-select
+          inputId="country"
+          formControlName="country"
+          [options]="countryOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select country"
+          class="w-full"
+        />
+        @if (form.controls.country.invalid && form.controls.country.touched) {
+          <span class="text-xs text-danger">Country is required</span>
+        }
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <p-button label="Cancel" severity="secondary" [text]="true" type="button" (onClick)="showFormDialog = false" />
+        <p-button [label]="dialogMode === 'edit' ? 'Update' : 'Save'" type="submit" />
+      </div>
+    </form>
+  </p-dialog>
+</div>

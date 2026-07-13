@@ -1,0 +1,46 @@
+<div class="w-full px-4 sm:px-6 py-10">
+  <app-breadcrumb [items]="breadcrumbItems" />
+
+  <app-data-table
+    class="block animate-fade-in-up stagger-1"
+    title="Applicants"
+    subtitle="All registered applicants"
+    [data]="applicants"
+    [loading]="loading()"
+    [searchFields]="['fullName', 'mobile', 'email']"
+    dataKey="email"
+  >
+    <ng-template #headerTpl>
+      <tr>
+        <th class="pl-6">No</th>
+        <th>Full Name</th>
+        <th>Gender</th>
+        <th>Mobile</th>
+        <th>Email</th>
+        <th class="text-center pr-6">Action</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #bodyTpl let-applicant let-rowIndex="rowIndex">
+      <tr>
+        <td class="pl-6">{{ rowIndex + 1 }}</td>
+        <td>{{ applicant.fullName }}</td>
+        <td>{{ applicant.gender }}</td>
+        <td>{{ applicant.mobile }}</td>
+        <td>{{ applicant.email }}</td>
+        <td class="text-center pr-6">
+          <button
+            type="button"
+            (click)="onView(applicant)"
+            class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors mx-auto"
+            aria-label="View applicant"
+            pTooltip="View"
+            tooltipPosition="top"
+          >
+            <i class="pi pi-eye text-sm"></i>
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+  </app-data-table>
+</div>

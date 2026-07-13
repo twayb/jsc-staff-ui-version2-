@@ -1,0 +1,104 @@
+<div class="w-full px-4 sm:px-6 py-10">
+  <app-breadcrumb [items]="breadcrumbItems" />
+
+  <app-data-table
+    class="block animate-fade-in-up stagger-1"
+    title="Countries"
+    subtitle="Manage countries, ISO codes, and phone codes"
+    [data]="countries"
+    [loading]="loading()"
+    [searchFields]="['name', 'iso', 'phoneCode']"
+    addLabel="Add Country"
+    addIcon="pi pi-plus"
+    dataKey="name"
+    (add)="openAddDialog()"
+  >
+    <p-button
+      tableAction
+      label="Sync"
+      icon="pi pi-sync"
+      [text]="true"
+      (onClick)="onSync()"
+      class="transition-transform duration-150 hover:scale-105 active:scale-95"
+    />
+
+    <ng-template #headerTpl>
+      <tr>
+        <th class="pl-6">No</th>
+        <th>Name</th>
+        <th>ISO</th>
+        <th>Phone Code</th>
+        <th class="text-center pr-6">Action</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #bodyTpl let-country let-rowIndex="rowIndex">
+      <tr>
+        <td class="pl-6">{{ rowIndex + 1 }}</td>
+        <td>{{ country.name }}</td>
+        <td>{{ country.iso }}</td>
+        <td>{{ country.phoneCode }}</td>
+        <td class="text-center pr-6">
+          <button
+            type="button"
+            (click)="openActionMenu($event, country, actionMenu)"
+            class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors mx-auto"
+            aria-label="Row actions"
+          >
+            <i class="pi pi-ellipsis-v text-sm"></i>
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+  </app-data-table>
+
+  <p-menu
+    #actionMenu
+    class="text-sm"
+    [model]="actionMenuItems"
+    [popup]="true"
+    appendTo="body"
+    [motionOptions]="{ duration: { enter: 200, leave: 150 } }"
+  />
+
+  <p-dialog
+    [(visible)]="showFormDialog"
+    [header]="dialogMode === 'edit' ? 'Edit Country' : 'Add Country'"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '28rem' }"
+  >
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4 pt-2">
+      <div class="flex flex-col gap-1.5">
+        <label for="name" class="text-sm font-medium text-heading">Name</label>
+        <input pInputText id="name" formControlName="name" fluid placeholder="e.g. Tanzania" />
+        @if (form.controls.name.invalid && form.controls.name.touched) {
+          <span class="text-xs text-danger">Name is required</span>
+        }
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="flex flex-col gap-1.5">
+          <label for="iso" class="text-sm font-medium text-heading">ISO</label>
+          <input pInputText id="iso" formControlName="iso" fluid placeholder="e.g. TZ" />
+          @if (form.controls.iso.invalid && form.controls.iso.touched) {
+            <span class="text-xs text-danger">ISO is required</span>
+          }
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label for="phoneCode" class="text-sm font-medium text-heading">Phone Code</label>
+          <input pInputText id="phoneCode" formControlName="phoneCode" fluid placeholder="e.g. +255" />
+          @if (form.controls.phoneCode.invalid && form.controls.phoneCode.touched) {
+            <span class="text-xs text-danger">Phone code is required</span>
+          }
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <p-button label="Cancel" severity="secondary" [text]="true" type="button" (onClick)="showFormDialog = false" />
+        <p-button [label]="dialogMode === 'edit' ? 'Update' : 'Save'" type="submit" />
+      </div>
+    </form>
+  </p-dialog>
+</div>
