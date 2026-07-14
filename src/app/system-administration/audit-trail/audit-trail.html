@@ -1,0 +1,87 @@
+<div class="w-full px-4 sm:px-6 py-10">
+  <app-breadcrumb [items]="breadcrumbItems()" />
+
+  <app-data-table
+    class="block animate-fade-in-up stagger-1"
+    [title]="meta().label"
+    [subtitle]="meta().subtitle"
+    [data]="events()"
+    [loading]="loading()"
+    [searchFields]="['user', 'ipAddress', 'method', 'resource']"
+    dataKey="resource"
+  >
+    <ng-template #headerTpl>
+      <tr>
+        <th class="pl-6">No</th>
+        <th>User</th>
+        <th>IP Address</th>
+        <th>Time</th>
+        <th>Method</th>
+        <th>Resource</th>
+        <th class="text-center pr-6">Action</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #bodyTpl let-event let-rowIndex="rowIndex">
+      <tr>
+        <td class="pl-6">{{ rowIndex + 1 }}</td>
+        <td>{{ event.user }}</td>
+        <td>{{ event.ipAddress }}</td>
+        <td>{{ event.time }}</td>
+        <td>
+          <p-tag [value]="event.method" [severity]="methodSeverity(event.method)" />
+        </td>
+        <td class="font-mono text-xs">{{ event.resource }}</td>
+        <td class="text-center pr-6">
+          <button
+            type="button"
+            (click)="onView(event)"
+            class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors mx-auto"
+            aria-label="View audit event"
+          >
+            <i class="pi pi-eye text-sm"></i>
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+  </app-data-table>
+
+  <p-dialog
+    [(visible)]="showViewDialog"
+    header="Audit Event Details"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '28rem' }"
+  >
+    @if (viewingEvent) {
+      <div class="flex flex-col gap-4 pt-2">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-xs font-medium text-label">User</p>
+            <p class="text-sm text-heading">{{ viewingEvent.user }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">IP Address</p>
+            <p class="text-sm text-heading">{{ viewingEvent.ipAddress }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">Time</p>
+            <p class="text-sm text-heading">{{ viewingEvent.time }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">Method</p>
+            <p-tag [value]="viewingEvent.method" [severity]="methodSeverity(viewingEvent.method)" />
+          </div>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-label">Resource</p>
+          <p class="text-sm text-heading font-mono break-all">{{ viewingEvent.resource }}</p>
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <p-button label="Close" severity="secondary" [text]="true" type="button" (onClick)="showViewDialog = false" />
+        </div>
+      </div>
+    }
+  </p-dialog>
+</div>

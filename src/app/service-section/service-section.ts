@@ -48,7 +48,7 @@ export class ServiceSection implements OnInit {
       icon: 'pi-cog',
       bgClass: 'bg-secondary-bg',
       fgClass: 'text-secondary',
-      route: null,
+      route: '/system-administration',
     },
     {
       title: 'Question Bank',

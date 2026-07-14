@@ -1,0 +1,62 @@
+<div class="max-w-6xl w-full mx-auto px-4 sm:px-8 py-10">
+  <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fade-in-up">
+    <div>
+      <h1 class="text-2xl font-semibold text-heading">System Administration</h1>
+      <p class="text-sm text-value mt-1">Manage users, employees, roles & audit trail</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <app-skeleton variant="cards" [count]="4" [cardCols]="4" />
+  } @else {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      @for (stat of stats; track stat.label; let i = $index) {
+        <a
+          [routerLink]="stat.route"
+          class="bg-card border border-border rounded-2xl p-6 flex items-center gap-4 transition-all duration-200 animate-fade-in-up"
+          [class]="'stagger-' + (i + 1)"
+          [class.hover:shadow-lg]="stat.route"
+          [class.hover:-translate-y-1]="stat.route"
+          [class.cursor-pointer]="stat.route"
+          [class.pointer-events-none]="!stat.route"
+        >
+          <span class="flex items-center justify-center w-12 h-12 rounded-xl shrink-0" [class]="stat.bgClass">
+            <i class="pi text-xl" [class]="[stat.icon, stat.fgClass]"></i>
+          </span>
+          <div>
+            <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="stat.value"></p>
+            <p class="text-sm text-value">{{ stat.label }}</p>
+          </div>
+        </a>
+      }
+    </div>
+  }
+
+  <div class="mt-6 bg-card border border-border rounded-2xl p-6 animate-fade-in-up stagger-5">
+    <div class="flex items-center justify-between mb-6 gap-4">
+      <div>
+        <h2 class="text-base font-semibold text-heading">Recent Activity</h2>
+        <p class="text-sm text-value mt-1">Latest actions across users, roles, employees & audits</p>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <app-skeleton variant="table" [rows]="6" [columns]="4" />
+    } @else {
+      <div class="flex flex-col divide-y divide-border">
+        @for (event of recentEvents(); track event.time + event.resource) {
+          <a
+            [routerLink]="['/system-administration/audit-trail', event.category]"
+            class="flex items-center gap-4 py-3 first:pt-0 last:pb-0 hover:bg-row-b -mx-2 px-2 rounded-lg transition-colors"
+          >
+            <span class="text-sm font-medium text-heading w-32 shrink-0 truncate">{{ event.user }}</span>
+            <p-tag [value]="event.method" [severity]="methodSeverity(event.method)" class="shrink-0" />
+            <span class="text-xs text-value font-mono truncate flex-1 min-w-0">{{ event.resource }}</span>
+            <span class="text-xs text-label shrink-0 hidden sm:inline">{{ categoryMeta[event.category].label }}</span>
+            <span class="text-xs text-label shrink-0 w-32 text-right">{{ event.time }}</span>
+          </a>
+        }
+      </div>
+    }
+  </div>
+</div>

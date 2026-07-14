@@ -1,0 +1,178 @@
+<div class="w-full px-4 sm:px-6 py-10">
+  <app-breadcrumb [items]="breadcrumbItems" />
+
+  @if (loading()) {
+    <app-skeleton variant="cards" [count]="3" [cardCols]="3" />
+  } @else {
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
+      <div class="bg-card border border-border rounded-2xl p-6 flex items-center gap-4 animate-fade-in-up stagger-1">
+        <span class="flex items-center justify-center w-12 h-12 rounded-xl shrink-0 bg-primary/10">
+          <i class="pi pi-users text-xl text-primary"></i>
+        </span>
+        <div>
+          <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="totalUsers"></p>
+          <p class="text-sm text-value">Total Users</p>
+        </div>
+      </div>
+      <div class="bg-card border border-border rounded-2xl p-6 flex items-center gap-4 animate-fade-in-up stagger-2">
+        <span class="flex items-center justify-center w-12 h-12 rounded-xl shrink-0 bg-success-bg">
+          <i class="pi pi-check-circle text-xl text-success"></i>
+        </span>
+        <div>
+          <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="activeUsers"></p>
+          <p class="text-sm text-value">Active Users</p>
+        </div>
+      </div>
+      <div class="bg-card border border-border rounded-2xl p-6 flex items-center gap-4 animate-fade-in-up stagger-3">
+        <span class="flex items-center justify-center w-12 h-12 rounded-xl shrink-0 bg-danger-bg">
+          <i class="pi pi-times-circle text-xl text-danger"></i>
+        </span>
+        <div>
+          <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="notActiveUsers"></p>
+          <p class="text-sm text-value">Not Active Users</p>
+        </div>
+      </div>
+    </div>
+  }
+
+  <app-data-table
+    class="block animate-fade-in-up stagger-1"
+    title="User Management"
+    subtitle="Manage system users and their roles"
+    [data]="users"
+    [loading]="loading()"
+    [searchFields]="['name', 'email', 'phone', 'userType']"
+    addLabel="Add User"
+    dataKey="email"
+    (add)="openAddDialog()"
+  >
+    <ng-template #headerTpl>
+      <tr>
+        <th class="pl-6">No</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>User Type</th>
+        <th>Status</th>
+        <th class="text-center pr-6">Action</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #bodyTpl let-user let-rowIndex="rowIndex">
+      <tr>
+        <td class="pl-6">{{ rowIndex + 1 }}</td>
+        <td>{{ user.name }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.phone }}</td>
+        <td>{{ user.userType }}</td>
+        <td>
+          <p-tag [value]="user.status" [severity]="statusSeverity(user.status)" />
+        </td>
+        <td class="text-center pr-6">
+          <button
+            type="button"
+            (click)="openActionMenu($event, user, actionMenu)"
+            class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors mx-auto"
+            aria-label="Row actions"
+          >
+            <i class="pi pi-ellipsis-v text-sm"></i>
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+  </app-data-table>
+
+  <p-menu
+    #actionMenu
+    class="text-sm"
+    [model]="actionMenuItems"
+    [popup]="true"
+    appendTo="body"
+    [motionOptions]="{ duration: { enter: 200, leave: 150 } }"
+  />
+
+  <p-dialog
+    [(visible)]="showFormDialog"
+    [header]="dialogMode === 'edit' ? 'Edit User' : 'Add User'"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '28rem' }"
+  >
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4 pt-2">
+      <div class="flex flex-col gap-1.5">
+        <label for="name" class="text-sm font-medium text-heading">Name</label>
+        <input pInputText id="name" formControlName="name" fluid placeholder="Full name" />
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="email" class="text-sm font-medium text-heading">Email</label>
+        <input pInputText id="email" formControlName="email" fluid placeholder="name@example.com" />
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="phone" class="text-sm font-medium text-heading">Mobile Number</label>
+        <input pInputText id="phone" formControlName="phone" fluid placeholder="e.g. +255 712 345 678" />
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="userType" class="text-sm font-medium text-heading">Role</label>
+        <p-select
+          inputId="userType"
+          formControlName="userType"
+          [options]="roleOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select role"
+          class="w-full"
+          appendTo="body"
+          [filter]="true"
+          filterPlaceholder="Search role"
+        />
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <p-button label="Cancel" severity="secondary" [text]="true" type="button" (onClick)="showFormDialog = false" />
+        <p-button [label]="dialogMode === 'edit' ? 'Update' : 'Save'" type="submit" />
+      </div>
+    </form>
+  </p-dialog>
+
+  <p-dialog
+    [(visible)]="showViewDialog"
+    header="User Details"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '26rem' }"
+  >
+    @if (viewingUser) {
+      <div class="flex flex-col gap-4 pt-2">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-xs font-medium text-label">Name</p>
+            <p class="text-sm text-heading">{{ viewingUser.name }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">Email</p>
+            <p class="text-sm text-heading">{{ viewingUser.email }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">Phone</p>
+            <p class="text-sm text-heading">{{ viewingUser.phone }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">User Type</p>
+            <p class="text-sm text-heading">{{ viewingUser.userType }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">Status</p>
+            <p-tag [value]="viewingUser.status" [severity]="statusSeverity(viewingUser.status)" />
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <p-button label="Close" severity="secondary" [text]="true" type="button" (onClick)="showViewDialog = false" />
+        </div>
+      </div>
+    }
+  </p-dialog>
+</div>

@@ -1,0 +1,63 @@
+<div class="w-full px-4 sm:px-6 py-10">
+  <app-breadcrumb [items]="breadcrumbItems" />
+
+  @if (!role) {
+    <div class="bg-card border border-border rounded-2xl p-6">
+      <p class="text-sm text-value">Role "{{ roleName }}" was not found.</p>
+    </div>
+  } @else {
+    <div class="bg-card border border-border rounded-2xl p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 class="text-xl font-semibold text-heading">{{ role.name }} Permissions</h1>
+          <p class="text-sm text-value mt-1">{{ role.description }}</p>
+        </div>
+        <div class="text-sm font-medium text-heading shrink-0">
+          {{ totalChecked() }} of {{ totalPermissions }} permissions selected
+        </div>
+      </div>
+
+      <p-accordion [multiple]="true">
+        @for (group of groups; track group.name) {
+          <p-accordion-panel [value]="group.name">
+            <p-accordion-header>
+              <div class="flex items-center justify-between w-full pr-2">
+                <span class="font-medium text-heading">{{ group.name }}</span>
+                <span class="flex items-center gap-3" (click)="$event.stopPropagation()">
+                  <span class="text-xs text-label">{{ groupCheckedCount(group) }}/{{ group.permissions.length }}</span>
+                  <p-checkbox
+                    [binary]="true"
+                    [ngModel]="isGroupAllChecked(group)"
+                    [indeterminate]="isGroupIndeterminate(group)"
+                    (ngModelChange)="toggleGroup(group, $event)"
+                    [attr.aria-label]="'Select all permissions in ' + group.name"
+                  />
+                </span>
+              </div>
+            </p-accordion-header>
+            <p-accordion-content>
+              <div class="grid sm:grid-cols-2 gap-3 pt-1 pb-2">
+                @for (permission of group.permissions; track permission.key) {
+                  <label class="flex items-center gap-2 text-sm text-heading cursor-pointer">
+                    <p-checkbox
+                      [binary]="true"
+                      [ngModel]="isChecked(permission.key)"
+                      (ngModelChange)="togglePermission(permission.key, $event)"
+                      [inputId]="permission.key"
+                    />
+                    {{ permission.label }}
+                  </label>
+                }
+              </div>
+            </p-accordion-content>
+          </p-accordion-panel>
+        }
+      </p-accordion>
+
+      <div class="flex justify-end gap-2 mt-6">
+        <p-button label="Cancel" severity="secondary" [outlined]="true" type="button" (onClick)="onCancel()" />
+        <p-button label="Save Permissions" icon="pi pi-check" type="button" (onClick)="onSave()" />
+      </div>
+    </div>
+  }
+</div>

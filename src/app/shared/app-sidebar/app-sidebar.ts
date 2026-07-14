@@ -1,6 +1,8 @@
-import { Component, Input, inject, signal } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { NAV_ITEMS, NavItem } from '../nav-items';
+import { Component, Input, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { filter, map, startWith } from 'rxjs';
+import { NavItem, navItemsForUrl } from '../nav-items';
 
 @Component({
   selector: 'app-sidebar',
@@ -14,12 +16,36 @@ export class AppSidebar {
 
   readonly appVersion = 'v2.0.0';
 
-  readonly navItems = NAV_ITEMS;
-
-  readonly expandedLabel = signal<string | null>(
-    NAV_ITEMS.find((item) => item.children?.some((child) => child.route && this.router.url.startsWith(child.route)))
-      ?.label ?? null,
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      map((event) => event.urlAfterRedirects),
+      startWith(this.router.url),
+    ),
+    { initialValue: this.router.url },
   );
+
+  readonly navItems = toSignal(
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      map((event) => navItemsForUrl(event.urlAfterRedirects)),
+      startWith(navItemsForUrl(this.router.url)),
+    ),
+    { initialValue: navItemsForUrl(this.router.url) },
+  );
+
+  readonly expandedLabel = signal<string | null>(null);
+
+  constructor() {
+    effect(() => {
+      const url = this.currentUrl();
+      const items = this.navItems();
+      this.expandedLabel.set(
+        items.find((item) => item.children?.some((child) => child.route && url.startsWith(child.route)))?.label ??
+          null,
+      );
+    });
+  }
 
   isExpanded(item: NavItem): boolean {
     return this.expandedLabel() === item.label;

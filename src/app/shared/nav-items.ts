@@ -5,7 +5,7 @@ export interface NavItem {
   children?: NavItem[];
 }
 
-export const NAV_ITEMS: NavItem[] = [
+const RECRUITMENT_NAV_ITEMS: NavItem[] = [
   { label: 'Services', icon: 'pi-th-large', route: '/services' },
   { label: 'Dashboard', icon: 'pi-user-plus', route: '/recruitment' },
   { label: 'Permits', icon: 'pi-id-card', route: '/recruitment/permits' },
@@ -45,3 +45,33 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
 ];
+
+const SYSTEM_ADMINISTRATION_NAV_ITEMS: NavItem[] = [
+  { label: 'Services', icon: 'pi-th-large', route: '/services' },
+  { label: 'Dashboard', icon: 'pi-home', route: '/system-administration' },
+  { label: 'User Management', icon: 'pi-user', route: '/system-administration/users' },
+  { label: 'Roles Management', icon: 'pi-shield', route: '/system-administration/roles' },
+  { label: 'Employee Management', icon: 'pi-id-card', route: '/system-administration/employees' },
+  {
+    label: 'Audit Trail',
+    icon: 'pi-history',
+    route: null,
+    children: [
+      { label: 'Recruitment Audits', icon: 'pi-user-plus', route: '/system-administration/audit-trail/recruitment' },
+      { label: 'Complaints Audit', icon: 'pi-flag', route: '/system-administration/audit-trail/complaints' },
+      { label: 'System Admin Audits', icon: 'pi-cog', route: '/system-administration/audit-trail/system-admin' },
+    ],
+  },
+];
+
+const NAV_ITEMS_BY_SERVICE: Record<string, NavItem[]> = {
+  recruitment: RECRUITMENT_NAV_ITEMS,
+  'system-administration': SYSTEM_ADMINISTRATION_NAV_ITEMS,
+};
+
+export const DEFAULT_NAV_ITEMS = RECRUITMENT_NAV_ITEMS;
+
+export function navItemsForUrl(url: string): NavItem[] {
+  const service = url.split('/').filter(Boolean)[0] ?? '';
+  return NAV_ITEMS_BY_SERVICE[service] ?? DEFAULT_NAV_ITEMS;
+}

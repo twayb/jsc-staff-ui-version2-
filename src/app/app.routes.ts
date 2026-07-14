@@ -228,6 +228,38 @@ export const routes: Routes = [
             (m) => m.ShortlistRemarks,
           ),
       },
+      {
+        path: 'system-administration',
+        loadComponent: () =>
+          import('./system-administration/admin-dashboard/admin-dashboard').then((m) => m.AdminDashboard),
+      },
+      {
+        path: 'system-administration/users',
+        loadComponent: () =>
+          import('./system-administration/user-management/user-management').then((m) => m.UserManagement),
+      },
+      {
+        path: 'system-administration/roles',
+        loadComponent: () =>
+          import('./system-administration/roles-management/roles-management').then((m) => m.RolesManagement),
+      },
+      {
+        path: 'system-administration/roles/:role/permissions',
+        loadComponent: () =>
+          import('./system-administration/permissions/permissions').then((m) => m.Permissions),
+      },
+      {
+        path: 'system-administration/employees',
+        loadComponent: () =>
+          import('./system-administration/employee-management/employee-management').then(
+            (m) => m.EmployeeManagement,
+          ),
+      },
+      {
+        path: 'system-administration/audit-trail/:category',
+        loadComponent: () =>
+          import('./system-administration/audit-trail/audit-trail').then((m) => m.AuditTrail),
+      },
     ],
   },
 ];

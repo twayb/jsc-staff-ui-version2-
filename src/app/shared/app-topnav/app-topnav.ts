@@ -1,6 +1,8 @@
-import { Component, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { NAV_ITEMS, NavItem } from '../nav-items';
+import { Component, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { filter, map, startWith } from 'rxjs';
+import { NavItem, navItemsForUrl } from '../nav-items';
 
 @Component({
   selector: 'app-topnav',
@@ -8,7 +10,16 @@ import { NAV_ITEMS, NavItem } from '../nav-items';
   templateUrl: './app-topnav.html',
 })
 export class AppTopNav {
-  readonly navItems = NAV_ITEMS;
+  private readonly router = inject(Router);
+
+  readonly navItems = toSignal(
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      map((event) => navItemsForUrl(event.urlAfterRedirects)),
+      startWith(navItemsForUrl(this.router.url)),
+    ),
+    { initialValue: navItemsForUrl(this.router.url) },
+  );
 
   readonly openLabel = signal<string | null>(null);
   readonly menuPosition = signal({ top: 0, left: 0 });

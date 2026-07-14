@@ -116,6 +116,9 @@
           optionValue="value"
           placeholder="Select type"
           class="w-full"
+          appendTo="body"
+          [filter]="true"
+          filterPlaceholder="Search type"
         />
       </div>
 
@@ -166,6 +169,9 @@
                   optionValue="value"
                   placeholder="Select scheme"
                   class="w-full"
+                  appendTo="body"
+                  [filter]="true"
+                  filterPlaceholder="Search scheme"
                 />
               </div>
               <div class="flex-1 min-w-0 flex flex-col gap-1.5">

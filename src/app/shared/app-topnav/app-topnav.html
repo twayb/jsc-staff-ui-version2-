@@ -1,5 +1,5 @@
 <nav class="mx-4 sm:mx-6 mt-4 bg-card border border-border rounded-xl shadow-sm px-3 py-2 flex items-center gap-1 overflow-x-auto animate-fade-in-up">
-  @for (item of navItems; track item.label) {
+  @for (item of navItems(); track item.label) {
     @if (item.children) {
       <button
         type="button"
@@ -29,7 +29,7 @@
   }
 </nav>
 
-@for (item of navItems; track item.label) {
+@for (item of navItems(); track item.label) {
   @if (item.children && isOpen(item)) {
     <div
       class="fixed min-w-[12rem] bg-card border border-border rounded-lg shadow-md py-1 z-50 flex flex-col"
