@@ -12,6 +12,8 @@ import { Tag } from 'primeng/tag';
 import { FileUpload, FileSelectEvent } from 'primeng/fileupload';
 import { AppBreadcrumb } from '../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../shared/app-data-table/app-data-table';
+import { AppSkeleton } from '../../shared/app-skeleton/app-skeleton';
+import { CountUp } from '../../shared/count-up.directive';
 
 type PermitTypeSeverity = 'success' | 'warn' | 'info' | 'secondary';
 
@@ -45,6 +47,8 @@ interface Permit {
     FileUpload,
     AppBreadcrumb,
     AppDataTable,
+    AppSkeleton,
+    CountUp,
   ],
   templateUrl: './permits.html',
   styleUrl: './permits.css',
@@ -103,6 +107,19 @@ export class Permits implements OnInit {
       endDate: '2026-10-05',
     },
   ];
+
+  get totalPermits(): number {
+    return this.permits.length;
+  }
+
+  get permitsThisYear(): number {
+    const currentYear = new Date().getFullYear();
+    return this.permits.filter((p) => new Date(p.startDate).getFullYear() === currentYear).length;
+  }
+
+  get permitTypesCount(): number {
+    return new Set(this.permits.map((p) => p.permitType)).size;
+  }
 
   actionMenuItems: MenuItem[] = [];
 
