@@ -1,32 +1,58 @@
-<div class="max-w-6xl w-full mx-auto px-4 sm:px-8 py-10">
-  <div class="mb-8 animate-fade-in-up">
-    <h1 class="text-2xl font-semibold text-heading animate-slide-mask">Welcome back</h1>
-    <p class="text-sm text-value mt-1">Select a service to get started</p>
+<div class="flex flex-col max-w-6xl w-full mx-auto px-4 sm:px-8 pt-10">
+  <div
+    class="shrink-0 mb-6 overflow-hidden rounded-2xl bg-gradient-to-r from-primary to-primary-hover px-6 py-5 sm:px-10 sm:py-6 text-white shadow-lg animate-fade-in-up"
+  >
+    <i class="pi {{ greeting().icon }} absolute -right-6 -top-10 text-[11rem] text-white/10 pointer-events-none"></i>
+
+    <div class="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wider text-white/70">
+          {{ now() | date: 'EEEE, d MMMM y' }}
+        </p>
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight mt-2">{{ greeting().title }}, {{ firstName }}.</h1>
+        <p class="text-sm text-white/85 mt-2 max-w-md">{{ greeting().subtitle }}</p>
+      </div>
+
+      <div class="flex items-center gap-3 bg-white/15 rounded-xl px-5 py-3 backdrop-blur-sm shrink-0">
+        <span class="relative flex items-center justify-center w-10 h-10 rounded-full bg-white/10 shrink-0">
+          <span class="absolute inset-0 rounded-full bg-white/20 animate-ping"></span>
+          <i class="pi {{ greeting().icon }} text-lg relative"></i>
+        </span>
+        <div>
+          <p class="text-lg font-semibold tabular-nums">{{ now() | date: 'HH:mm:ss' }}</p>
+          <p class="text-xs text-white/70">Local time</p>
+        </div>
+      </div>
+    </div>
   </div>
 
-  @if (loading()) {
-    <app-skeleton variant="cards" [count]="8" [cardCols]="3" />
-  } @else {
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      @for (service of services; track service.title; let i = $index) {
-        <a
-          [routerLink]="service.route"
-          class="group text-left bg-card border border-border rounded-2xl p-6 flex flex-col gap-4 h-full transition-all duration-200 animate-fade-in-up"
-          [class]="'stagger-' + (i + 1)"
-          [ngClass]="{
-            'hover:shadow-lg hover:-translate-y-1 cursor-pointer': service.route,
-            'opacity-50 cursor-not-allowed pointer-events-none': !service.route
-          }"
-        >
-          <span class="flex items-center justify-center w-12 h-12 rounded-xl" [class]="service.bgClass">
-            <i class="pi text-xl" [class]="[service.icon, service.fgClass]"></i>
-          </span>
-          <div>
-            <h3 class="text-base font-semibold text-heading group-hover:text-primary transition-colors">{{ service.title }}</h3>
-            <p class="text-sm text-value mt-1 line-clamp-2 min-h-[2.5rem]">{{ service.description }}</p>
-          </div>
-        </a>
-      }
-    </div>
-  }
+  <p class="shrink-0 text-sm text-value mb-6 -mt-2 animate-fade-in-up">Select a service to get started</p>
+
+  <div class="max-h-[65vh] overflow-y-auto scrollbar-hide">
+    @if (loading()) {
+      <app-skeleton variant="cards" [count]="8" [cardCols]="3" />
+    } @else {
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-2">
+        @for (service of services; track service.title; let i = $index) {
+          <a
+            [routerLink]="service.route"
+            class="group text-left bg-card border border-border rounded-2xl p-6 flex flex-col gap-4 h-full transition-all duration-200 animate-fade-in-up"
+            [class]="'stagger-' + (i + 1)"
+            [ngClass]="{
+              'hover:shadow-lg hover:-translate-y-1 cursor-pointer': service.route,
+              'opacity-50 cursor-not-allowed pointer-events-none': !service.route
+            }"
+          >
+            <span class="flex items-center justify-center w-12 h-12 rounded-xl" [class]="service.bgClass">
+              <i class="pi text-xl" [class]="[service.icon, service.fgClass]"></i>
+            </span>
+            <div>
+              <h3 class="text-base font-semibold text-heading group-hover:text-primary transition-colors">{{ service.title }}</h3>
+              <p class="text-sm text-value mt-1 line-clamp-2 min-h-[2.5rem]">{{ service.description }}</p>
+            </div>
+          </a>
+        }
+      </div>
+    }
+  </div>
 </div>

@@ -1,5 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
-import { NgClass } from '@angular/common';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { DatePipe, NgClass } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AppSkeleton } from '../shared/app-skeleton/app-skeleton';
 
@@ -12,17 +12,57 @@ interface Service {
   route: string | null;
 }
 
+type GreetingPeriod = 'morning' | 'afternoon' | 'evening';
+
+const GREETINGS: Record<GreetingPeriod, { title: string; subtitle: string; icon: string }> = {
+  morning: {
+    title: 'Good Morning',
+    subtitle: 'Welcome back. We wish you a productive day.',
+    icon: 'pi-sun',
+  },
+  afternoon: {
+    title: 'Good Afternoon',
+    subtitle: 'Welcome back. We hope your day is progressing well.',
+    icon: 'pi-sun',
+  },
+  evening: {
+    title: 'Good Evening',
+    subtitle: 'Welcome back. We hope you had a successful day.',
+    icon: 'pi-moon',
+  },
+};
+
 @Component({
   selector: 'app-service-section',
-  imports: [RouterLink, NgClass, AppSkeleton],
+  imports: [RouterLink, NgClass, DatePipe, AppSkeleton],
   templateUrl: './service-section.html',
   styleUrl: './service-section.css',
 })
 export class ServiceSection implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+
   readonly loading = signal(true);
+
+  // TODO: replace with the authenticated user's name once auth/session state is wired up.
+  private readonly userName = 'Admin User';
+  readonly firstName = this.userName.split(' ')[0];
+
+  readonly now = signal(new Date());
+
+  readonly period = computed<GreetingPeriod>(() => {
+    const hour = this.now().getHours();
+    if (hour < 12) return 'morning';
+    if (hour < 17) return 'afternoon';
+    return 'evening';
+  });
+
+  readonly greeting = computed(() => GREETINGS[this.period()]);
 
   ngOnInit(): void {
     setTimeout(() => this.loading.set(false), 800);
+
+    const handle = setInterval(() => this.now.set(new Date()), 1000);
+    this.destroyRef.onDestroy(() => clearInterval(handle));
   }
 
   readonly services: Service[] = [
