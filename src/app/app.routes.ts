@@ -73,6 +73,11 @@ export const routes: Routes = [
           import('./recruitment/applications/applicant-preview/applicant-preview').then((m) => m.ApplicantPreview),
       },
       {
+        path: 'recruitment/applications/:origin/:referenceNo/applicant/:nin/cv',
+        loadComponent: () =>
+          import('./recruitment/applications/cv-preview/cv-preview').then((m) => m.CvPreview),
+      },
+      {
         path: 'recruitment/interview-management',
         loadComponent: () =>
           import('./recruitment/interview-managment/interview-list-by-cadre/interview-list-by-cadre').then(

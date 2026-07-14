@@ -31,6 +31,14 @@
   --orange-bg: #fbe6cf; --orange-fg: #e58a2c;
   --gray-bg: #e6e8ec;   --gray-fg: #7c8696;
   --red-bg: #fbdfe0;    --red-fg: #e0455a;
+
+  /* One-hue ordinal ramp (blue, monotone lightness) for ordered-stage charts
+     like the recruitment funnel — validated with validate_palette.js --ordinal */
+  --funnel-1: #86b6ef;
+  --funnel-2: #5598e7;
+  --funnel-3: #2a78d6;
+  --funnel-4: #1c5cab;
+  --funnel-5: #104281;
 }
 
 :root.dark {
@@ -50,6 +58,12 @@
   --orange-bg: #4a3319; --orange-fg: #f5b56b;
   --gray-bg: #2a2e36;   --gray-fg: #a8b0bd;
   --red-bg: #4a1f24;    --red-fg: #f28b96;
+
+  --funnel-1: #9ec5f4;
+  --funnel-2: #6da7ec;
+  --funnel-3: #3987e5;
+  --funnel-4: #256abf;
+  --funnel-5: #184f95;
 }
 
 @theme inline {
@@ -269,5 +283,19 @@ quill-editor {
 
 @utility animate-icon-bounce {
   animation: icon-bounce 0.5s ease;
+}
+
+@media print {
+  .app-shell,
+  .app-shell-main {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
 }
 

@@ -1,7 +1,7 @@
 import { Component, ElementRef, HostListener, QueryList, ViewChild, ViewChildren, computed, inject, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { Tag } from 'primeng/tag';
 import { Dialog } from 'primeng/dialog';
@@ -15,7 +15,7 @@ type ApplicantStatusSeverity = 'warn' | 'success' | 'danger';
 
 @Component({
   selector: 'app-applicant-preview',
-  imports: [Tag, Dialog, Button, Tooltip, Select, FormsModule, NgClass, AppBreadcrumb],
+  imports: [Tag, Dialog, Button, Tooltip, Select, FormsModule, NgClass, RouterLink, AppBreadcrumb],
   templateUrl: './applicant-preview.html',
   styleUrl: './applicant-preview.css',
 })

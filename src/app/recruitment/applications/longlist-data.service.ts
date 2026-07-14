@@ -16,6 +16,12 @@ export interface RefereeEntry {
   email: string;
 }
 
+export interface ProfessionalQualificationEntry {
+  qualification: string;
+  awardingBody: string;
+  year: number;
+}
+
 export interface LonglistApplicant {
   nin: string;
   name: string;
@@ -32,6 +38,7 @@ export interface LonglistApplicant {
   mobile: string;
   employmentStatus: string;
   education: EducationEntry[];
+  professionalQualifications: ProfessionalQualificationEntry[];
   referees: RefereeEntry[];
   attachments: string[];
   remark?: string;
@@ -83,6 +90,14 @@ export class LonglistDataService {
           college: 'Law School of Tanzania',
         },
       ],
+      professionalQualifications: [
+        { qualification: 'Advocate of the High Court of Tanzania', awardingBody: 'Tanganyika Law Society', year: 2017 },
+        {
+          qualification: 'Certificate in Alternative Dispute Resolution',
+          awardingBody: 'Institute of Judicial Administration, Lushoto',
+          year: 2019,
+        },
+      ],
       referees: [
         {
           name: 'Dr. Joseph Kimaro',
@@ -121,6 +136,14 @@ export class LonglistDataService {
           startYear: 2014,
           endYear: 2014,
           college: 'Law School of Tanzania',
+        },
+      ],
+      professionalQualifications: [
+        { qualification: 'Advocate of the High Court of Tanzania', awardingBody: 'Tanganyika Law Society', year: 2014 },
+        {
+          qualification: 'Certificate in Case Management',
+          awardingBody: 'Institute of Judicial Administration, Lushoto',
+          year: 2016,
         },
       ],
       referees: [
@@ -163,6 +186,14 @@ export class LonglistDataService {
           college: 'Law School of Tanzania',
         },
       ],
+      professionalQualifications: [
+        { qualification: 'Advocate of the High Court of Tanzania', awardingBody: 'Tanganyika Law Society', year: 2012 },
+        {
+          qualification: 'Certificate in Judicial Ethics',
+          awardingBody: 'Institute of Judicial Administration, Lushoto',
+          year: 2015,
+        },
+      ],
       referees: [
         {
           name: 'Adv. Samuel Mrema',
@@ -203,6 +234,14 @@ export class LonglistDataService {
           college: 'Law School of Tanzania',
         },
       ],
+      professionalQualifications: [
+        { qualification: 'Advocate of the High Court of Tanzania', awardingBody: 'Tanganyika Law Society', year: 2017 },
+        {
+          qualification: 'Certificate in Commercial Law Practice',
+          awardingBody: 'Law School of Tanzania',
+          year: 2019,
+        },
+      ],
       referees: [
         {
           name: 'Adv. Godfrey Mwakalinga',
@@ -241,6 +280,14 @@ export class LonglistDataService {
           startYear: 2011,
           endYear: 2011,
           college: 'Law School of Tanzania',
+        },
+      ],
+      professionalQualifications: [
+        { qualification: 'Advocate of the High Court of Zanzibar', awardingBody: 'Zanzibar Law Society', year: 2012 },
+        {
+          qualification: 'Certificate in Islamic and Customary Law',
+          awardingBody: 'State University of Zanzibar',
+          year: 2014,
         },
       ],
       referees: [

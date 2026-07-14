@@ -32,4 +32,173 @@
       }
     </div>
   }
+
+  <div class="mt-6 bg-card border border-border rounded-2xl p-6 animate-fade-in-up stagger-5">
+    <div class="flex items-center justify-between mb-6 gap-4">
+      @if (loadingDetails()) {
+        <div class="flex flex-col gap-2">
+          <p-skeleton height="1rem" width="8rem" />
+          <p-skeleton height="0.75rem" width="14rem" />
+        </div>
+      } @else {
+        <div>
+          <h2 class="text-base font-semibold text-heading">Open Adverts</h2>
+          <p class="text-sm text-value mt-1">Live applicant counts per advert for the open permit</p>
+        </div>
+        <span class="flex items-center gap-1.5 text-xs font-medium text-success shrink-0">
+          <span class="relative flex w-2 h-2">
+            <span class="absolute inline-flex w-full h-full rounded-full bg-success opacity-75 animate-ping"></span>
+            <span class="relative inline-flex w-2 h-2 rounded-full bg-success"></span>
+          </span>
+          Live
+        </span>
+      }
+    </div>
+
+    @if (loadingDetails()) {
+      <app-skeleton variant="cards" [count]="3" [cardCols]="3" />
+    } @else {
+      <div class="flex flex-wrap items-center gap-2 mb-3">
+        <span class="text-sm font-semibold text-heading">{{ openPermit().permitName }}</span>
+        <span class="text-xs text-label">{{ openPermit().permitNo }}</span>
+        <span class="flex items-center gap-1 text-xs text-warning font-medium ml-auto">
+          <i class="pi pi-calendar text-xs"></i>
+          Closes {{ openPermit().closingDate | date: 'mediumDate' }}
+        </span>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        @for (advert of openPermit().adverts; track advert.referenceNo) {
+          <div
+            class="flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-300 cursor-pointer ring-1 ring-transparent hover:ring-primary/40"
+            [class.scale-105]="pulsedReferenceNo() === advert.referenceNo"
+            [ngClass]="selectedReferenceNo() === advert.referenceNo ? 'ring-primary bg-primary/10' : 'bg-row-b'"
+            role="button"
+            tabindex="0"
+            [attr.aria-pressed]="selectedReferenceNo() === advert.referenceNo"
+            (click)="selectAdvert(advert.referenceNo)"
+            (keydown.enter)="selectAdvert(advert.referenceNo)"
+            (keydown.space)="selectAdvert(advert.referenceNo); $event.preventDefault()"
+          >
+            <span class="flex items-center justify-center w-10 h-10 rounded-lg bg-info-bg shrink-0">
+              <i class="pi pi-users text-info text-sm"></i>
+            </span>
+            <div class="min-w-0">
+              <p class="text-lg font-semibold text-heading tabular-nums">{{ advert.applicants | number }}</p>
+              <p class="text-xs font-semibold text-heading leading-snug line-clamp-3 min-h-[3rem]" [title]="advert.cadre">{{ advert.cadre }}</p>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="mt-6 bg-card border border-border rounded-2xl p-6 animate-fade-in-up stagger-6">
+    <div class="flex items-center justify-between mb-6 gap-4">
+      @if (loadingDetails()) {
+        <div class="flex flex-col gap-2">
+          <p-skeleton height="1rem" width="9rem" />
+          <p-skeleton height="0.75rem" width="16rem" />
+        </div>
+      } @else {
+        <div>
+          <h2 class="text-base font-semibold text-heading">Candidate Pipeline</h2>
+          <p class="text-sm text-value mt-1">
+            @if (selectedAdvertLabel(); as label) {
+              Pipeline for <span class="font-medium text-heading">{{ label }}</span>
+            } @else {
+              Applications through to final selection this cycle
+            }
+          </p>
+        </div>
+        <div class="flex items-center gap-3 shrink-0">
+          @if (selectedReferenceNo()) {
+            <button
+              type="button"
+              (click)="selectedReferenceNo.set(null)"
+              class="flex items-center gap-1 text-xs font-medium text-value hover:text-heading transition-colors"
+            >
+              <i class="pi pi-times text-xs"></i>
+              Clear
+            </button>
+          }
+          <button
+            type="button"
+            (click)="showTable.set(!showTable())"
+            class="flex items-center gap-1.5 shrink-0 text-xs font-medium text-value hover:text-heading transition-colors"
+          >
+            <i class="pi text-xs" [class]="showTable() ? 'pi-chart-bar' : 'pi-table'"></i>
+            {{ showTable() ? 'View chart' : 'View table' }}
+          </button>
+        </div>
+      }
+    </div>
+
+    @if (loadingDetails()) {
+      <app-skeleton variant="table" [rows]="5" [columns]="3" />
+    } @else if (!showTable()) {
+      <div class="flex flex-col gap-4">
+        @for (stage of funnelStages(); track stage.label; let i = $index) {
+          <div
+            class="flex items-center gap-4"
+            tabindex="0"
+            role="img"
+            [attr.aria-label]="
+              stage.label + ': ' + stage.value + ' candidates' + (i > 0 ? ', ' + conversionRate(i) + '% of ' + funnelStages()[i - 1].label : '')
+            "
+            (mouseenter)="hoveredIndex.set(i)"
+            (mouseleave)="hoveredIndex.set(null)"
+            (focus)="hoveredIndex.set(i)"
+            (blur)="hoveredIndex.set(null)"
+          >
+            <span class="w-24 sm:w-28 shrink-0 text-sm font-medium text-heading text-right">{{ stage.label }}</span>
+
+            <div class="relative flex-1">
+              <div class="relative h-6 rounded-r-[4px] bg-row-b overflow-hidden">
+                <div
+                  class="absolute inset-y-0 left-0 rounded-r-[4px] transition-[width,filter] duration-300 ease-out"
+                  [style.width.%]="widthPercent(stage.value)"
+                  [style.background]="stage.color"
+                  [style.filter]="hoveredIndex() === i ? 'brightness(1.1)' : 'none'"
+                ></div>
+              </div>
+
+              @if (hoveredIndex() === i) {
+                <div
+                  class="absolute z-10 bottom-full mb-2 left-0 bg-heading text-card text-xs rounded-lg px-3 py-2 shadow-lg whitespace-nowrap pointer-events-none"
+                >
+                  <p class="font-semibold">{{ stage.value | number }} candidates</p>
+                  @if (i > 0) {
+                    <p class="text-card/70 mt-0.5">{{ conversionRate(i) }}% of {{ funnelStages()[i - 1].label }}</p>
+                  }
+                </div>
+              }
+            </div>
+
+            <span class="w-14 shrink-0 text-right text-sm font-semibold text-heading tabular-nums">{{ stage.value | number }}</span>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left text-label border-b border-border">
+              <th class="pb-2 font-medium">Stage</th>
+              <th class="pb-2 font-medium">Candidates</th>
+              <th class="pb-2 font-medium">Conversion</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (stage of funnelStages(); track stage.label; let i = $index) {
+              <tr class="border-b border-border last:border-0">
+                <td class="py-2 text-heading font-medium">{{ stage.label }}</td>
+                <td class="py-2 text-value tabular-nums">{{ stage.value | number }}</td>
+                <td class="py-2 text-value tabular-nums">{{ i > 0 ? conversionRate(i) + '%' : '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
 </div>

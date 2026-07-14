@@ -1,6 +1,6 @@
-<div class="h-screen flex bg-bg overflow-hidden">
+<div class="app-shell h-screen flex bg-bg overflow-hidden">
   @if (layout.mode() === 'vertical') {
-    <app-sidebar [collapsed]="sidebarCollapsed()" />
+    <app-sidebar [collapsed]="sidebarCollapsed()" class="print:hidden" />
   }
 
   <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
@@ -8,19 +8,20 @@
       [showLogo]="layout.mode() === 'horizontal'"
       [showSidebarToggle]="layout.mode() === 'vertical'"
       (sidebarToggle)="toggleSidebar()"
+      class="print:hidden"
     />
 
     @if (layout.mode() === 'horizontal') {
-      <app-topnav />
+      <app-topnav class="print:hidden" />
     }
 
-    <main class="flex-1 overflow-y-auto scrollbar-hide" [style.zoom.%]="textSize.scale()">
+    <main class="app-shell-main flex-1 overflow-y-auto scrollbar-hide" [style.zoom.%]="textSize.scale()">
       <router-outlet />
     </main>
 
-    <app-footer />
+    <app-footer class="print:hidden" />
   </div>
 
-  <p-toast />
-  <p-confirmdialog />
+  <p-toast class="print:hidden" />
+  <p-confirmdialog class="print:hidden" />
 </div>

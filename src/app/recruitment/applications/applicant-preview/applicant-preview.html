@@ -40,58 +40,14 @@
             <i class="pi pi-user text-3xl"></i>
           </div>
           <div class="flex-1">
-            <div class="flex flex-wrap items-center gap-3">
-              <h1 class="text-xl font-semibold text-heading">{{ a.name }}</h1>
-              <p-tag [value]="a.status" [severity]="statusSeverity(a.status)" />
-            </div>
+            <h1 class="text-xl font-semibold text-heading">{{ a.name }}</h1>
             <p class="text-sm text-value mt-1">{{ a.position }}</p>
             <div class="flex flex-wrap gap-x-6 gap-y-1 mt-2 text-xs text-label">
-              <span>Applicant ID: <span class="text-value">{{ a.applicantId }}</span></span>
-              <span>Applied Date: <span class="text-value">{{ a.applicationDate }}</span></span>
+              <span>Gender: <span class="text-value">{{ a.gender }}</span></span>
+              <span>Employment Status: <span class="text-value">{{ a.employmentStatus }}</span></span>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div class="bg-card border border-border rounded-2xl p-6">
-        <h2 class="text-sm font-semibold text-heading mb-4">Personal Details</h2>
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div>
-            <p class="text-xs font-medium text-label">NIN</p>
-            <p class="text-sm text-heading">{{ a.nin }}</p>
-          </div>
-          <div>
-            <p class="text-xs font-medium text-label">Email</p>
-            <p class="text-sm text-heading">{{ a.email }}</p>
-          </div>
-          <div>
-            <p class="text-xs font-medium text-label">Gender</p>
-            <p class="text-sm text-heading">{{ a.gender }}</p>
-          </div>
-          <div>
-            <p class="text-xs font-medium text-label">Date of Birth</p>
-            <p class="text-sm text-heading">{{ a.dateOfBirth }}</p>
-          </div>
-          <div>
-            <p class="text-xs font-medium text-label">Marital Status</p>
-            <p class="text-sm text-heading">{{ a.maritalStatus }}</p>
-          </div>
-          <div>
-            <p class="text-xs font-medium text-label">Address</p>
-            <p class="text-sm text-heading">{{ a.address }}</p>
-          </div>
-          <div>
-            <p class="text-xs font-medium text-label">Region</p>
-            <p class="text-sm text-heading">{{ a.region }}</p>
-          </div>
-          <div>
-            <p class="text-xs font-medium text-label">Mobile</p>
-            <p class="text-sm text-heading">{{ a.mobile }}</p>
-          </div>
-          <div>
-            <p class="text-xs font-medium text-label">Employment Status</p>
-            <p class="text-sm text-heading">{{ a.employmentStatus }}</p>
-          </div>
+          <p-tag [value]="a.status" [severity]="statusSeverity(a.status)" class="sm:self-start" />
         </div>
       </div>
 
@@ -110,14 +66,13 @@
         </div>
 
         <div class="bg-card border border-border rounded-2xl p-6">
-          <h2 class="text-sm font-semibold text-heading mb-4">Referees</h2>
-          <div class="flex flex-col gap-3">
-            @for (referee of a.referees; track referee.email) {
-              <div class="rounded-lg bg-row-b p-4">
-                <p class="text-sm font-medium text-heading">{{ referee.name }}</p>
-                <p class="text-xs text-value">{{ referee.position }}</p>
-                <p class="text-xs text-label mt-2">{{ referee.phone }}</p>
-                <p class="text-xs text-label">{{ referee.email }}</p>
+          <h2 class="text-sm font-semibold text-heading mb-4">Professional Qualification</h2>
+          <div class="flex flex-col divide-y divide-border">
+            @for (pq of a.professionalQualifications; track pq.qualification) {
+              <div class="py-3 first:pt-0 last:pb-0 flex flex-col gap-1">
+                <p class="text-sm font-medium text-heading">{{ pq.qualification }}</p>
+                <p class="text-xs text-value">{{ pq.awardingBody }}</p>
+                <p class="text-xs text-label">{{ pq.year }}</p>
               </div>
             }
           </div>
@@ -126,13 +81,22 @@
 
       <div class="bg-card border border-border rounded-2xl p-6">
         <h2 class="text-sm font-semibold text-heading mb-4">Attachments</h2>
-        <p-button
-          label="Preview Attachments"
-          icon="pi pi-paperclip"
-          severity="secondary"
-          [outlined]="true"
-          (onClick)="onPreviewAttachments()"
-        />
+        <div class="flex flex-wrap gap-2">
+          <p-button
+            label="Preview Attachments"
+            icon="pi pi-paperclip"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="onPreviewAttachments()"
+          />
+          <p-button
+            label="Preview CV"
+            icon="pi pi-id-card"
+            severity="secondary"
+            [outlined]="true"
+            [routerLink]="['/recruitment/applications', origin, referenceNo, 'applicant', a.nin, 'cv']"
+          />
+        </div>
 
         @if (a.status === 'Pending') {
           <div class="flex justify-end gap-2 pt-6 mt-6 border-t border-border">
