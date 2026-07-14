@@ -260,6 +260,27 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./system-administration/audit-trail/audit-trail').then((m) => m.AuditTrail),
       },
+      {
+        path: 'question-bank',
+        loadComponent: () =>
+          import('./question-bank/question-bank-dashboard/question-bank-dashboard').then(
+            (m) => m.QuestionBankDashboard,
+          ),
+      },
+      {
+        path: 'question-bank/add-question',
+        loadComponent: () =>
+          import('./question-bank/add-question/add-question').then((m) => m.AddQuestion),
+      },
+      {
+        path: 'question-bank/questions',
+        loadComponent: () =>
+          import('./question-bank/question-list/question-list').then((m) => m.QuestionList),
+      },
+      {
+        path: 'question-bank/setup',
+        loadComponent: () => import('./question-bank/setup/setup').then((m) => m.Setup),
+      },
     ],
   },
 ];

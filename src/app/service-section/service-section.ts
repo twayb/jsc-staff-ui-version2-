@@ -96,7 +96,7 @@ export class ServiceSection implements OnInit {
       icon: 'pi-book',
       bgClass: 'bg-info-bg',
       fgClass: 'text-info',
-      route: null,
+      route: '/question-bank',
     },
     {
       title: 'Online Interview',
