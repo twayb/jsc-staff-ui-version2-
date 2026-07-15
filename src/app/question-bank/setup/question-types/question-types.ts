@@ -11,14 +11,13 @@ import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
 interface QuestionTypeItem {
   name: string;
 }
-
 @Component({
   selector: 'app-question-types',
   imports: [ReactiveFormsModule, Menu, Dialog, InputText, Button, AppBreadcrumb, AppDataTable],
   templateUrl: './question-types.html',
   styleUrl: './question-types.css',
 })
-export class QuestionTypes implements OnInit {
+export class QuestionTypes implements OnInit { 
   private readonly fb = inject(FormBuilder);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);

@@ -1,1 +1,70 @@
-<p>question-bank-dashboard works!</p>
+<div class="max-w-6xl w-full mx-auto px-4 sm:px-8 py-10">
+  <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fade-in-up">
+    <div>
+      <h1 class="text-2xl font-semibold text-heading">Question Bank</h1>
+      <p class="text-sm text-value mt-1">Manage questions, categories, types & approvals</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <app-skeleton variant="cards" [count]="4" [cardCols]="4" />
+  } @else {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      @for (stat of stats; track stat.label; let i = $index) {
+        <a
+          [routerLink]="stat.route"
+          class="bg-card border border-border rounded-2xl p-6 flex items-center gap-4 transition-all duration-200 animate-fade-in-up"
+          [class]="'stagger-' + (i + 1)"
+          [class.hover:shadow-lg]="stat.route"
+          [class.hover:-translate-y-1]="stat.route"
+          [class.cursor-pointer]="stat.route"
+          [class.pointer-events-none]="!stat.route"
+        >
+          <span class="flex items-center justify-center w-12 h-12 rounded-xl shrink-0" [class]="stat.bgClass">
+            <i class="pi text-xl" [class]="[stat.icon, stat.fgClass]"></i>
+          </span>
+          <div>
+            <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="stat.value"></p>
+            <p class="text-sm text-value">{{ stat.label }}</p>
+          </div>
+        </a>
+      }
+    </div>
+  }
+
+  <div class="mt-6 bg-card border border-border rounded-2xl p-6 animate-fade-in-up stagger-5">
+    <div class="flex items-center justify-between mb-6 gap-4">
+      <div>
+        <h2 class="text-base font-semibold text-heading">Questions by Category</h2>
+        <p class="text-sm text-value mt-1">Top categories by number of questions in the bank</p>
+      </div>
+      @if (!loading()) {
+        <a routerLink="/question-bank/questions" class="text-sm font-medium text-primary hover:underline shrink-0">
+          View All
+        </a>
+      }
+    </div>
+
+    @if (loading()) {
+      <app-skeleton variant="cards" [count]="6" [cardCols]="3" />
+    } @else {
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        @for (stat of topCategories(); track stat.category; let i = $index) {
+          <a
+            [routerLink]="['/question-bank/questions', stat.category]"
+            class="bg-row-b rounded-2xl p-6 flex items-center gap-4 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer animate-fade-in-up"
+            [class]="'stagger-' + (i + 1)"
+          >
+            <span class="flex items-center justify-center w-12 h-12 rounded-xl shrink-0 bg-primary/10">
+              <i class="pi text-xl text-primary" [class]="categoryIcon"></i>
+            </span>
+            <div class="min-w-0">
+              <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="stat.totalQuestions"></p>
+              <p class="text-sm text-value line-clamp-2">{{ stat.category }}</p>
+            </div>
+          </a>
+        }
+      </div>
+    }
+  </div>
+</div>

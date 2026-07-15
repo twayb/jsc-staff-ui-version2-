@@ -1,4 +1,19 @@
-<nav class="mx-4 sm:mx-6 mt-4 bg-card border border-border rounded-xl shadow-sm px-3 py-2 flex items-center gap-1 overflow-x-auto animate-fade-in-up">
+<div class="relative group mx-4 sm:mx-6 mt-4 animate-fade-in-up">
+  @if (!canScrollEnd() && canScrollStart()) {
+    <button
+      type="button"
+      (mouseenter)="startScroll('start')"
+      (mouseleave)="stopScroll()"
+      (touchstart)="startScroll('start')"
+      (touchend)="stopScroll()"
+      aria-label="Scroll to start"
+      class="absolute left-1 top-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-card border border-border shadow-md text-value hover:text-heading animate-arrow-nudge-reverse"
+    >
+      <i class="pi pi-chevron-left text-xs"></i>
+    </button>
+  }
+
+  <nav #navScroll class="bg-card border border-border rounded-xl shadow-sm px-3 py-2 flex items-center gap-1 overflow-x-auto scrollbar-hide">
   @for (item of navItems(); track item.label) {
     @if (item.children) {
       <button
@@ -15,6 +30,7 @@
         [routerLink]="item.route"
         routerLinkActive="bg-primary/10 text-primary"
         [routerLinkActiveOptions]="{ exact: true }"
+        (click)="close()"
         class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-value hover:bg-row-b hover:text-heading transition-colors whitespace-nowrap"
       >
         <i class="pi text-sm" [class]="item.icon"></i>
@@ -27,7 +43,22 @@
       </span>
     }
   }
-</nav>
+  </nav>
+
+  @if (canScrollEnd()) {
+    <button
+      type="button"
+      (mouseenter)="startScroll('end')"
+      (mouseleave)="stopScroll()"
+      (touchstart)="startScroll('end')"
+      (touchend)="stopScroll()"
+      aria-label="Scroll to end"
+      class="absolute right-1 top-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-card border border-border shadow-md text-value hover:text-heading animate-arrow-nudge"
+    >
+      <i class="pi pi-chevron-right text-xs"></i>
+    </button>
+  }
+</div>
 
 @for (item of navItems(); track item.label) {
   @if (item.children && isOpen(item)) {

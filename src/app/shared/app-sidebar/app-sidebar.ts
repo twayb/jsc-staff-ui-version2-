@@ -35,6 +35,8 @@ export class AppSidebar {
   );
 
   readonly expandedLabel = signal<string | null>(null);
+  readonly flyoutLabel = signal<string | null>(null);
+  readonly flyoutPosition = signal({ top: 0, left: 0 });
 
   constructor() {
     effect(() => {
@@ -51,7 +53,25 @@ export class AppSidebar {
     return this.expandedLabel() === item.label;
   }
 
-  toggle(item: NavItem): void {
+  isFlyoutOpen(item: NavItem): boolean {
+    return this.flyoutLabel() === item.label;
+  }
+
+  toggle(item: NavItem, event: MouseEvent): void {
+    if (this.collapsed) {
+      if (this.isFlyoutOpen(item)) {
+        this.closeFlyout();
+        return;
+      }
+      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+      this.flyoutPosition.set({ top: rect.top, left: rect.right + 8 });
+      this.flyoutLabel.set(item.label);
+      return;
+    }
     this.expandedLabel.set(this.isExpanded(item) ? null : item.label);
+  }
+
+  closeFlyout(): void {
+    this.flyoutLabel.set(null);
   }
 }

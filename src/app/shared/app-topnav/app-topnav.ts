@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, ViewChild, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
@@ -9,8 +9,14 @@ import { NavItem, navItemsForUrl } from '../nav-items';
   imports: [RouterLink, RouterLinkActive],
   templateUrl: './app-topnav.html',
 })
-export class AppTopNav {
+export class AppTopNav implements AfterViewInit {
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+
+  @ViewChild('navScroll') navScrollRef?: ElementRef<HTMLElement>;
+
+  readonly canScrollStart = signal(false);
+  readonly canScrollEnd = signal(false);
 
   readonly navItems = toSignal(
     this.router.events.pipe(
@@ -41,5 +47,47 @@ export class AppTopNav {
 
   close(): void {
     this.openLabel.set(null);
+  }
+
+  private scrollRafId: number | null = null;
+
+  ngAfterViewInit(): void {
+    const onCheck = () => this.checkScroll();
+    onCheck();
+
+    const el = this.navScrollRef?.nativeElement;
+    el?.addEventListener('scroll', onCheck);
+    window.addEventListener('resize', onCheck);
+
+    this.destroyRef.onDestroy(() => {
+      el?.removeEventListener('scroll', onCheck);
+      window.removeEventListener('resize', onCheck);
+      this.stopScroll();
+    });
+  }
+
+  private checkScroll(): void {
+    const el = this.navScrollRef?.nativeElement;
+    if (!el) return;
+    this.canScrollStart.set(el.scrollLeft > 4);
+    this.canScrollEnd.set(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }
+
+  startScroll(direction: 'start' | 'end'): void {
+    this.stopScroll();
+    const step = () => {
+      const el = this.navScrollRef?.nativeElement;
+      if (!el) return;
+      el.scrollLeft += direction === 'end' ? 6 : -6;
+      this.scrollRafId = requestAnimationFrame(step);
+    };
+    this.scrollRafId = requestAnimationFrame(step);
+  }
+
+  stopScroll(): void {
+    if (this.scrollRafId !== null) {
+      cancelAnimationFrame(this.scrollRafId);
+      this.scrollRafId = null;
+    }
   }
 }

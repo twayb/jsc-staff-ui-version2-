@@ -285,6 +285,32 @@ quill-editor {
   animation: icon-bounce 0.5s ease;
 }
 
+@keyframes arrow-nudge-x {
+  0%, 100% {
+    transform: translate(0, -50%);
+  }
+  50% {
+    transform: translate(4px, -50%);
+  }
+}
+
+@utility animate-arrow-nudge {
+  animation: arrow-nudge-x 1.2s ease-in-out infinite;
+}
+
+@keyframes arrow-nudge-x-reverse {
+  0%, 100% {
+    transform: translate(0, -50%);
+  }
+  50% {
+    transform: translate(-4px, -50%);
+  }
+}
+
+@utility animate-arrow-nudge-reverse {
+  animation: arrow-nudge-x-reverse 1.2s ease-in-out infinite;
+}
+
 @media print {
   .app-shell,
   .app-shell-main {
