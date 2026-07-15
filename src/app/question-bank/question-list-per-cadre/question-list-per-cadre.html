@@ -1,0 +1,259 @@
+<div class="w-full px-4 sm:px-6 py-10">
+  <app-breadcrumb [items]="breadcrumbItems" />
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+    <div class="bg-card border border-border rounded-2xl p-6 flex items-center gap-4 animate-fade-in-up stagger-1">
+      <span class="flex items-center justify-center w-12 h-12 rounded-xl shrink-0 bg-warning-bg">
+        <i class="pi pi-clock text-xl text-warning"></i>
+      </span>
+      <div>
+        <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="pendingCount"></p>
+        <p class="text-sm text-value">Pending Questions</p>
+      </div>
+    </div>
+    <div class="bg-card border border-border rounded-2xl p-6 flex items-center gap-4 animate-fade-in-up stagger-2">
+      <span class="flex items-center justify-center w-12 h-12 rounded-xl shrink-0 bg-success-bg">
+        <i class="pi pi-check-circle text-xl text-success"></i>
+      </span>
+      <div>
+        <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="approvedCount"></p>
+        <p class="text-sm text-value">Approved Questions</p>
+      </div>
+    </div>
+    <div class="bg-card border border-border rounded-2xl p-6 flex items-center gap-4 animate-fade-in-up stagger-3">
+      <span class="flex items-center justify-center w-12 h-12 rounded-xl shrink-0 bg-info-bg">
+        <i class="pi pi-bolt text-xl text-info"></i>
+      </span>
+      <div>
+        <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="usedCount"></p>
+        <p class="text-sm text-value">Used Questions</p>
+      </div>
+    </div>
+    <div class="bg-card border border-border rounded-2xl p-6 flex items-center gap-4 animate-fade-in-up stagger-4">
+      <span class="flex items-center justify-center w-12 h-12 rounded-xl shrink-0 bg-danger-bg">
+        <i class="pi pi-ban text-xl text-danger"></i>
+      </span>
+      <div>
+        <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="unusedCount"></p>
+        <p class="text-sm text-value">Unused Questions</p>
+      </div>
+    </div>
+  </div>
+
+  <app-data-table
+    class="block animate-fade-in-up stagger-1"
+    [title]="cadre"
+    [subtitle]="category + ' — question bank for this cadre'"
+    [data]="questions"
+    [loading]="loading()"
+    [searchFields]="['question', 'type']"
+    dataKey="question"
+  >
+    <div tableAction class="flex items-center gap-2">
+      <p-button
+        label="Approve Selected"
+        icon="pi pi-check"
+        size="small"
+        severity="success"
+        [outlined]="true"
+        [disabled]="selection.length === 0"
+        (onClick)="onApproveSelected()"
+      />
+      <p-button
+        label="Activate Selected"
+        icon="pi pi-bolt"
+        size="small"
+        severity="info"
+        [outlined]="true"
+        [disabled]="selection.length === 0"
+        (onClick)="onActivateSelected()"
+      />
+      <p-button
+        label="Deactivate Selected"
+        icon="pi pi-ban"
+        size="small"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="selection.length === 0"
+        (onClick)="onDeactivateSelected()"
+      />
+    </div>
+
+    <ng-template #headerTpl>
+      <tr>
+        <th class="pl-6 w-10">
+          <input
+            type="checkbox"
+            [checked]="isAllSelected()"
+            (change)="toggleSelectAll($event)"
+            aria-label="Select all questions"
+          />
+        </th>
+        <th>No</th>
+        <th>Question</th>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Approval</th>
+        <th class="text-center pr-6">Action</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #bodyTpl let-question let-rowIndex="rowIndex">
+      <tr>
+        <td class="pl-6">
+          <input
+            type="checkbox"
+            [checked]="isSelected(question)"
+            (change)="toggleSelection(question)"
+            [attr.aria-label]="'Select question ' + (rowIndex + 1)"
+          />
+        </td>
+        <td>{{ rowIndex + 1 }}</td>
+        <td class="max-w-md truncate">{{ question.question }}</td>
+        <td>{{ question.type }}</td>
+        <td>
+          <p-tag [value]="question.status" [severity]="statusSeverity(question.status)" />
+        </td>
+        <td>
+          <p-tag [value]="question.approval" [severity]="approvalSeverity(question.approval)" />
+        </td>
+        <td class="text-center pr-6">
+          <button
+            type="button"
+            (click)="openActionMenu($event, question, actionMenu)"
+            class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors mx-auto"
+            aria-label="Row actions"
+          >
+            <i class="pi pi-ellipsis-v text-sm"></i>
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+  </app-data-table>
+
+  <p-menu
+    #actionMenu
+    class="text-sm"
+    [model]="actionMenuItems"
+    [popup]="true"
+    appendTo="body"
+    [motionOptions]="{ duration: { enter: 200, leave: 150 } }"
+  />
+
+  <p-dialog
+    [(visible)]="showViewDialog"
+    [header]="editMode ? 'Edit Question' : 'Question Details'"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '36rem' }"
+  >
+    @if (viewingQuestion) {
+      @if (!editMode) {
+        <div class="flex flex-col gap-4 pt-2">
+          <div class="flex items-center justify-between gap-4">
+            @if (viewingQuestion.approval === 'Pending') {
+              <p-button label="Approve" icon="pi pi-check" size="small" severity="success" type="button" (onClick)="onApproveInDialog()" />
+            } @else {
+              <p-tag [value]="viewingQuestion.approval" [severity]="approvalSeverity(viewingQuestion.approval)" />
+            }
+            <p-tag [value]="viewingQuestion.status" [severity]="statusSeverity(viewingQuestion.status)" />
+          </div>
+
+          <div>
+            <p class="text-xs font-medium text-label">Question</p>
+            <p class="text-sm text-heading">{{ viewingQuestion.question }}</p>
+          </div>
+
+          <div>
+            <p class="text-xs font-medium text-label">Type</p>
+            <p class="text-sm text-heading">{{ viewingQuestion.type }}</p>
+          </div>
+
+          @if (viewingQuestion.type === 'Multiple Choice' && viewingQuestion.options) {
+            <div>
+              <p class="text-xs font-medium text-label mb-2">Options</p>
+              <div class="flex flex-col gap-2">
+                @for (option of viewingQuestion.options; track $index; let i = $index) {
+                  <div
+                    class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
+                    [ngClass]="i === viewingQuestion.correctOptionIndex ? 'bg-success-bg text-success font-medium' : 'bg-row-b text-heading'"
+                  >
+                    <span
+                      class="flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold shrink-0"
+                      [ngClass]="i === viewingQuestion.correctOptionIndex ? 'bg-success text-white' : 'bg-card text-value'"
+                    >
+                      {{ optionLetter(i) }}
+                    </span>
+                    <span>{{ option }}</span>
+                    @if (i === viewingQuestion.correctOptionIndex) {
+                      <i class="pi pi-check ml-auto"></i>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          } @else if (viewingQuestion.type === 'True/False') {
+            <div>
+              <p class="text-xs font-medium text-label">Correct Answer</p>
+              <p class="text-sm text-heading font-medium">{{ viewingQuestion.correctAnswer }}</p>
+            </div>
+          } @else {
+            <div>
+              <p class="text-xs font-medium text-label">Model Answer</p>
+              <p class="text-sm text-heading">{{ viewingQuestion.modelAnswer }}</p>
+            </div>
+          }
+
+          <div class="flex justify-end gap-2 pt-2">
+            <p-button label="Close" severity="secondary" [text]="true" type="button" (onClick)="showViewDialog = false" />
+            <p-button label="Edit" icon="pi pi-pencil" severity="secondary" [outlined]="true" type="button" (onClick)="onEdit()" />
+          </div>
+        </div>
+      } @else {
+        <div class="flex flex-col gap-4 pt-2">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-heading">Question Text</label>
+            <textarea pTextarea [(ngModel)]="draft.questionText" rows="3" fluid></textarea>
+          </div>
+
+          @if (viewingQuestion.type === 'Multiple Choice') {
+            <div class="flex flex-col gap-3">
+              <label class="text-sm font-medium text-heading">Options</label>
+              @for (option of draft.options; track $index; let i = $index) {
+                <div class="flex items-center gap-3">
+                  <p-radiobutton [value]="i" [(ngModel)]="draft.correctOptionIndex" [inputId]="'edit-correct-' + i" />
+                  <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-row-b text-sm font-semibold text-heading shrink-0">
+                    {{ optionLetter(i) }}
+                  </span>
+                  <input pInputText [(ngModel)]="draft.options[i]" fluid class="w-full" />
+                </div>
+              }
+            </div>
+          } @else if (viewingQuestion.type === 'True/False') {
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm font-medium text-heading">Correct Answer</label>
+              <p-select
+                [(ngModel)]="draft.correctAnswer"
+                [options]="trueFalseOptions"
+                optionLabel="label"
+                optionValue="value"
+                class="w-full sm:w-64"
+                appendTo="body"
+              />
+            </div>
+          } @else {
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm font-medium text-heading">Model Answer</label>
+              <textarea pTextarea [(ngModel)]="draft.modelAnswer" rows="3" fluid></textarea>
+            </div>
+          }
+
+          <div class="flex justify-end gap-2 pt-2">
+            <p-button label="Cancel" severity="secondary" [text]="true" type="button" (onClick)="onCancelEdit()" />
+            <p-button label="Save" icon="pi pi-check" type="button" (onClick)="onSaveEdit()" />
+          </div>
+        </div>
+      }
+    }
+  </p-dialog>
+</div>

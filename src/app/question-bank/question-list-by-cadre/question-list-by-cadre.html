@@ -1,0 +1,61 @@
+<div class="w-full px-4 sm:px-6 py-10">
+  <app-breadcrumb [items]="breadcrumbItems" />
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+    <div class="bg-card border border-border rounded-2xl p-6 flex items-center gap-4 animate-fade-in-up stagger-1">
+      <span class="flex items-center justify-center w-12 h-12 rounded-xl shrink-0 bg-primary/10">
+        <i class="pi pi-briefcase text-xl text-primary"></i>
+      </span>
+      <div>
+        <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="totalCadre"></p>
+        <p class="text-sm text-value">Total Cadre</p>
+      </div>
+    </div>
+    <div class="bg-card border border-border rounded-2xl p-6 flex items-center gap-4 animate-fade-in-up stagger-2">
+      <span class="flex items-center justify-center w-12 h-12 rounded-xl shrink-0 bg-info-bg">
+        <i class="pi pi-book text-xl text-info"></i>
+      </span>
+      <div>
+        <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="totalQuestions"></p>
+        <p class="text-sm text-value">Total Questions</p>
+      </div>
+    </div>
+  </div>
+
+  <app-data-table
+    class="block animate-fade-in-up stagger-1"
+    [title]="category"
+    subtitle="Questions available per cadre for this category"
+    [data]="cadres"
+    [loading]="loading()"
+    [searchFields]="['cadre']"
+    dataKey="cadre"
+  >
+    <ng-template #headerTpl>
+      <tr>
+        <th class="pl-6">No</th>
+        <th>Cadre</th>
+        <th>Questions</th>
+        <th class="text-center pr-6">Action</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #bodyTpl let-cadre let-rowIndex="rowIndex">
+      <tr>
+        <td class="pl-6">{{ rowIndex + 1 }}</td>
+        <td>{{ cadre.cadre }}</td>
+        <td>{{ cadre.questions }}</td>
+        <td class="text-center pr-6">
+          <button
+            type="button"
+            (click)="onView(cadre)"
+            class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors mx-auto"
+            aria-label="View cadre questions"
+          >
+            <i class="pi pi-eye text-sm"></i>
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+  </app-data-table>
+</div>

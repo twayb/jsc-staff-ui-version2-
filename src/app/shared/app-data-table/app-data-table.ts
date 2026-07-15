@@ -1,7 +1,6 @@
 import { Component, ContentChild, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { TableModule } from 'primeng/table';
-import { Toolbar } from 'primeng/toolbar';
 import { Button } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { IconField } from 'primeng/iconfield';
@@ -10,7 +9,7 @@ import { AppSkeleton } from '../app-skeleton/app-skeleton';
 
 @Component({
   selector: 'app-data-table',
-  imports: [NgClass, NgTemplateOutlet, TableModule, Toolbar, Button, InputText, IconField, InputIcon, AppSkeleton],
+  imports: [NgClass, NgTemplateOutlet, TableModule, Button, InputText, IconField, InputIcon, AppSkeleton],
   templateUrl: './app-data-table.html',
 })
 export class AppDataTable<T = unknown> {

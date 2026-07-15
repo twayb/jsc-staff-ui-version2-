@@ -5,41 +5,38 @@
     </div>
     <app-skeleton variant="table" [rows]="skeletonRows" [columns]="skeletonColumns" class="block p-6" />
   } @else {
-    <p-toolbar [ngClass]="card ? '!border-0 !border-b !border-border !rounded-b-none !bg-transparent' : '!border-0 !border-b !border-border !rounded-none !bg-transparent'">
-      <ng-template #start>
-        <div>
-          <h1 class="text-lg font-semibold text-heading">{{ title }}</h1>
-          @if (subtitle) {
-            <p class="text-xs text-value">{{ subtitle }}</p>
-          }
-        </div>
-      </ng-template>
-      <ng-template #end>
-        <div class="flex items-center gap-2">
-          @if (searchFields.length) {
-            <p-iconfield>
-              <p-inputicon class="pi pi-search" />
-              <input
-                pInputText
-                type="text"
-                placeholder="Search"
-                (input)="dt.filterGlobal($any($event.target).value, 'contains')"
-              />
-            </p-iconfield>
-          }
-          @if (addLabel) {
-            <p-button
-              [label]="addLabel"
-              [icon]="addIcon"
-              (onClick)="add.emit()"
-              [text]="true"
-              class="transition-transform duration-150 hover:scale-105 active:scale-95"
+    <div role="toolbar" class="flex flex-wrap items-center justify-between gap-4 px-4 py-3 border-b border-border">
+      <div>
+        <h1 class="text-lg font-semibold text-heading">{{ title }}</h1>
+        @if (subtitle) {
+          <p class="text-xs text-value">{{ subtitle }}</p>
+        }
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 ml-auto justify-end">
+        @if (searchFields.length) {
+          <p-iconfield>
+            <p-inputicon class="pi pi-search" />
+            <input
+              pInputText
+              type="text"
+              placeholder="Search"
+              (input)="dt.filterGlobal($any($event.target).value, 'contains')"
             />
-          }
-          <ng-content select="[tableAction]" />
-        </div>
-      </ng-template>
-    </p-toolbar>
+          </p-iconfield>
+        }
+        @if (addLabel) {
+          <p-button
+            [label]="addLabel"
+            [icon]="addIcon"
+            (onClick)="add.emit()"
+            [text]="true"
+            class="transition-transform duration-150 hover:scale-105 active:scale-95"
+          />
+        }
+        <ng-content select="[tableAction]" />
+      </div>
+    </div>
 
     <p-table
       #dt

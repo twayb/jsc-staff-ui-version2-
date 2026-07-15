@@ -2,7 +2,11 @@
   <app-breadcrumb [items]="breadcrumbItems" />
 
   <div class="bg-card border border-border rounded-2xl p-6 animate-fade-in-up">
-    <p-stepper [value]="activeStep()" (valueChange)="activeStep.set($event ?? 1)">
+    <p-stepper
+      [value]="activeStep()"
+      (valueChange)="activeStep.set($event ?? 1)"
+      [motionOptions]="{ duration: { enter: 300, leave: 200 } }"
+    >
       <p-step-list>
         <p-step [value]="1">Question Details</p-step>
         <p-step [value]="2">Add Question</p-step>
@@ -11,185 +15,289 @@
       <p-step-panels>
         <p-step-panel [value]="1">
           <ng-template #content let-activateCallback="activateCallback">
-            <form [formGroup]="detailsForm" class="flex flex-col gap-4 pt-6">
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-sm font-medium text-heading">Education Level</label>
-                  <p-select
-                    formControlName="educationLevel"
-                    [options]="educationLevelOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Select education level"
-                    class="w-full"
-                    appendTo="body"
-                  />
-                </div>
-
-                <div class="flex flex-col gap-1.5 sm:col-span-2">
-                  <label class="text-sm font-medium text-heading">Cadre</label>
-                  <p-select
-                    formControlName="cadre"
-                    [options]="cadreOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Select cadre"
-                    class="w-full"
-                    appendTo="body"
-                    [filter]="true"
-                    filterPlaceholder="Search cadre"
-                  />
-                </div>
-
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-sm font-medium text-heading">Interview Type</label>
-                  <p-select
-                    formControlName="interviewType"
-                    [options]="interviewTypeOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Select interview type"
-                    class="w-full"
-                    appendTo="body"
-                  />
-                </div>
-
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-sm font-medium text-heading">Question Type</label>
-                  <p-select
-                    formControlName="questionType"
-                    [options]="questionTypeOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Select question type"
-                    class="w-full"
-                    appendTo="body"
-                  />
-                </div>
-
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-sm font-medium text-heading">Question Category</label>
-                  <p-select
-                    formControlName="questionCategory"
-                    [options]="questionCategoryOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Select category"
-                    class="w-full"
-                    appendTo="body"
-                  />
-                </div>
-
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-sm font-medium text-heading">Question Level</label>
-                  <p-select
-                    formControlName="questionLevel"
-                    [options]="questionLevelOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Select level"
-                    class="w-full"
-                    appendTo="body"
-                  />
-                </div>
-
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-sm font-medium text-heading">Points</label>
-                  <p-inputnumber formControlName="points" [min]="1" [showButtons]="true" class="w-full" />
-                </div>
-
-                @if (isMultipleChoice()) {
+            @if (activeStep() === 1) {
+              <form [formGroup]="detailsForm" class="flex flex-col gap-4 pt-6 animate-tab-slide">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-heading">Number of Options</label>
+                    <label class="text-sm font-medium text-heading">Education Level</label>
                     <p-select
-                      formControlName="numberOfOptions"
-                      [options]="optionCountOptions"
+                      formControlName="educationLevel"
+                      [options]="educationLevelOptions"
                       optionLabel="label"
                       optionValue="value"
-                      placeholder="Select number of options"
+                      placeholder="Select education level"
                       class="w-full"
                       appendTo="body"
                     />
+                    @if (detailsForm.controls.educationLevel.invalid && detailsForm.controls.educationLevel.touched) {
+                      <span class="text-xs text-danger">Education level is required.</span>
+                    }
                   </div>
-                }
-              </div>
 
-              <div class="flex justify-end pt-2">
-                <p-button label="Next" icon="pi pi-arrow-right" iconPos="right" type="button" (onClick)="onGoToQuestionStep(activateCallback)" />
-              </div>
-            </form>
+                  <div class="flex flex-col gap-1.5 sm:col-span-2">
+                    <label class="text-sm font-medium text-heading">Cadre</label>
+                    <p-select
+                      formControlName="cadre"
+                      [options]="cadreOptions"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Select cadre"
+                      class="w-full"
+                      appendTo="body"
+                      [filter]="true"
+                      filterPlaceholder="Search cadre"
+                    />
+                    @if (detailsForm.controls.cadre.invalid && detailsForm.controls.cadre.touched) {
+                      <span class="text-xs text-danger">Cadre is required.</span>
+                    }
+                  </div>
+
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-heading">Interview Type</label>
+                    <p-select
+                      formControlName="interviewType"
+                      [options]="interviewTypeOptions"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Select interview type"
+                      class="w-full"
+                      appendTo="body"
+                    />
+                    @if (detailsForm.controls.interviewType.invalid && detailsForm.controls.interviewType.touched) {
+                      <span class="text-xs text-danger">Interview type is required.</span>
+                    }
+                  </div>
+
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-heading">Question Type</label>
+                    <p-select
+                      formControlName="questionType"
+                      [options]="questionTypeOptions"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Select question type"
+                      class="w-full"
+                      appendTo="body"
+                    />
+                    @if (detailsForm.controls.questionType.invalid && detailsForm.controls.questionType.touched) {
+                      <span class="text-xs text-danger">Question type is required.</span>
+                    }
+                  </div>
+
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-heading">Question Category</label>
+                    <p-select
+                      formControlName="questionCategory"
+                      [options]="questionCategoryOptions"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Select category"
+                      class="w-full"
+                      appendTo="body"
+                    />
+                    @if (detailsForm.controls.questionCategory.invalid && detailsForm.controls.questionCategory.touched) {
+                      <span class="text-xs text-danger">Question category is required.</span>
+                    }
+                  </div>
+
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-heading">Question Level</label>
+                    <p-select
+                      formControlName="questionLevel"
+                      [options]="questionLevelOptions"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Select level"
+                      class="w-full"
+                      appendTo="body"
+                    />
+                    @if (detailsForm.controls.questionLevel.invalid && detailsForm.controls.questionLevel.touched) {
+                      <span class="text-xs text-danger">Question level is required.</span>
+                    }
+                  </div>
+
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-heading">Points</label>
+                    <p-inputnumber formControlName="points" [min]="1" [showButtons]="true" class="w-full" />
+                    @if (detailsForm.controls.points.invalid && detailsForm.controls.points.touched) {
+                      <span class="text-xs text-danger">Points are required.</span>
+                    }
+                  </div>
+
+                  @if (isMultipleChoice()) {
+                    <div class="flex flex-col gap-1.5">
+                      <label class="text-sm font-medium text-heading">Number of Options</label>
+                      <p-select
+                        formControlName="numberOfOptions"
+                        [options]="optionCountOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Select number of options"
+                        class="w-full"
+                        appendTo="body"
+                      />
+                      @if (detailsForm.controls.numberOfOptions.invalid && detailsForm.controls.numberOfOptions.touched) {
+                        <span class="text-xs text-danger">Number of options is required.</span>
+                      }
+                    </div>
+                  }
+                </div>
+
+                <div class="flex justify-end pt-2">
+                  <p-button label="Next" icon="pi pi-arrow-right" iconPos="right" type="button" (onClick)="onGoToQuestionStep(activateCallback)" />
+                </div>
+              </form>
+            }
           </ng-template>
         </p-step-panel>
 
         <p-step-panel [value]="2">
           <ng-template #content let-activateCallback="activateCallback">
-            <form [formGroup]="questionForm" class="flex flex-col gap-4 pt-6">
-              <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-heading">Question Text</label>
-                <app-rich-text-editor formControlName="questionText" placeholder="Type the question here" />
-                @if (questionForm.controls.questionText.invalid && questionForm.controls.questionText.touched) {
-                  <span class="text-xs text-danger">Question text is required.</span>
-                }
+            @if (activeStep() === 2) {
+              <div class="flex flex-col gap-6 pt-6 animate-tab-slide">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  (click)="mode.set('one-by-one')"
+                  class="text-left rounded-xl border p-4 transition-colors"
+                  [ngClass]="mode() === 'one-by-one' ? 'border-primary bg-primary/5' : 'border-border hover:bg-row-b'"
+                >
+                  <div class="flex items-center gap-3">
+                    <span class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary shrink-0">
+                      <i class="pi pi-pencil"></i>
+                    </span>
+                    <div>
+                      <p class="text-sm font-semibold text-heading">One by One</p>
+                      <p class="text-xs text-value mt-0.5">Fill in a single question using the form below</p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  (click)="mode.set('template')"
+                  class="text-left rounded-xl border p-4 transition-colors"
+                  [ngClass]="mode() === 'template' ? 'border-primary bg-primary/5' : 'border-border hover:bg-row-b'"
+                >
+                  <div class="flex items-center gap-3">
+                    <span class="flex items-center justify-center w-10 h-10 rounded-lg bg-info-bg text-info shrink-0">
+                      <i class="pi pi-upload"></i>
+                    </span>
+                    <div>
+                      <p class="text-sm font-semibold text-heading">By Template</p>
+                      <p class="text-xs text-value mt-0.5">Download a template, fill it, then upload to bulk import</p>
+                    </div>
+                  </div>
+                </button>
               </div>
 
-              @if (isMultipleChoice()) {
-                <div formArrayName="options" class="flex flex-col gap-3">
-                  <label class="text-sm font-medium text-heading">Options</label>
-                  @for (option of optionsArray.controls; track $index; let i = $index) {
-                    <div [formGroupName]="i" class="flex items-center gap-3">
-                      <p-radiobutton
-                        [value]="i"
-                        [formControl]="questionForm.controls.correctOptionIndex"
-                        [inputId]="'correct-' + i"
-                      />
-                      <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-row-b text-sm font-semibold text-heading shrink-0">
-                        {{ optionLetter(i) }}
-                      </span>
-                      <input
-                        pInputText
-                        formControlName="text"
-                        fluid
-                        class="w-full"
-                        [placeholder]="'Option ' + optionLetter(i)"
+              @if (mode() === 'one-by-one') {
+                <form [formGroup]="questionForm" class="flex flex-col gap-4">
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-heading">Question Text</label>
+                    <app-rich-text-editor formControlName="questionText" placeholder="Type the question here" />
+                    @if (questionForm.controls.questionText.invalid && questionForm.controls.questionText.touched) {
+                      <span class="text-xs text-danger">Question text is required.</span>
+                    }
+                  </div>
+
+                  @if (isMultipleChoice()) {
+                    <div formArrayName="options" class="flex flex-col gap-3">
+                      <label class="text-sm font-medium text-heading">Options</label>
+                      @for (option of optionsArray.controls; track $index; let i = $index) {
+                        <div [formGroupName]="i" class="flex items-center gap-3">
+                          <p-radiobutton
+                            [value]="i"
+                            [formControl]="questionForm.controls.correctOptionIndex"
+                            [inputId]="'correct-' + i"
+                          />
+                          <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-row-b text-sm font-semibold text-heading shrink-0">
+                            {{ optionLetter(i) }}
+                          </span>
+                          <input
+                            pInputText
+                            formControlName="text"
+                            fluid
+                            class="w-full"
+                            [placeholder]="'Option ' + optionLetter(i)"
+                          />
+                        </div>
+                      }
+                      <p class="text-xs text-label">Select the radio button next to the correct option.</p>
+                    </div>
+                  } @else if (isTrueFalse()) {
+                    <div class="flex flex-col gap-1.5">
+                      <label class="text-sm font-medium text-heading">Correct Answer</label>
+                      <p-select
+                        formControlName="correctAnswer"
+                        [options]="[
+                          { label: 'True', value: 'True' },
+                          { label: 'False', value: 'False' }
+                        ]"
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Select correct answer"
+                        class="w-full sm:w-64"
+                        appendTo="body"
                       />
                     </div>
+                  } @else if (isOpenEnded()) {
+                    <div class="flex flex-col gap-1.5">
+                      <label class="text-sm font-medium text-heading">Model Answer / Marking Guide (optional)</label>
+                      <textarea
+                        pTextarea
+                        formControlName="modelAnswer"
+                        rows="3"
+                        fluid
+                        placeholder="Optional guidance for markers"
+                      ></textarea>
+                    </div>
                   }
-                  <p class="text-xs text-label">Select the radio button next to the correct option.</p>
-                </div>
-              } @else if (isTrueFalse()) {
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-sm font-medium text-heading">Correct Answer</label>
-                  <p-select
-                    formControlName="correctAnswer"
-                    [options]="[
-                      { label: 'True', value: 'True' },
-                      { label: 'False', value: 'False' }
-                    ]"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Select correct answer"
-                    class="w-full sm:w-64"
-                    appendTo="body"
-                  />
-                </div>
-              } @else if (isOpenEnded()) {
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-sm font-medium text-heading">Model Answer / Marking Guide (optional)</label>
-                  <textarea
-                    pTextarea
-                    formControlName="modelAnswer"
-                    rows="3"
-                    fluid
-                    placeholder="Optional guidance for markers"
-                  ></textarea>
+                </form>
+              } @else {
+                <div class="flex flex-col gap-4">
+                  <div class="rounded-xl border border-border bg-row-b p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <p class="text-sm font-medium text-heading">Step 1: Download the template</p>
+                      <p class="text-xs text-value mt-1">Use the spreadsheet template to prepare multiple questions at once.</p>
+                    </div>
+                    <p-button
+                      label="Download Template"
+                      icon="pi pi-download"
+                      severity="secondary"
+                      [outlined]="true"
+                      type="button"
+                      (onClick)="onDownloadTemplate()"
+                    />
+                  </div>
+
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-heading">Step 2: Upload the filled template</label>
+                    <p-fileupload
+                      mode="basic"
+                      chooseLabel="Choose File"
+                      [auto]="false"
+                      [multiple]="false"
+                      (onSelect)="onTemplateFileSelect($event)"
+                    />
+                    @if (selectedTemplateFile) {
+                      <span class="text-xs text-value">{{ selectedTemplateFile.name }}</span>
+                    }
+                  </div>
                 </div>
               }
 
               <div class="flex justify-between pt-2">
                 <p-button label="Back" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" type="button" (onClick)="activateCallback(1)" />
-                <p-button label="Save Question" icon="pi pi-check" type="button" (onClick)="onSubmit()" />
+                <p-button
+                  [label]="mode() === 'template' ? 'Import Questions' : 'Save Question'"
+                  icon="pi pi-check"
+                  type="button"
+                  (onClick)="onSubmit()"
+                />
               </div>
-            </form>
+            </div>
+            }
           </ng-template>
         </p-step-panel>
       </p-step-panels>

@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MenuItem, MessageService } from 'primeng/api';
 import { Stepper, StepList, Step, StepPanels, StepPanel } from 'primeng/stepper';
@@ -8,10 +9,12 @@ import { InputText } from 'primeng/inputtext';
 import { Textarea } from 'primeng/textarea';
 import { RadioButton } from 'primeng/radiobutton';
 import { Button } from 'primeng/button';
+import { FileSelectEvent, FileUpload } from 'primeng/fileupload';
 import { AppBreadcrumb } from '../../shared/app-breadcrumb/app-breadcrumb';
 import { AppRichTextEditor } from '../../shared/app-rich-text-editor/app-rich-text-editor';
 
 type QuestionType = 'Multiple Choice' | 'True/False' | 'Short Answer' | 'Essay';
+type AddQuestionMode = 'one-by-one' | 'template';
 
 @Component({
   selector: 'app-add-question',
@@ -28,6 +31,8 @@ type QuestionType = 'Multiple Choice' | 'True/False' | 'Short Answer' | 'Essay';
     Textarea,
     RadioButton,
     Button,
+    FileUpload,
+    NgClass,
     AppBreadcrumb,
     AppRichTextEditor,
   ],
@@ -44,6 +49,8 @@ export class AddQuestion {
   ];
 
   readonly activeStep = signal(1);
+  readonly mode = signal<AddQuestionMode>('one-by-one');
+  selectedTemplateFile: File | null = null;
 
   readonly educationLevelOptions = [
     { label: 'Certificate', value: 'Certificate' },
@@ -168,7 +175,42 @@ export class AddQuestion {
     return String.fromCharCode(65 + index);
   }
 
+  onDownloadTemplate(): void {
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Download Template',
+      detail: 'Template download is not available in this demo.',
+    });
+  }
+
+  onTemplateFileSelect(event: FileSelectEvent): void {
+    this.selectedTemplateFile = event.files[0] ?? null;
+  }
+
   onSubmit(): void {
+    if (this.mode() === 'template') {
+      if (!this.selectedTemplateFile) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'No File Selected',
+          detail: 'Please upload a filled template before importing.',
+        });
+        return;
+      }
+
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Questions Imported',
+        detail: 'Questions from the template were imported successfully.',
+      });
+
+      this.selectedTemplateFile = null;
+      this.detailsForm.reset();
+      this.mode.set('one-by-one');
+      this.activeStep.set(1);
+      return;
+    }
+
     if (this.questionForm.controls.questionText.invalid) {
       this.questionForm.markAllAsTouched();
       return;

@@ -278,8 +278,30 @@ export const routes: Routes = [
           import('./question-bank/question-list/question-list').then((m) => m.QuestionList),
       },
       {
-        path: 'question-bank/setup',
-        loadComponent: () => import('./question-bank/setup/setup').then((m) => m.Setup),
+        path: 'question-bank/questions/:category',
+        loadComponent: () =>
+          import('./question-bank/question-list-by-cadre/question-list-by-cadre').then(
+            (m) => m.QuestionListByCadre,
+          ),
+      },
+      {
+        path: 'question-bank/questions/:category/:cadre',
+        loadComponent: () =>
+          import('./question-bank/question-list-per-cadre/question-list-per-cadre').then(
+            (m) => m.QuestionListPerCadre,
+          ),
+      },
+      {
+        path: 'question-bank/setup/question-categories',
+        loadComponent: () =>
+          import('./question-bank/setup/question-categories/question-categories').then(
+            (m) => m.QuestionCategories,
+          ),
+      },
+      {
+        path: 'question-bank/setup/question-types',
+        loadComponent: () =>
+          import('./question-bank/setup/question-types/question-types').then((m) => m.QuestionTypes),
       },
     ],
   },

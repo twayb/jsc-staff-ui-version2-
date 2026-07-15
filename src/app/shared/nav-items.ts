@@ -69,7 +69,15 @@ const QUESTION_BANK_NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', icon: 'pi-home', route: '/question-bank' },
   { label: 'Add Question', icon: 'pi-plus-circle', route: '/question-bank/add-question' },
   { label: 'Question List', icon: 'pi-list', route: '/question-bank/questions' },
-  { label: 'Setup', icon: 'pi-cog', route: '/question-bank/setup' },
+  {
+    label: 'Setup',
+    icon: 'pi-cog',
+    route: null,
+    children: [
+      { label: 'Question Categories', icon: 'pi-tags', route: '/question-bank/setup/question-categories' },
+      { label: 'Question Types', icon: 'pi-list-check', route: '/question-bank/setup/question-types' },
+    ],
+  },
 ];
 
 const NAV_ITEMS_BY_SERVICE: Record<string, NavItem[]> = {
