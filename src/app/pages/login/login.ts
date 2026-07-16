@@ -1,13 +1,15 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { Button } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { Password } from 'primeng/password';
 import { Checkbox } from 'primeng/checkbox';
 import { IconField } from 'primeng/iconfield';
 import { InputIcon } from 'primeng/inputicon';
+import { finalize } from 'rxjs';
 import { AuthLayout } from '../../shared/auth-layout/auth-layout';
+import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -17,7 +19,7 @@ import { AuthLayout } from '../../shared/auth-layout/auth-layout';
 })
 export class Login {
   private readonly fb = inject(FormBuilder);
-  private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
 
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -25,7 +27,7 @@ export class Login {
     rememberMe: [false],
   });
 
-  submitting = false;
+  readonly submitting = signal(false);
 
   onSubmit(): void {
     if (this.form.invalid) {
@@ -33,9 +35,16 @@ export class Login {
       return;
     }
 
-    this.submitting = true;
-    // TODO: wire up to auth service once the backend endpoint is ready
-    console.log(this.form.getRawValue());
-    this.router.navigateByUrl('/services');
+    this.submitting.set(true);
+    const { email, password } = this.form.getRawValue();
+
+    this.authService
+      .login({ email, password })
+      .pipe(finalize(() => this.submitting.set(false)))
+      .subscribe({
+        error: () => {
+          // Failure is already surfaced via toast inside AuthService.
+        },
+      });
   }
 }

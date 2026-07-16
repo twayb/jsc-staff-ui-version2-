@@ -8,6 +8,7 @@ import { ThemeService } from '../../core/theme/theme.service';
 import { SessionLockService } from '../../core/session-lock/session-lock.service';
 import { LayoutService } from '../../core/layout/layout.service';
 import { TextSizeService } from '../../core/text-size/text-size.service';
+import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-header',
@@ -24,8 +25,9 @@ export class AppHeader {
   readonly textSize = inject(TextSizeService);
   private readonly router = inject(Router);
   private readonly sessionLock = inject(SessionLockService);
+  private readonly authService = inject(AuthService);
 
-  readonly userName = 'Staff Member';
+  readonly userName = this.authService.user()?.fullName ?? 'Staff Member';
   readonly userTitle = 'ICT Officer';
 
   readonly userMenuItems = computed<MenuItem[]>(() => [
@@ -53,6 +55,6 @@ export class AppHeader {
   ]);
 
   logout(): void {
-    this.router.navigateByUrl('/login');
+    this.authService.logout();
   }
 }

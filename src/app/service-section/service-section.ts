@@ -2,6 +2,7 @@ import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angula
 import { DatePipe, NgClass } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AppSkeleton } from '../shared/app-skeleton/app-skeleton';
+import { cando } from '../core/utils';
 
 interface Service {
   title: string;
@@ -10,6 +11,7 @@ interface Service {
   bgClass: string;
   fgClass: string;
   route: string | null;
+  permission?: string;
 }
 
 type GreetingPeriod = 'morning' | 'afternoon' | 'evening';
@@ -73,6 +75,7 @@ export class ServiceSection implements OnInit {
       bgClass: 'bg-primary/10',
       fgClass: 'text-primary',
       route: '/recruitment',
+      permission: 'GET_ASSIGNED_APPLICATIONS_BY_ADVERT',
     },
     {
       title: 'Complaints',
@@ -81,6 +84,7 @@ export class ServiceSection implements OnInit {
       bgClass: 'bg-danger-bg',
       fgClass: 'text-danger',
       route: null,
+      permission: 'GET_FILTERED_COMPLAINTS',
     },
     {
       title: 'System Administration',
@@ -89,6 +93,7 @@ export class ServiceSection implements OnInit {
       bgClass: 'bg-secondary-bg',
       fgClass: 'text-secondary',
       route: '/system-administration',
+      permission: 'GET_AUDIT_LOGS_SYSADMIN',
     },
     {
       title: 'Question Bank',
@@ -97,6 +102,7 @@ export class ServiceSection implements OnInit {
       bgClass: 'bg-info-bg',
       fgClass: 'text-info',
       route: '/question-bank',
+      permission: 'ADD_PERMIT',
     },
     {
       title: 'Online Interview',
@@ -105,6 +111,7 @@ export class ServiceSection implements OnInit {
       bgClass: 'bg-info-bg',
       fgClass: 'text-info',
       route: '/online-interview',
+      permission: 'ADD_PERMIT',
     },
     {
       title: 'Report',
@@ -113,6 +120,7 @@ export class ServiceSection implements OnInit {
       bgClass: 'bg-success-bg',
       fgClass: 'text-success',
       route: null,
+      permission: 'GET_DATA_BANK_APPLICATIONS',
     },
     {
       title: 'HR Management',
@@ -121,6 +129,7 @@ export class ServiceSection implements OnInit {
       bgClass: 'bg-warning-bg',
       fgClass: 'text-warning',
       route: null,
+      permission: 'GET_ASSIGNED_APPLICATIONS_BY_ADVERT',
     },
     {
       title: 'Asset Management',
@@ -131,4 +140,8 @@ export class ServiceSection implements OnInit {
       route: null,
     },
   ];
+
+  canAccess(service: Service): boolean {
+    return !!service.route && (!service.permission || cando(service.permission));
+  }
 }
