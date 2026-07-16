@@ -1,0 +1,491 @@
+<div class="w-full px-4 sm:px-6 py-10 max-w-6xl mx-auto">
+  <app-breadcrumb [items]="breadcrumbItems" />
+
+  <div class="bg-card border border-border rounded-2xl p-6 animate-fade-in-up">
+    <p-stepper
+      [value]="activeStep()"
+      (valueChange)="activeStep.set($event ?? 1)"
+      [motionOptions]="{ duration: { enter: 300, leave: 200 } }"
+    >
+      <p-step-list>
+        <p-step [value]="1">Interview Setup</p-step>
+        <p-step [value]="2">Question Selection</p-step>
+        <p-step [value]="3">Interview Timing</p-step>
+        <p-step [value]="4">Review</p-step>
+      </p-step-list>
+
+      <p-step-panels>
+        <!-- Step 1: Interview Setup -->
+        <p-step-panel [value]="1">
+          <ng-template #content let-activateCallback="activateCallback">
+            @if (activeStep() === 1) {
+              <form [formGroup]="setupForm" class="flex flex-col gap-4 pt-6 animate-tab-slide">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-heading">Advert</label>
+                    <p-select
+                      formControlName="advert"
+                      [options]="advertOptions"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Select advert"
+                      class="w-full"
+                      appendTo="body"
+                      [filter]="true"
+                      filterPlaceholder="Search advert"
+                    />
+                    @if (setupForm.controls.advert.invalid && setupForm.controls.advert.touched) {
+                      <span class="text-xs text-danger">Advert is required.</span>
+                    }
+                  </div>
+
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-heading">Interview Type</label>
+                    <p-select
+                      formControlName="interviewType"
+                      [options]="interviewTypeOptions"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Select interview type"
+                      class="w-full"
+                      appendTo="body"
+                    />
+                    @if (setupForm.controls.interviewType.invalid && setupForm.controls.interviewType.touched) {
+                      <span class="text-xs text-danger">Interview type is required.</span>
+                    }
+                  </div>
+
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-heading">Number of Questions</label>
+                    <p-inputnumber formControlName="questionCount" [min]="1" [showButtons]="true" class="w-full" />
+                    @if (setupForm.controls.questionCount.invalid && setupForm.controls.questionCount.touched) {
+                      <span class="text-xs text-danger">Number of questions is required.</span>
+                    }
+                  </div>
+
+                  <div class="flex items-center justify-between gap-4 rounded-xl border border-border px-4 py-2.5">
+                    <div>
+                      <p class="text-sm font-medium text-heading">Show Results</p>
+                      <p class="text-xs text-value">Reveal the score to candidates right after submission</p>
+                    </div>
+                    <p-toggleswitch formControlName="showResults" />
+                  </div>
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                  <label class="text-sm font-medium text-heading">Question Selection Mode</label>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      (click)="selectionMode.set('random')"
+                      class="text-left rounded-xl border p-4 transition-colors"
+                      [ngClass]="selectionMode() === 'random' ? 'border-primary bg-primary/5' : 'border-border hover:bg-row-b'"
+                    >
+                      <div class="flex items-center gap-3">
+                        <span class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary shrink-0">
+                          <i class="pi pi-sync"></i>
+                        </span>
+                        <div>
+                          <p class="text-sm font-semibold text-heading">Random Selection</p>
+                          <p class="text-xs text-value mt-0.5">Questions are picked automatically from the pool</p>
+                        </div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="selectionMode.set('manual')"
+                      class="text-left rounded-xl border p-4 transition-colors"
+                      [ngClass]="selectionMode() === 'manual' ? 'border-primary bg-primary/5' : 'border-border hover:bg-row-b'"
+                    >
+                      <div class="flex items-center gap-3">
+                        <span class="flex items-center justify-center w-10 h-10 rounded-lg bg-info-bg text-info shrink-0">
+                          <i class="pi pi-list-check"></i>
+                        </span>
+                        <div>
+                          <p class="text-sm font-semibold text-heading">Manual Selection</p>
+                          <p class="text-xs text-value mt-0.5">Hand-pick the exact questions to use</p>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="flex justify-end pt-2">
+                  <p-button label="Next" icon="pi pi-arrow-right" iconPos="right" type="button" (onClick)="onGoToQuestionStep(activateCallback)" />
+                </div>
+              </form>
+            }
+          </ng-template>
+        </p-step-panel>
+
+        <!-- Step 2: Question Selection -->
+        <p-step-panel [value]="2">
+          <ng-template #content let-activateCallback="activateCallback">
+            @if (activeStep() === 2) {
+              <div class="flex flex-col gap-4 pt-6 animate-tab-slide">
+                @if (selectionMode() === 'manual') {
+                  <app-data-table
+                    [card]="false"
+                    [data]="availableQuestions()"
+                    [searchFields]="['text', 'category', 'level']"
+                    dataKey="id"
+                    [rows]="5"
+                    [rowsPerPageOptions]="[5, 10, 20]"
+                    [skeletonColumns]="4"
+                  >
+                    <div tableAction class="text-xs text-value whitespace-nowrap">
+                      Selected {{ selectedQuestionIds().length }} of {{ questionCount() || 0 }}
+                    </div>
+
+                    <ng-template #headerTpl>
+                      <tr>
+                        <th class="pl-6 w-10"></th>
+                        <th>No</th>
+                        <th>Question</th>
+                        <th>Category</th>
+                        <th>Level</th>
+                      </tr>
+                    </ng-template>
+
+                    <ng-template #bodyTpl let-question let-rowIndex="rowIndex">
+                      <tr
+                        (click)="toggleQuestion(question.id)"
+                        [class.bg-primary/5]="isQuestionSelected(question.id)"
+                        [class.opacity-50]="isSelectionLimitReached(question.id)"
+                      >
+                        <td class="pl-6">
+                          <input
+                            type="checkbox"
+                            [checked]="isQuestionSelected(question.id)"
+                            [disabled]="isSelectionLimitReached(question.id)"
+                            (click)="$event.stopPropagation(); toggleQuestion(question.id)"
+                            [attr.aria-label]="'Select question ' + (rowIndex + 1)"
+                          />
+                        </td>
+                        <td>{{ rowIndex + 1 }}</td>
+                        <td class="max-w-md truncate">{{ question.text }}</td>
+                        <td>{{ question.category }}</td>
+                        <td>{{ question.level }}</td>
+                      </tr>
+                    </ng-template>
+
+                    <ng-template #emptyTpl>
+                      <tr>
+                        <td colspan="5" class="text-center text-value py-8">
+                          No questions are available in the bank for this cadre.
+                        </td>
+                      </tr>
+                    </ng-template>
+                  </app-data-table>
+                } @else {
+                  <div class="rounded-xl border border-border p-4 flex items-start gap-3">
+                    <i class="pi pi-sync text-primary mt-0.5"></i>
+                    <div>
+                      <p class="text-sm font-semibold text-heading">Random Selection Configuration</p>
+                      <p class="text-xs text-value mt-1">
+                        Allocate <strong>{{ questionCount() || 0 }}</strong> question(s) across categories and difficulty levels.
+                      </p>
+                      <p
+                        class="text-xs font-medium mt-2 flex items-center gap-1.5"
+                        [ngClass]="totalRemaining() === 0 ? 'text-success' : 'text-danger'"
+                      >
+                        <i class="pi" [ngClass]="totalRemaining() === 0 ? 'pi-check-circle' : 'pi-exclamation-circle'"></i>
+                        @if (totalRemaining() > 0) {
+                          {{ totalRemaining() }} question(s) still unallocated
+                        } @else if (totalRemaining() < 0) {
+                          {{ -totalRemaining() }} question(s) above requested total
+                        } @else {
+                          All {{ questionCount() }} question(s) allocated
+                        }
+                      </p>
+                    </div>
+                  </div>
+
+                  @if (randomAllocation().length === 0) {
+                    <p class="text-sm text-value">Select an advert to load question categories.</p>
+                  } @else {
+                    <div class="flex flex-col gap-3">
+                      @for (row of randomAllocation(); track row.category; let i = $index) {
+                        <div class="rounded-xl border border-border p-4">
+                          <div class="flex items-center justify-between mb-3">
+                            <span class="text-sm font-semibold text-heading">{{ row.category }}</span>
+                            <span class="text-xs text-value">Available {{ rowAvailableTotal(row) }}</span>
+                          </div>
+
+                          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            @for (level of levels; track level) {
+                              @if (row.available[level] > 0) {
+                                <div class="flex flex-col gap-1.5">
+                                  <label class="text-xs font-medium text-heading">{{ level }}</label>
+                                  <p-inputnumber
+                                    [ngModel]="row.counts[level]"
+                                    (ngModelChange)="setLevelCount(i, level, $event)"
+                                    [min]="0"
+                                    [max]="row.available[level]"
+                                    [showButtons]="true"
+                                    class="w-full"
+                                  />
+                                  <span class="text-xs text-value">Available: {{ row.available[level] }}</span>
+                                </div>
+                              }
+                            }
+                          </div>
+
+                          <p
+                            class="text-xs font-medium mt-3 flex items-center gap-1.5"
+                            [ngClass]="rowAvailableTotal(row) - rowAllocatedTotal(row) >= 0 ? 'text-success' : 'text-danger'"
+                          >
+                            <i
+                              class="pi"
+                              [ngClass]="rowAvailableTotal(row) - rowAllocatedTotal(row) >= 0 ? 'pi-check-circle' : 'pi-exclamation-circle'"
+                            ></i>
+                            @if (rowAvailableTotal(row) - rowAllocatedTotal(row) > 0) {
+                              {{ rowAllocatedTotal(row) }} selected for this category
+                            } @else if (rowAvailableTotal(row) - rowAllocatedTotal(row) < 0) {
+                              {{ rowAllocatedTotal(row) - rowAvailableTotal(row) }} above category available total
+                            } @else {
+                              Category fully allocated
+                            }
+                          </p>
+                        </div>
+                      }
+                    </div>
+                  }
+                }
+
+                <div class="flex justify-between pt-2">
+                  <p-button label="Back" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" type="button" (onClick)="activateCallback(1)" />
+                  <p-button
+                    label="Next"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                    type="button"
+                    [disabled]="!canProceedFromQuestionSelection()"
+                    (onClick)="activateCallback(3)"
+                  />
+                </div>
+              </div>
+            }
+          </ng-template>
+        </p-step-panel>
+
+        <!-- Step 3: Interview Timing -->
+        <p-step-panel [value]="3">
+          <ng-template #content let-activateCallback="activateCallback">
+            @if (activeStep() === 3) {
+              <form [formGroup]="timingForm" class="flex flex-col gap-4 pt-6 animate-tab-slide">
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-calendar text-primary"></i>
+                  <span class="text-sm font-semibold text-heading">Availability</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div class="flex flex-col gap-1.5">
+                    <label for="startDate" class="text-sm font-medium text-heading">Start Date</label>
+                    <p-datepicker
+                      inputId="startDate"
+                      formControlName="startDate"
+                      dateFormat="yy-mm-dd"
+                      [showIcon]="true"
+                      appendTo="body"
+                      class="w-full"
+                    />
+                    @if (timingForm.controls.startDate.invalid && timingForm.controls.startDate.touched) {
+                      <span class="text-xs text-danger">Start date is required.</span>
+                    }
+                  </div>
+
+                  <div class="flex flex-col gap-1.5">
+                    <label for="startTime" class="text-sm font-medium text-heading">Start Time</label>
+                    <p-datepicker
+                      inputId="startTime"
+                      formControlName="startTime"
+                      [timeOnly]="true"
+                      [showIcon]="true"
+                      appendTo="body"
+                      class="w-full"
+                    />
+                    @if (timingForm.controls.startTime.invalid && timingForm.controls.startTime.touched) {
+                      <span class="text-xs text-danger">Start time is required.</span>
+                    }
+                  </div>
+
+                  <div class="flex flex-col gap-1.5">
+                    <label for="endDate" class="text-sm font-medium text-heading">End Date</label>
+                    <p-datepicker
+                      inputId="endDate"
+                      formControlName="endDate"
+                      dateFormat="yy-mm-dd"
+                      [showIcon]="true"
+                      appendTo="body"
+                      class="w-full"
+                    />
+                    @if (timingForm.controls.endDate.invalid && timingForm.controls.endDate.touched) {
+                      <span class="text-xs text-danger">End date is required.</span>
+                    }
+                  </div>
+
+                  <div class="flex flex-col gap-1.5">
+                    <label for="endTime" class="text-sm font-medium text-heading">End Time</label>
+                    <p-datepicker
+                      inputId="endTime"
+                      formControlName="endTime"
+                      [timeOnly]="true"
+                      [showIcon]="true"
+                      appendTo="body"
+                      class="w-full"
+                    />
+                    @if (timingForm.controls.endTime.invalid && timingForm.controls.endTime.touched) {
+                      <span class="text-xs text-danger">End time is required.</span>
+                    }
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2 pt-2">
+                  <i class="pi pi-clock text-primary"></i>
+                  <span class="text-sm font-semibold text-heading">Duration</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-heading">Hours</label>
+                    <p-inputnumber formControlName="durationHours" [min]="0" [max]="23" [showButtons]="true" class="w-full" />
+                    @if (timingForm.controls.durationHours.invalid && timingForm.controls.durationHours.touched) {
+                      <span class="text-xs text-danger">Hours must be between 0 and 23.</span>
+                    }
+                  </div>
+
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-heading">Minutes</label>
+                    <p-inputnumber formControlName="durationMinutes" [min]="0" [max]="59" [showButtons]="true" class="w-full" />
+                    @if (timingForm.controls.durationMinutes.invalid && timingForm.controls.durationMinutes.touched) {
+                      <span class="text-xs text-danger">Minutes must be between 0 and 59.</span>
+                    }
+                  </div>
+                </div>
+
+                <div class="flex justify-between pt-2">
+                  <p-button label="Back" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" type="button" (onClick)="activateCallback(2)" />
+                  <p-button label="Next" icon="pi pi-arrow-right" iconPos="right" type="button" (onClick)="onGoToReviewStep(activateCallback)" />
+                </div>
+              </form>
+            }
+          </ng-template>
+        </p-step-panel>
+
+        <!-- Step 4: Review -->
+        <p-step-panel [value]="4">
+          <ng-template #content let-activateCallback="activateCallback">
+            @if (activeStep() === 4) {
+              <div class="flex flex-col gap-4 pt-6 animate-tab-slide">
+                <div class="rounded-xl border border-border p-4">
+                  <div class="flex items-center justify-between mb-3">
+                    <p class="text-sm font-semibold text-heading">Interview Setup</p>
+                    <button type="button" class="text-xs font-medium text-primary hover:underline" (click)="activateCallback(1)">Edit</button>
+                  </div>
+                  <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                    <div class="flex justify-between sm:justify-start sm:gap-2">
+                      <dt class="text-value">Advert</dt>
+                      <dd class="text-heading font-medium">{{ setupForm.controls.advert.value || '—' }}</dd>
+                    </div>
+                    <div class="flex justify-between sm:justify-start sm:gap-2">
+                      <dt class="text-value">Interview Type</dt>
+                      <dd class="text-heading font-medium">{{ setupForm.controls.interviewType.value || '—' }}</dd>
+                    </div>
+                    <div class="flex justify-between sm:justify-start sm:gap-2">
+                      <dt class="text-value">Number of Questions</dt>
+                      <dd class="text-heading font-medium">{{ setupForm.controls.questionCount.value ?? '—' }}</dd>
+                    </div>
+                    <div class="flex justify-between sm:justify-start sm:gap-2">
+                      <dt class="text-value">Selection Mode</dt>
+                      <dd class="text-heading font-medium">{{ selectionMode() === 'random' ? 'Random' : 'Manual' }}</dd>
+                    </div>
+                    <div class="flex justify-between sm:justify-start sm:gap-2">
+                      <dt class="text-value">Show Results</dt>
+                      <dd class="text-heading font-medium">{{ setupForm.controls.showResults.value ? 'Yes' : 'No' }}</dd>
+                    </div>
+                  </dl>
+                </div>
+
+                <div class="rounded-xl border border-border p-4">
+                  <div class="flex items-center justify-between mb-3">
+                    <p class="text-sm font-semibold text-heading">Question Selection</p>
+                    <button type="button" class="text-xs font-medium text-primary hover:underline" (click)="activateCallback(2)">Edit</button>
+                  </div>
+                  @if (selectionMode() === 'random') {
+                    <div class="flex flex-col gap-1">
+                      @for (row of randomAllocation(); track row.category) {
+                        <p class="text-sm text-heading">
+                          <strong>{{ row.category }}:</strong>
+                          {{ rowAllocatedTotal(row) }} total (Easy {{ row.counts.Easy }}, Medium {{ row.counts.Medium }}, Hard {{ row.counts.Hard }})
+                        </p>
+                      }
+                    </div>
+                  } @else {
+                    <ul class="list-disc pl-5 flex flex-col gap-1">
+                      @for (question of availableQuestions(); track question.id) {
+                        @if (isQuestionSelected(question.id)) {
+                          <li class="text-sm text-heading">{{ question.text }}</li>
+                        }
+                      }
+                    </ul>
+                  }
+                </div>
+
+                <div class="rounded-xl border border-border p-4">
+                  <div class="flex items-center justify-between mb-3">
+                    <p class="text-sm font-semibold text-heading">Interview Timing</p>
+                    <button type="button" class="text-xs font-medium text-primary hover:underline" (click)="activateCallback(3)">Edit</button>
+                  </div>
+                  <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                    <div class="flex justify-between sm:justify-start sm:gap-2">
+                      <dt class="text-value">Start</dt>
+                      <dd class="text-heading font-medium">
+                        {{ timingForm.controls.startDate.value ? (timingForm.controls.startDate.value | date: 'yyyy-MM-dd') : '—' }}
+                        @if (timingForm.controls.startTime.value) {
+                          at {{ timingForm.controls.startTime.value | date: 'HH:mm' }}
+                        }
+                      </dd>
+                    </div>
+                    <div class="flex justify-between sm:justify-start sm:gap-2">
+                      <dt class="text-value">End</dt>
+                      <dd class="text-heading font-medium">
+                        {{ timingForm.controls.endDate.value ? (timingForm.controls.endDate.value | date: 'yyyy-MM-dd') : '—' }}
+                        @if (timingForm.controls.endTime.value) {
+                          at {{ timingForm.controls.endTime.value | date: 'HH:mm' }}
+                        }
+                      </dd>
+                    </div>
+                    <div class="flex justify-between sm:justify-start sm:gap-2">
+                      <dt class="text-value">Duration</dt>
+                      <dd class="text-heading font-medium">
+                        {{ timingForm.controls.durationHours.value ?? 0 }}h {{ timingForm.controls.durationMinutes.value ?? 0 }}m
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+
+                <label class="flex items-center gap-2 text-sm text-heading">
+                  <input type="checkbox" [checked]="confirmed()" (change)="confirmed.set(!confirmed())" />
+                  I confirm all details above are correct
+                </label>
+
+                <div class="flex justify-between pt-2">
+                  <p-button label="Back" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" type="button" (onClick)="activateCallback(3)" />
+                  <p-button
+                    label="Schedule Interview"
+                    icon="pi pi-check"
+                    type="button"
+                    [disabled]="!confirmed()"
+                    (onClick)="onSubmit()"
+                  />
+                </div>
+              </div>
+            }
+          </ng-template>
+        </p-step-panel>
+      </p-step-panels>
+    </p-stepper>
+  </div>
+</div>

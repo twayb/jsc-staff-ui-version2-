@@ -1,43 +1,41 @@
 <div [ngClass]="card ? 'bg-card border border-border rounded-2xl' : ''">
-  @if (loading) {
-    <div class="!border-0 !border-b !border-border px-4 py-3">
-      <app-skeleton variant="list" [rows]="1" class="block max-w-xs" />
+  <div role="toolbar" class="flex flex-wrap items-center justify-between gap-4 px-4 py-3 border-b border-border">
+    <div>
+      <h1 class="text-lg font-semibold text-heading">{{ title }}</h1>
+      @if (subtitle) {
+        <p class="text-xs text-value">{{ subtitle }}</p>
+      }
     </div>
+
+    <div class="flex flex-wrap items-center gap-2 ml-auto justify-end">
+      @if (searchFields.length) {
+        <p-iconfield>
+          <p-inputicon class="pi pi-search" />
+          <input
+            pInputText
+            type="text"
+            placeholder="Search"
+            [disabled]="loading"
+            (input)="dt?.filterGlobal($any($event.target).value, 'contains')"
+          />
+        </p-iconfield>
+      }
+      @if (addLabel) {
+        <p-button
+          [label]="addLabel"
+          [icon]="addIcon"
+          (onClick)="add.emit()"
+          [text]="true"
+          class="transition-transform duration-150 hover:scale-105 active:scale-95"
+        />
+      }
+      <ng-content select="[tableAction]" />
+    </div>
+  </div>
+
+  @if (loading) {
     <app-skeleton variant="table" [rows]="skeletonRows" [columns]="skeletonColumns" class="block p-6" />
   } @else {
-    <div role="toolbar" class="flex flex-wrap items-center justify-between gap-4 px-4 py-3 border-b border-border">
-      <div>
-        <h1 class="text-lg font-semibold text-heading">{{ title }}</h1>
-        @if (subtitle) {
-          <p class="text-xs text-value">{{ subtitle }}</p>
-        }
-      </div>
-
-      <div class="flex flex-wrap items-center gap-2 ml-auto justify-end">
-        @if (searchFields.length) {
-          <p-iconfield>
-            <p-inputicon class="pi pi-search" />
-            <input
-              pInputText
-              type="text"
-              placeholder="Search"
-              (input)="dt.filterGlobal($any($event.target).value, 'contains')"
-            />
-          </p-iconfield>
-        }
-        @if (addLabel) {
-          <p-button
-            [label]="addLabel"
-            [icon]="addIcon"
-            (onClick)="add.emit()"
-            [text]="true"
-            class="transition-transform duration-150 hover:scale-105 active:scale-95"
-          />
-        }
-        <ng-content select="[tableAction]" />
-      </div>
-    </div>
-
     <p-table
       #dt
       class="text-sm"
@@ -45,6 +43,7 @@
       [paginator]="true"
       [rows]="rows"
       [rowsPerPageOptions]="rowsPerPageOptions"
+      paginatorDropdownAppendTo="body"
       [globalFilterFields]="searchFields"
       [rowHover]="true"
       [scrollable]="true"

@@ -163,6 +163,28 @@
   display: none;
 }
 
+.scrollbar-auto {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.scrollbar-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-auto::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 9999px;
+}
+
+.scrollbar-auto:hover {
+  scrollbar-color: var(--border) transparent;
+}
+
+.scrollbar-auto:hover::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+}
+
 .stagger-1 {
   animation-delay: 0.08s;
 }

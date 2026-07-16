@@ -1,0 +1,236 @@
+<div class="w-full px-4 sm:px-6 py-10">
+  <app-breadcrumb [items]="breadcrumbItems" />
+
+  @if (viewMode() === 'table') {
+    <app-data-table
+      class="block animate-fade-in-up stagger-1"
+      title="Interview Session by Venue"
+      [subtitle]="subtitle"
+      [data]="filteredSessions()"
+      [loading]="loading()"
+      [searchFields]="['session']"
+      [scrollHeight]="'28rem'"
+      dataKey="session"
+    >
+      <div tableAction class="flex items-center gap-1 bg-row-b rounded-lg p-1 flex-wrap">
+        @for (filter of statusFilters; track filter.value) {
+          <button
+            type="button"
+            (click)="statusFilter.set(filter.value)"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+            [class.bg-card]="statusFilter() === filter.value"
+            [class.shadow-sm]="statusFilter() === filter.value"
+            [class.text-primary]="statusFilter() === filter.value"
+            [class.text-value]="statusFilter() !== filter.value"
+          >
+            {{ filter.label }}
+            <span
+              class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+              [class.bg-primary/10]="statusFilter() === filter.value"
+              [class.bg-card]="statusFilter() !== filter.value"
+            >
+              {{ filterCount(filter.value) }}
+            </span>
+          </button>
+        }
+      </div>
+
+      <div tableAction class="flex items-center gap-1 bg-row-b rounded-lg p-1 shrink-0">
+        <button
+          type="button"
+          (click)="viewMode.set('table')"
+          class="flex items-center justify-center w-8 h-8 rounded-md transition-colors"
+          [class.bg-card]="viewMode() === 'table'"
+          [class.shadow-sm]="viewMode() === 'table'"
+          [class.text-primary]="viewMode() === 'table'"
+          [class.text-value]="viewMode() !== 'table'"
+          aria-label="Table view"
+        >
+          <i class="pi pi-list text-sm"></i>
+        </button>
+        <button
+          type="button"
+          (click)="viewMode.set('card')"
+          class="flex items-center justify-center w-8 h-8 rounded-md transition-colors"
+          [class.bg-card]="viewMode() === 'card'"
+          [class.shadow-sm]="viewMode() === 'card'"
+          [class.text-primary]="viewMode() === 'card'"
+          [class.text-value]="viewMode() !== 'card'"
+          aria-label="Card view"
+        >
+          <i class="pi pi-th-large text-sm"></i>
+        </button>
+      </div>
+
+      <ng-template #headerTpl>
+        <tr>
+          <th class="pl-6">No</th>
+          <th>Session</th>
+          <th>Status</th>
+          <th>Total</th>
+          <th>Not Started</th>
+          <th>In Progress</th>
+          <th class="text-center pr-6">Action</th>
+        </tr>
+      </ng-template>
+
+      <ng-template #bodyTpl let-session let-rowIndex="rowIndex">
+        <tr>
+          <td class="pl-6">{{ rowIndex + 1 }}</td>
+          <td>{{ session.session }}</td>
+          <td>
+            <p-tag [value]="sessionStatus(session)" [severity]="sessionStatusSeverity(session)" />
+          </td>
+          <td>{{ session.total }}</td>
+          <td>{{ session.notStarted }}</td>
+          <td>{{ session.inProgress }}</td>
+          <td class="text-center pr-6">
+            <div class="flex items-center justify-center gap-1">
+              <button
+                type="button"
+                (click)="onGenerateCode(session)"
+                class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors"
+                aria-label="Generate code"
+              >
+                <i class="pi pi-key text-sm"></i>
+              </button>
+              <button
+                type="button"
+                (click)="onView(session)"
+                class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors"
+                aria-label="View session"
+              >
+                <i class="pi pi-eye text-sm"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </app-data-table>
+  } @else {
+    <div class="bg-card border border-border rounded-2xl animate-fade-in-up stagger-1">
+      <div role="toolbar" class="flex flex-wrap items-center justify-between gap-4 px-4 py-3 border-b border-border">
+        <div>
+          <h1 class="text-lg font-semibold text-heading">Interview Session by Venue</h1>
+          <p class="text-xs text-value">{{ subtitle }}</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 ml-auto justify-end">
+          <div class="flex items-center gap-1 bg-row-b rounded-lg p-1 flex-wrap">
+            @for (filter of statusFilters; track filter.value) {
+              <button
+                type="button"
+                (click)="statusFilter.set(filter.value)"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                [class.bg-card]="statusFilter() === filter.value"
+                [class.shadow-sm]="statusFilter() === filter.value"
+                [class.text-primary]="statusFilter() === filter.value"
+                [class.text-value]="statusFilter() !== filter.value"
+              >
+                {{ filter.label }}
+                <span
+                  class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                  [class.bg-primary/10]="statusFilter() === filter.value"
+                  [class.bg-card]="statusFilter() !== filter.value"
+                >
+                  {{ filterCount(filter.value) }}
+                </span>
+              </button>
+            }
+          </div>
+
+          <div class="flex items-center gap-1 bg-row-b rounded-lg p-1 shrink-0">
+            <button
+              type="button"
+              (click)="viewMode.set('table')"
+              class="flex items-center justify-center w-8 h-8 rounded-md transition-colors"
+              [class.bg-card]="viewMode() === 'table'"
+              [class.shadow-sm]="viewMode() === 'table'"
+              [class.text-primary]="viewMode() === 'table'"
+              [class.text-value]="viewMode() !== 'table'"
+              aria-label="Table view"
+            >
+              <i class="pi pi-list text-sm"></i>
+            </button>
+            <button
+              type="button"
+              (click)="viewMode.set('card')"
+              class="flex items-center justify-center w-8 h-8 rounded-md transition-colors"
+              [class.bg-card]="viewMode() === 'card'"
+              [class.shadow-sm]="viewMode() === 'card'"
+              [class.text-primary]="viewMode() === 'card'"
+              [class.text-value]="viewMode() !== 'card'"
+              aria-label="Card view"
+            >
+              <i class="pi pi-th-large text-sm"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 sm:p-6">
+        @if (loading()) {
+          <app-skeleton variant="cards" [count]="6" [cardCols]="3" />
+        } @else {
+          <div class="max-h-[28rem] overflow-y-auto scrollbar-auto pr-1">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              @for (session of filteredSessions(); track session.session; let i = $index) {
+                <div class="bg-row-b rounded-2xl p-5 flex flex-col gap-4 animate-fade-in-up" [class]="'stagger-' + ((i % 6) + 1)">
+                  <div class="flex items-start justify-between gap-2">
+                    <p class="text-sm font-semibold text-heading">{{ session.session }}</p>
+                    <p-tag [value]="sessionStatus(session)" [severity]="sessionStatusSeverity(session)" />
+                  </div>
+
+                  <div>
+                    <div class="flex items-center justify-between text-xs text-value mb-1.5">
+                      <span>{{ session.inProgress }} / {{ session.total }} in progress</span>
+                      <span>{{ inProgressProgress(session) }}%</span>
+                    </div>
+                    <div class="w-full h-1.5 rounded-full bg-card overflow-hidden">
+                      <div class="h-full bg-primary rounded-full transition-[width] duration-300" [style.width.%]="inProgressProgress(session)"></div>
+                    </div>
+                  </div>
+
+                  <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                    <div>
+                      <dt class="text-label uppercase tracking-wide">Total</dt>
+                      <dd class="text-heading font-medium mt-0.5">{{ session.total }}</dd>
+                    </div>
+                    <div>
+                      <dt class="text-label uppercase tracking-wide">Not Started</dt>
+                      <dd class="text-heading font-medium mt-0.5">{{ session.notStarted }}</dd>
+                    </div>
+                  </dl>
+
+                  <div class="flex items-center gap-2 mt-auto pt-2 border-t border-border">
+                    <p-button label="Generate Code" icon="pi pi-key" size="small" severity="secondary" [outlined]="true" type="button" (onClick)="onGenerateCode(session)" />
+                    <p-button label="View" icon="pi pi-eye" size="small" severity="secondary" [outlined]="true" type="button" (onClick)="onView(session)" />
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <p-dialog
+    [(visible)]="showCodeDialog"
+    header="Session Access Code"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '24rem' }"
+  >
+    @if (codeForSession; as session) {
+      <div class="flex flex-col gap-4 pt-2">
+        <p class="text-sm text-value">{{ session.session }}</p>
+        <div class="flex items-center justify-between gap-4 rounded-xl border border-border p-4">
+          <span class="text-2xl font-semibold tracking-[0.3em] text-heading">{{ generatedCode }}</span>
+          <p-button icon="pi pi-copy" size="small" severity="secondary" [outlined]="true" type="button" (onClick)="onCopyCode()" />
+        </div>
+        <p class="text-xs text-value">Share this code with candidates to let them join the session.</p>
+      </div>
+    }
+  </p-dialog>
+</div>

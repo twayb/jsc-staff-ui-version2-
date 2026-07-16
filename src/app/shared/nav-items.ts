@@ -80,10 +80,28 @@ const QUESTION_BANK_NAV_ITEMS: NavItem[] = [
   },
 ];
 
+const ONLINE_INTERVIEW_NAV_ITEMS: NavItem[] = [
+  { label: 'Services', icon: 'pi-th-large', route: '/services' },
+  { label: 'Dashboard', icon: 'pi-home', route: '/online-interview' },
+  { label: 'Set Interview', icon: 'pi-plus-circle', route: '/online-interview/set-interview' },
+  { label: 'Interview List', icon: 'pi-list', route: '/online-interview/interview-list' },
+  { label: 'Interview Session', icon: 'pi-desktop', route: '/online-interview/interview-session' },
+  {
+    label: 'Setup',
+    icon: 'pi-cog',
+    route: null,
+    children: [
+      { label: 'Interview Categories', icon: 'pi-tags', route: '/online-interview/setup/interview-categories' },
+      { label: 'Interview Types', icon: 'pi-list-check', route: '/online-interview/setup/interview-types' },
+    ],
+  },
+];
+
 const NAV_ITEMS_BY_SERVICE: Record<string, NavItem[]> = {
   recruitment: RECRUITMENT_NAV_ITEMS,
   'system-administration': SYSTEM_ADMINISTRATION_NAV_ITEMS,
   'question-bank': QUESTION_BANK_NAV_ITEMS,
+  'online-interview': ONLINE_INTERVIEW_NAV_ITEMS,
 };
 
 export const DEFAULT_NAV_ITEMS = RECRUITMENT_NAV_ITEMS;

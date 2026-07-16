@@ -1,6 +1,6 @@
-import { Component, ContentChild, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
+import { Component, ContentChild, EventEmitter, Input, Output, TemplateRef, ViewChild } from '@angular/core';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
-import { TableModule } from 'primeng/table';
+import { Table, TableModule } from 'primeng/table';
 import { Button } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { IconField } from 'primeng/iconfield';
@@ -29,6 +29,8 @@ export class AppDataTable<T = unknown> {
   @Input() dataKey?: string;
 
   @Output() add = new EventEmitter<void>();
+
+  @ViewChild('dt') dt?: Table;
 
   @ContentChild('headerTpl') headerTemplate?: TemplateRef<unknown>;
   @ContentChild('bodyTpl') bodyTemplate?: TemplateRef<unknown>;

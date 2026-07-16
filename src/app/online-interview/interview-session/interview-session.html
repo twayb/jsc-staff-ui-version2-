@@ -1,0 +1,275 @@
+<div class="w-full px-4 sm:px-6 py-10">
+  <app-breadcrumb [items]="breadcrumbItems" />
+
+  @if (viewMode() === 'table') {
+    <app-data-table
+      class="block animate-fade-in-up stagger-1"
+      title="Interview Session"
+      subtitle="Live and scheduled online interview sessions"
+      [data]="filteredInterviews()"
+      [loading]="loading()"
+      [searchFields]="['cadre', 'interviewType']"
+      [scrollHeight]="'28rem'"
+      dataKey="id"
+    >
+      <div tableAction class="flex items-center gap-1 bg-row-b rounded-lg p-1 flex-wrap">
+        @for (filter of statusFilters; track filter.value) {
+          <button
+            type="button"
+            (click)="statusFilter.set(filter.value)"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+            [class.bg-card]="statusFilter() === filter.value"
+            [class.shadow-sm]="statusFilter() === filter.value"
+            [class.text-primary]="statusFilter() === filter.value"
+            [class.text-value]="statusFilter() !== filter.value"
+          >
+            {{ filter.label }}
+            <span
+              class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+              [class.bg-primary/10]="statusFilter() === filter.value"
+              [class.bg-card]="statusFilter() !== filter.value"
+            >
+              {{ filterCount(filter.value) }}
+            </span>
+          </button>
+        }
+      </div>
+
+      <div tableAction class="flex items-center gap-1 bg-row-b rounded-lg p-1 shrink-0">
+        <button
+          type="button"
+          (click)="viewMode.set('table')"
+          class="flex items-center justify-center w-8 h-8 rounded-md transition-colors"
+          [class.bg-card]="viewMode() === 'table'"
+          [class.shadow-sm]="viewMode() === 'table'"
+          [class.text-primary]="viewMode() === 'table'"
+          [class.text-value]="viewMode() !== 'table'"
+          aria-label="Table view"
+        >
+          <i class="pi pi-list text-sm"></i>
+        </button>
+        <button
+          type="button"
+          (click)="viewMode.set('card')"
+          class="flex items-center justify-center w-8 h-8 rounded-md transition-colors"
+          [class.bg-card]="viewMode() === 'card'"
+          [class.shadow-sm]="viewMode() === 'card'"
+          [class.text-primary]="viewMode() === 'card'"
+          [class.text-value]="viewMode() !== 'card'"
+          aria-label="Card view"
+        >
+          <i class="pi pi-th-large text-sm"></i>
+        </button>
+      </div>
+
+      <ng-template #headerTpl>
+        <tr>
+          <th class="pl-6">No</th>
+          <th>Cadre</th>
+          <th>Interview Type</th>
+          <th>Candidates</th>
+          <th>Start</th>
+          <th>End</th>
+          <th>Duration</th>
+          <th class="text-center pr-6">Action</th>
+        </tr>
+      </ng-template>
+
+      <ng-template #bodyTpl let-interview let-rowIndex="rowIndex">
+        <tr>
+          <td class="pl-6">{{ rowIndex + 1 }}</td>
+          <td>{{ interview.cadre }}</td>
+          <td>
+            <p-tag [value]="interview.interviewType" [severity]="interviewTypeSeverity(interview.interviewType)" />
+          </td>
+          <td>{{ submittedCount(interview) }} / {{ interview.candidatesInvited }} submitted</td>
+          <td>{{ interview.scheduledDate }} {{ interview.scheduledTime }}</td>
+          <td>{{ interview.endDate }} {{ interview.endTime }}</td>
+          <td>{{ formatDuration(interview.duration) }}</td>
+          <td class="text-center pr-6">
+            <div class="flex items-center justify-center gap-1">
+              <button
+                type="button"
+                (click)="onView(interview)"
+                class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors"
+                aria-label="View interview"
+              >
+                <i class="pi pi-eye text-sm"></i>
+              </button>
+              @if (canEnd(interview)) {
+                <button
+                  type="button"
+                  (click)="onEnd(interview)"
+                  class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-danger-bg hover:text-danger transition-colors"
+                  aria-label="End session"
+                >
+                  <i class="pi pi-stop-circle text-sm"></i>
+                </button>
+              }
+              <button
+                type="button"
+                (click)="onResults(interview)"
+                class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors"
+                aria-label="View results"
+              >
+                <i class="pi pi-chart-bar text-sm"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </app-data-table>
+  } @else {
+    <div class="bg-card border border-border rounded-2xl animate-fade-in-up stagger-1">
+      <div role="toolbar" class="flex flex-wrap items-center justify-between gap-4 px-4 py-3 border-b border-border">
+        <div>
+          <h1 class="text-lg font-semibold text-heading">Interview Session</h1>
+          <p class="text-xs text-value">Live and scheduled online interview sessions</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 ml-auto justify-end">
+          <div class="flex items-center gap-1 bg-row-b rounded-lg p-1 flex-wrap">
+            @for (filter of statusFilters; track filter.value) {
+              <button
+                type="button"
+                (click)="statusFilter.set(filter.value)"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                [class.bg-card]="statusFilter() === filter.value"
+                [class.shadow-sm]="statusFilter() === filter.value"
+                [class.text-primary]="statusFilter() === filter.value"
+                [class.text-value]="statusFilter() !== filter.value"
+              >
+                {{ filter.label }}
+                <span
+                  class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                  [class.bg-primary/10]="statusFilter() === filter.value"
+                  [class.bg-card]="statusFilter() !== filter.value"
+                >
+                  {{ filterCount(filter.value) }}
+                </span>
+              </button>
+            }
+          </div>
+
+          <div class="flex items-center gap-1 bg-row-b rounded-lg p-1 shrink-0">
+            <button
+              type="button"
+              (click)="viewMode.set('table')"
+              class="flex items-center justify-center w-8 h-8 rounded-md transition-colors"
+              [class.bg-card]="viewMode() === 'table'"
+              [class.shadow-sm]="viewMode() === 'table'"
+              [class.text-primary]="viewMode() === 'table'"
+              [class.text-value]="viewMode() !== 'table'"
+              aria-label="Table view"
+            >
+              <i class="pi pi-list text-sm"></i>
+            </button>
+            <button
+              type="button"
+              (click)="viewMode.set('card')"
+              class="flex items-center justify-center w-8 h-8 rounded-md transition-colors"
+              [class.bg-card]="viewMode() === 'card'"
+              [class.shadow-sm]="viewMode() === 'card'"
+              [class.text-primary]="viewMode() === 'card'"
+              [class.text-value]="viewMode() !== 'card'"
+              aria-label="Card view"
+            >
+              <i class="pi pi-th-large text-sm"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 sm:p-6">
+        @if (loading()) {
+          <app-skeleton variant="cards" [count]="6" [cardCols]="3" />
+        } @else {
+          <div class="max-h-[28rem] overflow-y-auto scrollbar-auto pr-1">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              @for (interview of filteredInterviews(); track interview.id; let i = $index) {
+                <div class="bg-row-b rounded-2xl p-5 flex flex-col gap-4 animate-fade-in-up" [class]="'stagger-' + ((i % 6) + 1)">
+                  <div class="flex items-start justify-between gap-2">
+                    <div>
+                      <p class="text-sm font-semibold text-heading">{{ interview.cadre }}</p>
+                      <p class="text-xs text-value mt-0.5">{{ interview.title }}</p>
+                    </div>
+                    <p-tag [value]="interview.status" [severity]="statusSeverity(interview.status)" />
+                  </div>
+
+                  <p-tag [value]="interview.interviewType" [severity]="interviewTypeSeverity(interview.interviewType)" class="w-fit" />
+
+                  <div>
+                    <div class="flex items-center justify-between text-xs text-value mb-1.5">
+                      <span>{{ submittedCount(interview) }} / {{ interview.candidatesInvited }} submitted</span>
+                      <span>{{ submittedProgress(interview) }}%</span>
+                    </div>
+                    <div class="w-full h-1.5 rounded-full bg-card overflow-hidden">
+                      <div class="h-full bg-primary rounded-full transition-[width] duration-300" [style.width.%]="submittedProgress(interview)"></div>
+                    </div>
+                  </div>
+
+                  <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                    <div>
+                      <dt class="text-label uppercase tracking-wide">Start</dt>
+                      <dd class="text-heading font-medium mt-0.5">{{ interview.scheduledDate }} {{ interview.scheduledTime }}</dd>
+                    </div>
+                    <div>
+                      <dt class="text-label uppercase tracking-wide">End</dt>
+                      <dd class="text-heading font-medium mt-0.5">{{ interview.endDate }} {{ interview.endTime }}</dd>
+                    </div>
+                    <div>
+                      <dt class="text-label uppercase tracking-wide">Duration</dt>
+                      <dd class="text-heading font-medium mt-0.5">{{ formatDuration(interview.duration) }}</dd>
+                    </div>
+                  </dl>
+
+                  <div class="flex items-center gap-2 mt-auto pt-2 border-t border-border">
+                    <p-button label="View" icon="pi pi-eye" size="small" severity="secondary" [outlined]="true" type="button" (onClick)="onView(interview)" />
+                    @if (canEnd(interview)) {
+                      <p-button label="End" icon="pi pi-stop-circle" size="small" severity="danger" [outlined]="true" type="button" (onClick)="onEnd(interview)" />
+                    }
+                    <p-button label="Results" icon="pi pi-chart-bar" size="small" severity="secondary" [outlined]="true" type="button" (onClick)="onResults(interview)" />
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <p-dialog
+    [(visible)]="showResultsDialog"
+    header="Session Results"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '40rem' }"
+  >
+    @if (resultsInterview; as interview) {
+      <div class="flex flex-col gap-4 pt-2">
+        <p class="text-sm text-value">{{ interview.title }}</p>
+
+        @if (resultsFor(interview).length === 0) {
+          <p class="text-sm text-value">No candidate sessions recorded for this interview yet.</p>
+        } @else {
+          <div class="flex flex-col gap-2 max-h-96 overflow-y-auto pr-1">
+            @for (session of resultsFor(interview); track session.id) {
+              <div class="flex items-center justify-between gap-4 rounded-xl border border-border p-3">
+                <div class="min-w-0">
+                  <p class="text-sm font-medium text-heading truncate">{{ session.candidateName }}</p>
+                  <p class="text-xs text-value mt-0.5">{{ session.nin }}</p>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                  <span class="text-sm font-semibold text-heading">
+                    {{ session.score !== null ? session.score + '%' : '—' }}
+                  </span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </p-dialog>
+</div>

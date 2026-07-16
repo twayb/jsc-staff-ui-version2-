@@ -104,7 +104,7 @@ export class ServiceSection implements OnInit {
       icon: 'pi-desktop',
       bgClass: 'bg-info-bg',
       fgClass: 'text-info',
-      route: null,
+      route: '/online-interview',
     },
     {
       title: 'Report',

@@ -303,6 +303,71 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./question-bank/setup/question-types/question-types').then((m) => m.QuestionTypes),
       },
+      {
+        path: 'online-interview',
+        loadComponent: () =>
+          import('./online-interview/online-interview-dashboard/online-interview-dashboard').then(
+            (m) => m.OnlineInterviewDashboard,
+          ),
+      },
+      {
+        path: 'online-interview/set-interview',
+        loadComponent: () =>
+          import('./online-interview/set-interview/set-interview').then((m) => m.SetInterview),
+      },
+      {
+        path: 'online-interview/interview-list',
+        loadComponent: () =>
+          import('./online-interview/interview-list/interview-list').then((m) => m.InterviewList),
+      },
+      {
+        path: 'online-interview/interview-list/:id',
+        loadComponent: () =>
+          import('./online-interview/interview-details/interview-details').then((m) => m.InterviewDetails),
+      },
+      {
+        path: 'online-interview/interview-session',
+        loadComponent: () =>
+          import('./online-interview/interview-session/interview-session').then((m) => m.InterviewSession),
+      },
+      {
+        path: 'online-interview/session-by-region',
+        loadComponent: () =>
+          import('./online-interview/session-by-region/session-by-region').then((m) => m.SessionByRegion),
+      },
+      {
+        path: 'online-interview/venue-session-by-region',
+        loadComponent: () =>
+          import('./online-interview/venue-session-by-region/venue-session-by-region').then(
+            (m) => m.VenueSessionByRegion,
+          ),
+      },
+      {
+        path: 'online-interview/interview-session-by-venue',
+        loadComponent: () =>
+          import('./online-interview/interview-sesssion-by-venue/interview-sesssion-by-venue').then(
+            (m) => m.InterviewSesssionByVenue,
+          ),
+      },
+      {
+        path: 'online-interview/candidates-session-by-venue',
+        loadComponent: () =>
+          import('./online-interview/candidates-session-by-venue/candidates-session-by-venue').then(
+            (m) => m.CandidatesSessionByVenue,
+          ),
+      },
+      {
+        path: 'online-interview/setup/interview-categories',
+        loadComponent: () =>
+          import('./online-interview/setup/interview-categories/interview-categories').then(
+            (m) => m.InterviewCategories,
+          ),
+      },
+      {
+        path: 'online-interview/setup/interview-types',
+        loadComponent: () =>
+          import('./online-interview/setup/interview-types/interview-types').then((m) => m.InterviewTypes),
+      },
     ],
   },
 ];
