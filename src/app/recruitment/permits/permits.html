@@ -64,7 +64,7 @@
         <td class="pl-6">{{ rowIndex + 1 }}</td>
         <td>{{ permit.name }}</td>
         <td>
-          <p-tag [value]="permit.permitType" [severity]="permitTypeSeverity(permit.permitType)" />
+          <p-tag [value]="formatPermitType(permit.permitType)" [severity]="permitTypeSeverity(permit.permitType)" />
         </td>
         <td>{{ permit.permitNo }}</td>
         <td>{{ permit.numberOfPosts }}</td>
@@ -163,8 +163,8 @@
               <div class="flex-[2] min-w-0 flex flex-col gap-1.5">
                 <label class="text-xs font-medium text-heading">Scheme</label>
                 <p-select
-                  formControlName="scheme"
-                  [options]="schemeOptions"
+                  formControlName="schemeId"
+                  [options]="schemeOptions()"
                   optionLabel="label"
                   optionValue="value"
                   placeholder="Select scheme"
@@ -196,7 +196,7 @@
 
       <div class="flex justify-end gap-2 pt-2">
         <p-button label="Cancel" severity="secondary" [text]="true" type="button" (onClick)="showFormDialog = false" />
-        <p-button [label]="dialogMode === 'edit' ? 'Update' : 'Save'" type="submit" />
+        <p-button [label]="dialogMode === 'edit' ? 'Update' : 'Save'" type="submit" [loading]="submitting()" />
       </div>
     </form>
   </p-dialog>
@@ -217,7 +217,7 @@
           </div>
           <div>
             <p class="text-xs font-medium text-label">Permit Type</p>
-            <p-tag [value]="viewingPermit.permitType" [severity]="permitTypeSeverity(viewingPermit.permitType)" />
+            <p-tag [value]="formatPermitType(viewingPermit.permitType)" [severity]="permitTypeSeverity(viewingPermit.permitType)" />
           </div>
           <div>
             <p class="text-xs font-medium text-label">Permit No</p>

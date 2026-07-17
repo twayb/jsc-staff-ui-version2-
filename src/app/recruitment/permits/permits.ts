@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Button } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
@@ -10,26 +10,55 @@ import { Select } from 'primeng/select';
 import { DatePicker } from 'primeng/datepicker';
 import { Tag } from 'primeng/tag';
 import { FileUpload, FileSelectEvent } from 'primeng/fileupload';
+import { finalize, map, of, switchMap } from 'rxjs';
 import { AppBreadcrumb } from '../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../shared/app-data-table/app-data-table';
 import { AppSkeleton } from '../../shared/app-skeleton/app-skeleton';
 import { CountUp } from '../../shared/count-up.directive';
+import { PermitInput, PermitRecord, PermitsApiService } from '../../core/recruitment/permits-api.service';
+import { FileUploadApiService } from '../../core/files/file-upload-api.service';
+import { titleCase } from '../../core/utils';
 
 type PermitTypeSeverity = 'success' | 'warn' | 'info' | 'secondary';
 
 interface PermitScheme {
+  schemeId: number;
   scheme: string;
   numberOfPosts: number;
 }
 
 interface Permit {
+  id: string;
   name: string;
   permitType: string;
   permitNo: string;
+  status: string;
   numberOfPosts: number;
   schemes: PermitScheme[];
   startDate: string;
   endDate: string;
+  fileId: string | null;
+  createdAt: string;
+}
+
+function mapPermit(raw: PermitRecord): Permit {
+  return {
+    id: raw.id,
+    name: raw.name,
+    permitType: raw.permitType,
+    permitNo: raw.permitNo,
+    status: raw.status,
+    numberOfPosts: raw.numberOfPost,
+    schemes: raw.permitSchemes.map((entry) => ({
+      schemeId: entry.scheme.id,
+      scheme: entry.scheme.name,
+      numberOfPosts: entry.numberOfPost,
+    })),
+    startDate: raw.startDate,
+    endDate: raw.endDate,
+    fileId: raw.fileId,
+    createdAt: raw.createdAt,
+  };
 }
 
 @Component({
@@ -53,10 +82,12 @@ interface Permit {
   templateUrl: './permits.html',
   styleUrl: './permits.css',
 })
-export class Permits implements OnInit {
+export class Permits {
   private readonly fb = inject(FormBuilder);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
+  private readonly permitsApi = inject(PermitsApiService);
+  private readonly fileUploadApi = inject(FileUploadApiService);
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
@@ -64,49 +95,45 @@ export class Permits implements OnInit {
   ];
 
   readonly loading = signal(true);
+  readonly schemeOptions = signal<{ label: string; value: number }[]>([]);
 
-  ngOnInit(): void {
-    setTimeout(() => this.loading.set(false), 800);
+  constructor() {
+    this.fetchPermits();
+
+    this.permitsApi.getSchemes().subscribe({
+      next: (response) => this.schemeOptions.set((response.data ?? []).map((s) => ({ label: s.name, value: s.id }))),
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Failed to Load Schemes',
+          detail: 'Could not load the scheme list. Please try again later.',
+        });
+      },
+    });
   }
 
-  permits: Permit[] = [
-    {
-      name: 'Permit July 2026',
-      permitType: 'New Hire',
-      permitNo: 'PR-2026-001',
-      numberOfPosts: 1,
-      schemes: [{ scheme: 'Legal Officer Scheme', numberOfPosts: 1 }],
-      startDate: '2026-01-15',
-      endDate: '2026-07-15',
-    },
-    {
-      name: 'Replacement july 2026',
-      permitType: 'Replacement',
-      permitNo: 'PR-2026-002',
-      numberOfPosts: 1,
-      schemes: [{ scheme: 'Court Administration Scheme', numberOfPosts: 1 }],
-      startDate: '2026-02-01',
-      endDate: '2026-08-01',
-    },
-    {
-      name: 'Promotion July 2026',
-      permitType: 'Promotion',
-      permitNo: 'PR-2026-003',
-      numberOfPosts: 1,
-      schemes: [{ scheme: 'Legal Officer Scheme', numberOfPosts: 1 }],
-      startDate: '2026-03-10',
-      endDate: '2026-09-10',
-    },
-    {
-      name: 'New Hire April 2026',
-      permitType: 'New Hire',
-      permitNo: 'PR-2026-004',
-      numberOfPosts: 1,
-      schemes: [{ scheme: 'HR Officer Scheme', numberOfPosts: 1 }],
-      startDate: '2026-04-05',
-      endDate: '2026-10-05',
-    },
-  ];
+  private fetchPermits(): void {
+    this.loading.set(true);
+    this.permitsApi
+      .getPermits()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.permits = (response.data ?? [])
+            .map(mapPermit)
+            .sort((a, b) => new Date(b.createdAt || b.startDate).getTime() - new Date(a.createdAt || a.startDate).getTime());
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Permits',
+            detail: 'Could not load the permit list. Please try again later.',
+          });
+        },
+      });
+  }
+
+  permits: Permit[] = [];
 
   get totalPermits(): number {
     return this.permits.length;
@@ -132,18 +159,9 @@ export class Permits implements OnInit {
   viewingPermit: Permit | null = null;
 
   readonly permitTypeOptions = [
-    { label: 'New Hire', value: 'New Hire' },
-    { label: 'Replacement', value: 'Replacement' },
-    { label: 'Promotion', value: 'Promotion' },
-  ];
-
-  readonly schemeOptions = [
-    { label: 'Legal Officer Scheme', value: 'Legal Officer Scheme' },
-    { label: 'Court Administration Scheme', value: 'Court Administration Scheme' },
-    { label: 'ICT Officer Scheme', value: 'ICT Officer Scheme' },
-    { label: 'HR Officer Scheme', value: 'HR Officer Scheme' },
-    { label: 'Finance Officer Scheme', value: 'Finance Officer Scheme' },
-    { label: 'Support Staff Scheme', value: 'Support Staff Scheme' },
+    { label: 'New Hire', value: 'NEW HIRE' },
+    { label: 'Replacement', value: 'REPLACEMENT' },
+    { label: 'Promotion', value: 'PROMOTION' },
   ];
 
   readonly form = this.fb.nonNullable.group({
@@ -160,13 +178,17 @@ export class Permits implements OnInit {
     return this.form.get('schemes') as FormArray;
   }
 
+  formatPermitType(permitType: string): string {
+    return titleCase(permitType);
+  }
+
   permitTypeSeverity(permitType: string): PermitTypeSeverity {
-    switch (permitType) {
-      case 'New Hire':
+    switch (permitType.toUpperCase()) {
+      case 'NEW HIRE':
         return 'success';
-      case 'Replacement':
+      case 'REPLACEMENT':
         return 'warn';
-      case 'Promotion':
+      case 'PROMOTION':
         return 'info';
       default:
         return 'secondary';
@@ -196,7 +218,7 @@ export class Permits implements OnInit {
   addScheme(scheme?: PermitScheme): void {
     this.schemes.push(
       this.fb.nonNullable.group({
-        scheme: [scheme?.scheme ?? '', Validators.required],
+        schemeId: this.fb.control<number | null>(scheme?.schemeId ?? null, Validators.required),
         numberOfPosts: this.fb.control<number | null>(scheme?.numberOfPosts ?? null, [
           Validators.required,
           Validators.min(1),
@@ -213,41 +235,67 @@ export class Permits implements OnInit {
     this.selectedFile = event.files[0] ?? null;
   }
 
+  readonly submitting = signal(false);
+
   onSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
-
-    const raw = this.form.getRawValue();
-    const permitData: Permit = {
-      name: raw.name,
-      permitType: raw.permitType,
-      permitNo: raw.permitNo,
-      numberOfPosts: raw.numberOfPosts!,
-      schemes: raw.schemes as PermitScheme[],
-      startDate: this.formatDate(raw.startDate!),
-      endDate: this.formatDate(raw.endDate!),
-    };
-
-    if (this.dialogMode === 'edit' && this.editingPermit) {
-      const target = this.editingPermit;
-      this.permits = this.permits.map((p) => (p === target ? permitData : p));
+    if (this.dialogMode === 'add' && !this.selectedFile) {
       this.messageService.add({
-        severity: 'success',
-        summary: 'Permit Updated',
-        detail: `Permit for "${permitData.name}" was updated successfully.`,
+        severity: 'error',
+        summary: 'File Required',
+        detail: 'Please attach the permit document.',
       });
-    } else {
-      this.permits = [permitData, ...this.permits];
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Permit Added',
-        detail: `Permit for "${permitData.name}" was added successfully.`,
-      });
+      return;
     }
 
-    this.showFormDialog = false;
+    const raw = this.form.getRawValue();
+    const schemeInputs = raw.schemes as { schemeId: number; numberOfPosts: number }[];
+    this.submitting.set(true);
+
+    const fileId$ = this.selectedFile
+      ? this.fileUploadApi.upload(this.selectedFile, 'PERMIT', raw.name).pipe(map((response) => response.data.id))
+      : of(this.editingPermit?.fileId ?? '');
+
+    fileId$
+      .pipe(
+        switchMap((fileId) => {
+          const payload: PermitInput = {
+            name: raw.name,
+            permitType: raw.permitType,
+            permitNo: raw.permitNo,
+            startDate: this.formatDate(raw.startDate!),
+            endDate: this.formatDate(raw.endDate!),
+            numberOfPost: raw.numberOfPosts!,
+            fileId,
+            permitSchemes: schemeInputs.map((s) => ({ schemeId: s.schemeId, numberOfPost: s.numberOfPosts })),
+          };
+          return this.dialogMode === 'edit' && this.editingPermit
+            ? this.permitsApi.updatePermit(this.editingPermit.id, payload)
+            : this.permitsApi.createPermit(payload);
+        }),
+        finalize(() => this.submitting.set(false)),
+      )
+      .subscribe({
+        next: () => {
+          this.messageService.add({
+            severity: 'success',
+            summary: this.dialogMode === 'edit' ? 'Permit Updated' : 'Permit Added',
+            detail: `Permit for "${raw.name}" was ${this.dialogMode === 'edit' ? 'updated' : 'added'} successfully.`,
+          });
+          this.showFormDialog = false;
+          this.fetchPermits();
+        },
+        error: (error) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: this.dialogMode === 'edit' ? 'Update Failed' : 'Add Failed',
+            detail: error?.error?.message ?? 'Something went wrong. Please try again later.',
+          });
+        },
+      });
   }
 
   onEdit(permit: Permit): void {
@@ -281,10 +329,22 @@ export class Permits implements OnInit {
       acceptButtonProps: { label: 'Approve' },
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
       accept: () => {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Permit Approved',
-          detail: `Permit for "${permit.name}" was approved successfully.`,
+        this.permitsApi.approvePermit(permit.id).subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Permit Approved',
+              detail: `Permit for "${permit.name}" was approved successfully.`,
+            });
+            this.fetchPermits();
+          },
+          error: (error) => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Approval Failed',
+              detail: error?.error?.message ?? 'Could not approve the permit. Please try again later.',
+            });
+          },
         });
       },
     });
@@ -303,11 +363,22 @@ export class Permits implements OnInit {
       acceptButtonProps: { label: 'Delete', severity: 'danger' },
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
       accept: () => {
-        this.permits = this.permits.filter((p) => p !== permit);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Permit Deleted',
-          detail: `Permit for "${permit.name}" was deleted successfully.`,
+        this.permitsApi.deletePermit(permit.id).subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Permit Deleted',
+              detail: `Permit for "${permit.name}" was deleted successfully.`,
+            });
+            this.fetchPermits();
+          },
+          error: (error) => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Delete Failed',
+              detail: error?.error?.message ?? 'Could not delete the permit. Please try again later.',
+            });
+          },
         });
       },
     });
