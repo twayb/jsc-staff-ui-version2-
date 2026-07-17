@@ -126,7 +126,7 @@
 
       <div class="flex justify-end gap-2 pt-2">
         <p-button label="Cancel" severity="secondary" [text]="true" type="button" (onClick)="showFormDialog = false" />
-        <p-button [label]="dialogMode === 'edit' ? 'Update' : 'Save'" type="submit" />
+        <p-button [label]="dialogMode === 'edit' ? 'Update' : 'Save'" type="submit" [loading]="submitting()" />
       </div>
     </form>
   </p-dialog>

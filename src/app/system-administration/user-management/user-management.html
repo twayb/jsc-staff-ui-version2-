@@ -10,7 +10,7 @@
           <i class="pi pi-users text-xl text-primary"></i>
         </span>
         <div>
-          <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="totalUsers"></p>
+          <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="totalUsers()"></p>
           <p class="text-sm text-value">Total Users</p>
         </div>
       </div>
@@ -19,7 +19,7 @@
           <i class="pi pi-check-circle text-xl text-success"></i>
         </span>
         <div>
-          <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="activeUsers"></p>
+          <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="activeUsers()"></p>
           <p class="text-sm text-value">Active Users</p>
         </div>
       </div>
@@ -28,7 +28,7 @@
           <i class="pi pi-times-circle text-xl text-danger"></i>
         </span>
         <div>
-          <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="notActiveUsers"></p>
+          <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="notActiveUsers()"></p>
           <p class="text-sm text-value">Not Active Users</p>
         </div>
       </div>
@@ -39,7 +39,7 @@
     class="block animate-fade-in-up stagger-1"
     title="User Management"
     subtitle="Manage system users and their roles"
-    [data]="users"
+    [data]="users()"
     [loading]="loading()"
     [searchFields]="['name', 'email', 'phone', 'userType']"
     addLabel="Add User"
@@ -61,10 +61,10 @@
     <ng-template #bodyTpl let-user let-rowIndex="rowIndex">
       <tr>
         <td class="pl-6">{{ rowIndex + 1 }}</td>
-        <td>{{ user.name }}</td>
+        <td>{{ formatName(user.name) }}</td>
         <td>{{ user.email }}</td>
         <td>{{ user.phone }}</td>
-        <td>{{ user.userType }}</td>
+        <td>{{ formatUserType(user.userType) }}</td>
         <td>
           <p-tag [value]="user.status" [severity]="statusSeverity(user.status)" />
         </td>
@@ -132,7 +132,7 @@
 
       <div class="flex justify-end gap-2 pt-2">
         <p-button label="Cancel" severity="secondary" [text]="true" type="button" (onClick)="showFormDialog = false" />
-        <p-button [label]="dialogMode === 'edit' ? 'Update' : 'Save'" type="submit" />
+        <p-button [label]="dialogMode === 'edit' ? 'Update' : 'Save'" type="submit" [loading]="submitting()" />
       </div>
     </form>
   </p-dialog>
@@ -149,7 +149,7 @@
         <div class="grid grid-cols-2 gap-4">
           <div>
             <p class="text-xs font-medium text-label">Name</p>
-            <p class="text-sm text-heading">{{ viewingUser.name }}</p>
+            <p class="text-sm text-heading">{{ formatName(viewingUser.name) }}</p>
           </div>
           <div>
             <p class="text-xs font-medium text-label">Email</p>
@@ -161,7 +161,7 @@
           </div>
           <div>
             <p class="text-xs font-medium text-label">User Type</p>
-            <p class="text-sm text-heading">{{ viewingUser.userType }}</p>
+            <p class="text-sm text-heading">{{ formatUserType(viewingUser.userType) }}</p>
           </div>
           <div>
             <p class="text-xs font-medium text-label">Status</p>

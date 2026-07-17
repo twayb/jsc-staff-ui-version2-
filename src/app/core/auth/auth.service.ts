@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, WritableSignal, inject, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { Observable, catchError, map, switchMap, tap, throwError, timeout, timer } from 'rxjs';
@@ -17,7 +17,8 @@ const STAFF_USER_TYPE = 'STAFF';
 
 export interface StaffPayload {
   id: string;
-  fullName: string;
+  name: string;
+  fullName?: string;
   email: string;
   userType: 'STAFF';
   permissions: string[];
@@ -25,6 +26,8 @@ export interface StaffPayload {
   passwordExpired?: boolean;
   passwordResetToken?: string;
   accessToken: string;
+  phoneNumber?: string;
+  locked?: boolean;
 }
 
 export interface ApiResponse<T = null> {
@@ -47,15 +50,18 @@ export class AuthService {
 
   readonly sessionLoading = signal<string | null>(null);
 
-  get user(): WritableSignal<StaffPayload | null> {
+  private readonly _user = signal<StaffPayload | null>(this.readUserFromStorage());
+  readonly user = this._user.asReadonly();
+
+  private readUserFromStorage(): StaffPayload | null {
     const userData = localStorage.getItem('user');
     if (!userData || userData === '{}' || userData === 'null') {
-      return signal(null);
+      return null;
     }
     try {
-      return signal(JSON.parse(userData));
+      return JSON.parse(userData);
     } catch {
-      return signal(null);
+      return null;
     }
   }
 
@@ -80,19 +86,11 @@ export class AuthService {
       .post<LoginResponse>(`${this.apiUrl}api/auth/authenticate`, { ...body, userType: STAFF_USER_TYPE })
       .pipe(
         catchError((error) => {
-          if (error?.error?.statusCode === 5003) {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Login Failed',
-              detail: 'Invalid username or password',
-            });
-          } else {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Login Failed',
-              detail: 'Something went wrong. Please try again later.',
-            });
-          }
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Login Failed',
+            detail: error?.error?.message ?? 'Something went wrong. Please try again later.',
+          });
           return throwError(() => error);
         }),
         tap((data) => {
@@ -144,6 +142,7 @@ export class AuthService {
   handleSessionTimeout(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    this._user.set(null);
     this.messageService.add({
       severity: 'warn',
       summary: 'Session Expired',
@@ -160,7 +159,7 @@ export class AuthService {
 
   resetPassword(password: string, token: string): Observable<ApiResponse> {
     return this.http
-      .post<ApiResponse>(`${this.apiUrl}api/auth/reset-password`, { password, token, userType: STAFF_USER_TYPE })
+      .post<ApiResponse>(`${this.apiUrl}api/auth/reset-password`, { newPassword: password, resetToken: token })
       .pipe(timeout(REQUEST_TIMEOUT_MS));
   }
 
@@ -175,70 +174,16 @@ export class AuthService {
     });
   }
 
-  getStaffUsers(): Observable<StaffPayload[]> {
-    return this.http.get<StaffPayload[]>(`${this.apiUrl}users/type/STAFF`);
-  }
-
-  getStaff(id: string): Observable<StaffPayload> {
-    return this.http.get<StaffPayload>(`${this.apiUrl}users/${id}`);
-  }
-
-  saveUser(user: Partial<StaffPayload>): Observable<StaffPayload> {
-    return this.http.post<StaffPayload>(`${this.apiUrl}users`, user);
-  }
-
-  updateUser(user: Partial<StaffPayload>): Observable<StaffPayload> {
-    return this.http.put<StaffPayload>(`${this.apiUrl}users`, user);
-  }
-
-  deleteUser(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}users/${id}`);
-  }
-
-  lockAccount(id: string): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}users/lock/${id}`, {});
-  }
-
-  unlockAccount(id: string): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}users/unlock/${id}`, {});
-  }
-
-  getAllRoles(): Observable<unknown[]> {
-    return this.http.get<unknown[]>(`${this.apiUrl}roles`);
-  }
-
-  getRoleById(id: string): Observable<unknown> {
-    return this.http.get(`${this.apiUrl}roles/${id}`);
-  }
-
-  saveRole(data: unknown): Observable<unknown> {
-    return this.http.post(`${this.apiUrl}roles`, data);
-  }
-
-  updateRole(data: unknown): Observable<unknown> {
-    return this.http.put(`${this.apiUrl}roles`, data);
-  }
-
-  deleteRole(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}roles/${id}`);
-  }
-
-  getPermissions(): Observable<unknown[]> {
-    return this.http.get<unknown[]>(`${this.apiUrl}permissions`);
-  }
-
-  updateRoleWithPermissions(data: unknown): Observable<unknown> {
-    return this.http.put(`${this.apiUrl}roles/permissions`, data);
-  }
-
   private storeTokens(data: LoginResponse): void {
     localStorage.setItem('token', data.data.accessToken);
     localStorage.setItem('user', JSON.stringify(data.data));
+    this._user.set(data.data);
   }
 
   private clearSessionAndRedirect(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    this._user.set(null);
     setTimeout(() => {
       this.sessionLoading.set(null);
       this.router.navigate(['/login']);

@@ -1,7 +1,9 @@
 <div class="w-full px-4 sm:px-6 py-10">
   <app-breadcrumb [items]="breadcrumbItems" />
 
-  @if (!role) {
+  @if (loading()) {
+    <app-skeleton variant="table" [count]="4" />
+  } @else if (!role()) {
     <div class="bg-card border border-border rounded-2xl p-6">
       <p class="text-sm text-value">Role "{{ roleName }}" was not found.</p>
     </div>
@@ -9,16 +11,16 @@
     <div class="bg-card border border-border rounded-2xl p-6">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 class="text-xl font-semibold text-heading">{{ role.name }} Permissions</h1>
-          <p class="text-sm text-value mt-1">{{ role.description }}</p>
+          <h1 class="text-xl font-semibold text-heading">{{ role()!.name }} Permissions</h1>
+          <p class="text-sm text-value mt-1">{{ role()!.description }}</p>
         </div>
         <div class="text-sm font-medium text-heading shrink-0">
-          {{ totalChecked() }} of {{ totalPermissions }} permissions selected
+          {{ totalChecked() }} of {{ totalPermissions() }} permissions selected
         </div>
       </div>
 
       <p-accordion [multiple]="true">
-        @for (group of groups; track group.name) {
+        @for (group of groups(); track group.name) {
           <p-accordion-panel [value]="group.name">
             <p-accordion-header>
               <div class="flex items-center justify-between w-full pr-2">
@@ -56,7 +58,7 @@
 
       <div class="flex justify-end gap-2 mt-6">
         <p-button label="Cancel" severity="secondary" [outlined]="true" type="button" (onClick)="onCancel()" />
-        <p-button label="Save Permissions" icon="pi pi-check" type="button" (onClick)="onSave()" />
+        <p-button label="Save Permissions" icon="pi pi-check" type="button" (onClick)="onSave()" [loading]="saving()" />
       </div>
     </div>
   }

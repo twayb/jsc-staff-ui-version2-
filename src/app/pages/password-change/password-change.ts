@@ -74,11 +74,18 @@ export class PasswordChange {
 
     request$.pipe(finalize(() => this.submitting.set(false))).subscribe({
       next: () => this.submitted.set(true),
-      error: () => {
+      error: (error) => {
+        const message = error?.error?.message ?? 'Something went wrong. Please try again later.';
+
+        if (error?.error?.statusCode === 5006) {
+          this.form.controls.currentPassword.setErrors({ invalidOldPassword: true });
+          this.form.controls.currentPassword.markAsTouched();
+        }
+
         this.messageService.add({
           severity: 'error',
           summary: 'Update Failed',
-          detail: 'Something went wrong. Please try again later.',
+          detail: message,
         });
       },
     });

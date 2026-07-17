@@ -27,7 +27,7 @@ export class AppHeader {
   private readonly sessionLock = inject(SessionLockService);
   private readonly authService = inject(AuthService);
 
-  readonly userName = this.authService.user()?.fullName ?? 'Staff Member';
+  readonly userName = computed(() => this.authService.user()?.name ?? this.authService.user()?.fullName ?? 'Staff Member');
   readonly userTitle = 'ICT Officer';
 
   readonly userMenuItems = computed<MenuItem[]>(() => [

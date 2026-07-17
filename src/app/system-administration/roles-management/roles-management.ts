@@ -1,6 +1,7 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { finalize } from 'rxjs';
 import { MenuItem, MessageService } from 'primeng/api';
 import { Menu } from 'primeng/menu';
 import { Dialog } from 'primeng/dialog';
@@ -30,7 +31,7 @@ import { Role, RolesDataService } from '../roles-data.service';
   templateUrl: './roles-management.html',
   styleUrl: './roles-management.css',
 })
-export class RolesManagement implements OnInit {
+export class RolesManagement {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly messageService = inject(MessageService);
@@ -41,11 +42,7 @@ export class RolesManagement implements OnInit {
     { label: 'Roles Management' },
   ];
 
-  readonly loading = signal(true);
-
-  ngOnInit(): void {
-    setTimeout(() => this.loading.set(false), 800);
-  }
+  readonly loading = this.rolesData.loading;
 
   readonly roles = this.rolesData.roles;
 
@@ -65,6 +62,7 @@ export class RolesManagement implements OnInit {
 
   showViewDialog = false;
   viewingRole: Role | null = null;
+  readonly submitting = signal(false);
 
   readonly form = this.fb.nonNullable.group({
     name: ['', Validators.required],
@@ -111,23 +109,29 @@ export class RolesManagement implements OnInit {
     }
 
     const raw = this.form.getRawValue();
+    this.submitting.set(true);
 
-    if (this.dialogMode === 'edit' && this.editingRole) {
-      this.rolesData.updateRole(this.editingRole, raw);
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Role Updated',
-        detail: `"${raw.name}" was updated successfully.`,
-      });
-    } else {
-      this.rolesData.addRole(raw);
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Role Added',
-        detail: `"${raw.name}" was added successfully.`,
-      });
-    }
+    const request$ =
+      this.dialogMode === 'edit' && this.editingRole
+        ? this.rolesData.updateRole(this.editingRole, raw)
+        : this.rolesData.addRole(raw);
 
-    this.showFormDialog = false;
+    request$.pipe(finalize(() => this.submitting.set(false))).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: this.dialogMode === 'edit' ? 'Role Updated' : 'Role Added',
+          detail: `"${raw.name}" was ${this.dialogMode === 'edit' ? 'updated' : 'added'} successfully.`,
+        });
+        this.showFormDialog = false;
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: this.dialogMode === 'edit' ? 'Update Failed' : 'Add Failed',
+          detail: 'Something went wrong. Please try again later.',
+        });
+      },
+    });
   }
 }

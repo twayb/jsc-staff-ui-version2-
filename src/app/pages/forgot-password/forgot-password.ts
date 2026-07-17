@@ -51,11 +51,11 @@ export class ForgotPassword {
             detail: response.message,
           });
         },
-        error: () => {
+        error: (error) => {
           this.messageService.add({
             severity: 'error',
             summary: 'Request Failed',
-            detail: 'Something went wrong. Please try again later.',
+            detail: error?.error?.message ?? 'Something went wrong. Please try again later.',
           });
         },
       });
