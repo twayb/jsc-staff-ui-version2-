@@ -114,7 +114,7 @@ export class AuthService {
           }
 
           if (data.data.passChange === 0) {
-            this.router.navigate(['/password-change']);
+            this.router.navigate(['/password-change'], { queryParams: { reason: 'first-login' } });
             return;
           }
 

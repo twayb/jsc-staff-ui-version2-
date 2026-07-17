@@ -1,4 +1,9 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { finalize } from 'rxjs';
+import { AuditLogEntry } from '../core/audit/audit-log.types';
+import { RecruitmentAuditApiService } from '../core/audit/recruitment-audit-api.service';
+import { ComplaintsAuditApiService } from '../core/audit/complaints-audit-api.service';
+import { SysadminAuditApiService } from '../core/audit/sysadmin-audit-api.service';
 
 export type AuditCategory = 'recruitment' | 'complaints' | 'system-admin';
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -41,92 +46,65 @@ export function auditMethodSeverity(method: HttpMethod): HttpMethodSeverity {
   }
 }
 
-const ALL_EVENTS: AuditEvent[] = [
-  {
-    user: 'Amina Hassan',
-    ipAddress: '196.216.53.14',
-    time: '2026-07-14 09:12',
-    method: 'PUT',
-    resource: '/api/recruitment/permits/PR-2026-001/approve',
-    category: 'recruitment',
-  },
-  {
-    user: 'John Mwangi',
-    ipAddress: '105.160.22.8',
-    time: '2026-07-13 16:45',
-    method: 'PUT',
-    resource: '/api/recruitment/adverts/ADV-2026-002',
-    category: 'recruitment',
-  },
-  {
-    user: 'Grace Kileo',
-    ipAddress: '41.59.107.33',
-    time: '2026-07-13 10:20',
-    method: 'POST',
-    resource: '/api/recruitment/selection/ADV-2026-003/shortlist',
-    category: 'recruitment',
-  },
-  {
-    user: 'Fatma Salim',
-    ipAddress: '196.192.34.11',
-    time: '2026-07-14 11:05',
-    method: 'POST',
-    resource: '/api/complaints',
-    category: 'complaints',
-  },
-  {
-    user: 'Peter Mushi',
-    ipAddress: '154.118.22.6',
-    time: '2026-07-12 15:40',
-    method: 'PUT',
-    resource: '/api/complaints/CMP-2026-009/resolve',
-    category: 'complaints',
-  },
-  {
-    user: 'Juma Kessy',
-    ipAddress: '197.186.15.42',
-    time: '2026-07-11 09:00',
-    method: 'PUT',
-    resource: '/api/complaints/CMP-2026-011/escalate',
-    category: 'complaints',
-  },
-  {
-    user: 'Grace Kileo',
-    ipAddress: '41.59.107.33',
-    time: '2026-07-13 08:02',
-    method: 'POST',
-    resource: '/api/auth/authenticate',
-    category: 'system-admin',
-  },
-  {
-    user: 'System',
-    ipAddress: '127.0.0.1',
-    time: '2026-07-12 23:00',
-    method: 'POST',
-    resource: '/api/system/backup',
-    category: 'system-admin',
-  },
-  {
-    user: 'Amina Hassan',
-    ipAddress: '196.216.53.14',
-    time: '2026-07-14 09:30',
-    method: 'PUT',
-    resource: '/api/admin/users/grace.kileo/lock',
-    category: 'system-admin',
-  },
-  {
-    user: 'HICT Admin',
-    ipAddress: '10.10.4.2',
-    time: '2026-07-14 10:15',
-    method: 'PUT',
-    resource: '/api/admin/roles/DSE/permissions',
-    category: 'system-admin',
-  },
-];
+function mapAuditLog(raw: AuditLogEntry, category: AuditCategory): AuditEvent {
+  return {
+    user: raw.username,
+    ipAddress: raw.ipAddress,
+    time: raw.timestamp.replace('T', ' ').slice(0, 16),
+    method: (raw.method as HttpMethod) ?? 'GET',
+    resource: raw.resource,
+    category,
+  };
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuditDataService {
-  private readonly _events = signal<AuditEvent[]>(ALL_EVENTS);
+  private readonly recruitmentAuditApi = inject(RecruitmentAuditApiService);
+  private readonly complaintsAuditApi = inject(ComplaintsAuditApiService);
+  private readonly sysadminAuditApi = inject(SysadminAuditApiService);
+
+  private readonly _events = signal<AuditEvent[]>([]);
+  private readonly _recruitmentLoading = signal(true);
+  private readonly _complaintsLoading = signal(true);
+  private readonly _sysadminLoading = signal(true);
 
   readonly events = this._events.asReadonly();
+  readonly loading = computed(
+    () => this._recruitmentLoading() || this._complaintsLoading() || this._sysadminLoading(),
+  );
+
+  constructor() {
+    this.recruitmentAuditApi
+      .getAuditLogs()
+      .pipe(finalize(() => this._recruitmentLoading.set(false)))
+      .subscribe({
+        next: (response) => {
+          const entries = (response.data?.content ?? []).map((entry) => mapAuditLog(entry, 'recruitment'));
+          this._events.update((list) => [...entries, ...list]);
+        },
+        error: () => {},
+      });
+
+    this.complaintsAuditApi
+      .getAuditLogs()
+      .pipe(finalize(() => this._complaintsLoading.set(false)))
+      .subscribe({
+        next: (response) => {
+          const entries = (response.data?.content ?? []).map((entry) => mapAuditLog(entry, 'complaints'));
+          this._events.update((list) => [...entries, ...list]);
+        },
+        error: () => {},
+      });
+
+    this.sysadminAuditApi
+      .getAuditLogs()
+      .pipe(finalize(() => this._sysadminLoading.set(false)))
+      .subscribe({
+        next: (response) => {
+          const entries = (response.data?.content ?? []).map((entry) => mapAuditLog(entry, 'system-admin'));
+          this._events.update((list) => [...entries, ...list]);
+        },
+        error: () => {},
+      });
+  }
 }

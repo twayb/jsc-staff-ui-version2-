@@ -9,6 +9,7 @@ import { SessionLockService } from '../../core/session-lock/session-lock.service
 import { LayoutService } from '../../core/layout/layout.service';
 import { TextSizeService } from '../../core/text-size/text-size.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { titleCase } from '../../core/utils';
 
 @Component({
   selector: 'app-header',
@@ -28,11 +29,11 @@ export class AppHeader {
   private readonly authService = inject(AuthService);
 
   readonly userName = computed(() => this.authService.user()?.name ?? this.authService.user()?.fullName ?? 'Staff Member');
-  readonly userTitle = 'ICT Officer';
+  readonly userTitle = computed(() => titleCase(this.authService.user()?.userType ?? 'Staff'));
 
   readonly userMenuItems = computed<MenuItem[]>(() => [
     {
-      label: this.userTitle,
+      label: this.userTitle(),
       disabled: true,
     },
     { separator: true },

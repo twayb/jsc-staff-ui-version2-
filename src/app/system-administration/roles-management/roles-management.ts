@@ -125,11 +125,11 @@ export class RolesManagement {
         });
         this.showFormDialog = false;
       },
-      error: () => {
+      error: (error) => {
         this.messageService.add({
           severity: 'error',
           summary: this.dialogMode === 'edit' ? 'Update Failed' : 'Add Failed',
-          detail: 'Something went wrong. Please try again later.',
+          detail: error?.error?.message ?? 'Something went wrong. Please try again later.',
         });
       },
     });

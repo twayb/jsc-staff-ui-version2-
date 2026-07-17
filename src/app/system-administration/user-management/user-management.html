@@ -41,7 +41,7 @@
     subtitle="Manage system users and their roles"
     [data]="users()"
     [loading]="loading()"
-    [searchFields]="['name', 'email', 'phone', 'userType']"
+    [searchFields]="['name', 'email', 'phone', 'roleName']"
     addLabel="Add User"
     dataKey="email"
     (add)="openAddDialog()"
@@ -52,7 +52,7 @@
         <th>Name</th>
         <th>Email</th>
         <th>Phone</th>
-        <th>User Type</th>
+        <th>Role</th>
         <th>Status</th>
         <th class="text-center pr-6">Action</th>
       </tr>
@@ -64,7 +64,7 @@
         <td>{{ formatName(user.name) }}</td>
         <td>{{ user.email }}</td>
         <td>{{ user.phone }}</td>
-        <td>{{ formatUserType(user.userType) }}</td>
+        <td>{{ user.roleName || '—' }}</td>
         <td>
           <p-tag [value]="user.status" [severity]="statusSeverity(user.status)" />
         </td>
@@ -115,11 +115,25 @@
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label for="userType" class="text-sm font-medium text-heading">Role</label>
+        <label for="userType" class="text-sm font-medium text-heading">User Type</label>
         <p-select
           inputId="userType"
           formControlName="userType"
-          [options]="roleOptions"
+          [options]="userTypeOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select user type"
+          class="w-full"
+          appendTo="body"
+        />
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="roleId" class="text-sm font-medium text-heading">Role</label>
+        <p-select
+          inputId="roleId"
+          formControlName="roleId"
+          [options]="roleOptions()"
           optionLabel="label"
           optionValue="value"
           placeholder="Select role"
@@ -161,7 +175,11 @@
           </div>
           <div>
             <p class="text-xs font-medium text-label">User Type</p>
-            <p class="text-sm text-heading">{{ formatUserType(viewingUser.userType) }}</p>
+            <p class="text-sm text-heading">{{ formatName(viewingUser.userType) }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-label">Role</p>
+            <p class="text-sm text-heading">{{ viewingUser.roleName || '—' }}</p>
           </div>
           <div>
             <p class="text-xs font-medium text-label">Status</p>

@@ -4,6 +4,11 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from './auth.service';
 
+export interface StaffRoleRef {
+  id: string;
+  roleName: string;
+}
+
 export interface StaffRecord {
   id: string;
   createdBy: string | null;
@@ -19,6 +24,15 @@ export interface StaffRecord {
   passwordResetToken: string | null;
   passwordResetTokenExpireDate: string | null;
   isLocked: boolean;
+  roles: StaffRoleRef[];
+}
+
+export interface StaffUserPayload {
+  name: string;
+  email: string;
+  mobileNumber: string;
+  userType: string;
+  roles: string[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -34,11 +48,11 @@ export class UserManagementService {
     return this.http.get<ApiResponse<StaffRecord>>(`${this.apiUrl}users/${id}`);
   }
 
-  saveUser(user: Partial<StaffRecord>): Observable<ApiResponse<StaffRecord>> {
+  saveUser(user: StaffUserPayload): Observable<ApiResponse<StaffRecord>> {
     return this.http.post<ApiResponse<StaffRecord>>(`${this.apiUrl}users`, user);
   }
 
-  updateUser(user: Partial<StaffRecord>): Observable<ApiResponse<StaffRecord>> {
+  updateUser(user: Partial<StaffUserPayload> & { id: string }): Observable<ApiResponse<StaffRecord>> {
     return this.http.put<ApiResponse<StaffRecord>>(`${this.apiUrl}users`, user);
   }
 

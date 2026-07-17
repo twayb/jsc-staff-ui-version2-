@@ -13,6 +13,7 @@ import { AppDataTable } from '../../shared/app-data-table/app-data-table';
 import { AppSkeleton } from '../../shared/app-skeleton/app-skeleton';
 import { CountUp } from '../../shared/count-up.directive';
 import { StaffRecord, UserManagementService } from '../../core/auth/user-management.service';
+import { RolesDataService } from '../roles-data.service';
 import { titleCase } from '../../core/utils';
 
 type UserStatus = 'Active' | 'Not Active';
@@ -24,6 +25,8 @@ interface SystemUser {
   email: string;
   phone: string;
   userType: string;
+  roleId: string;
+  roleName: string;
   status: UserStatus;
 }
 
@@ -34,6 +37,8 @@ function mapStaffUser(raw: StaffRecord): SystemUser {
     email: raw.email ?? '',
     phone: raw.mobileNumber ?? '',
     userType: raw.type ?? '',
+    roleId: raw.roles?.[0]?.id ?? '',
+    roleName: raw.roles?.[0]?.roleName ?? '',
     status: raw.isLocked ? 'Not Active' : 'Active',
   };
 }
@@ -61,6 +66,7 @@ export class UserManagement implements OnInit {
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
   private readonly userManagementService = inject(UserManagementService);
+  private readonly rolesData = inject(RolesDataService);
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'System Administration', routerLink: '/system-administration' },
@@ -95,9 +101,9 @@ export class UserManagement implements OnInit {
   readonly activeUsers = computed(() => this.users().filter((u) => u.status === 'Active').length);
   readonly notActiveUsers = computed(() => this.users().filter((u) => u.status === 'Not Active').length);
 
-  // `type` is the coarse user category the backend returns (confirmed: "COMPLAINANT");
-  // it's distinct from the RBAC role assigned in Roles Management (HICT/DSE/DSR/etc.).
-  readonly roleOptions = [
+  readonly roleOptions = computed(() => this.rolesData.roles().map((role) => ({ label: role.name, value: role.id })));
+
+  readonly userTypeOptions = [
     { label: 'Staff', value: 'STAFF' },
     { label: 'Complainant', value: 'COMPLAINANT' },
     { label: 'Applicant', value: 'APPLICANT' },
@@ -118,14 +124,11 @@ export class UserManagement implements OnInit {
     email: ['', [Validators.required, Validators.email]],
     phone: ['', Validators.required],
     userType: ['', Validators.required],
+    roleId: ['', Validators.required],
   });
 
   statusSeverity(status: UserStatus): UserStatusSeverity {
     return status === 'Active' ? 'success' : 'danger';
-  }
-
-  formatUserType(userType: string): string {
-    return userType ? titleCase(userType) : '';
   }
 
   formatName(name: string): string {
@@ -165,6 +168,7 @@ export class UserManagement implements OnInit {
       email: user.email,
       phone: user.phone,
       userType: user.userType,
+      roleId: user.roleId,
     });
     this.showFormDialog = true;
   }
@@ -181,11 +185,19 @@ export class UserManagement implements OnInit {
     if (this.dialogMode === 'edit' && this.editingUser) {
       const target = this.editingUser;
       this.userManagementService
-        .updateUser({ id: target.id, name: raw.name, email: raw.email, mobileNumber: raw.phone, type: raw.userType })
+        .updateUser({
+          id: target.id,
+          name: raw.name,
+          email: raw.email,
+          mobileNumber: raw.phone,
+          userType: raw.userType,
+          roles: [raw.roleId],
+        })
         .pipe(finalize(() => this.submitting.set(false)))
         .subscribe({
           next: () => {
-            this.users.update((list) => list.map((u) => (u === target ? { ...u, ...raw } : u)));
+            const roleName = this.rolesData.roles().find((role) => role.id === raw.roleId)?.name ?? '';
+            this.users.update((list) => list.map((u) => (u === target ? { ...u, ...raw, roleName } : u)));
             this.messageService.add({
               severity: 'success',
               summary: 'User Updated',
@@ -193,17 +205,23 @@ export class UserManagement implements OnInit {
             });
             this.showFormDialog = false;
           },
-          error: () => {
+          error: (error) => {
             this.messageService.add({
               severity: 'error',
               summary: 'Update Failed',
-              detail: 'Something went wrong. Please try again later.',
+              detail: error?.error?.message ?? 'Something went wrong. Please try again later.',
             });
           },
         });
     } else {
       this.userManagementService
-        .saveUser({ name: raw.name, email: raw.email, mobileNumber: raw.phone, type: raw.userType })
+        .saveUser({
+          name: raw.name,
+          email: raw.email,
+          mobileNumber: raw.phone,
+          userType: raw.userType,
+          roles: [raw.roleId],
+        })
         .pipe(finalize(() => this.submitting.set(false)))
         .subscribe({
           next: (response) => {
@@ -215,11 +233,11 @@ export class UserManagement implements OnInit {
             });
             this.showFormDialog = false;
           },
-          error: () => {
+          error: (error) => {
             this.messageService.add({
               severity: 'error',
               summary: 'Add Failed',
-              detail: 'Something went wrong. Please try again later.',
+              detail: error?.error?.message ?? 'Something went wrong. Please try again later.',
             });
           },
         });

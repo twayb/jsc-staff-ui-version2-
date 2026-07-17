@@ -37,8 +37,10 @@ export class PasswordChange {
   private readonly token = this.route.snapshot.queryParamMap.get('token') ?? '';
 
   // A token in the URL means this is a forgot-password/expired-password reset link;
-  // otherwise it's an already-authenticated user changing their password from the header menu.
+  // otherwise it's an already-authenticated user changing their password from the header menu
+  // or from a forced first-login change (reason=first-login, set by AuthService.login()).
   readonly hasToken = !!this.token;
+  readonly isFirstLogin = this.route.snapshot.queryParamMap.get('reason') === 'first-login';
 
   readonly form = this.fb.nonNullable.group(
     {

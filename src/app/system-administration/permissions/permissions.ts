@@ -117,11 +117,11 @@ export class Permissions {
           });
           this.router.navigate(['/system-administration/roles']);
         },
-        error: () => {
+        error: (error) => {
           this.messageService.add({
             severity: 'error',
             summary: 'Update Failed',
-            detail: 'Something went wrong. Please try again later.',
+            detail: error?.error?.message ?? 'Something went wrong. Please try again later.',
           });
         },
       });

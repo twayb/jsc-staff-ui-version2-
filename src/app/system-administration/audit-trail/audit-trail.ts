@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
@@ -16,7 +16,7 @@ import { AuditCategory, AuditDataService, AuditEvent, CATEGORY_META, auditMethod
   templateUrl: './audit-trail.html',
   styleUrl: './audit-trail.css',
 })
-export class AuditTrail implements OnInit {
+export class AuditTrail {
   private readonly route = inject(ActivatedRoute);
   private readonly auditData = inject(AuditDataService);
 
@@ -32,11 +32,7 @@ export class AuditTrail implements OnInit {
     { label: this.meta().label },
   ]);
 
-  readonly loading = signal(true);
-
-  ngOnInit(): void {
-    setTimeout(() => this.loading.set(false), 800);
-  }
+  readonly loading = this.auditData.loading;
 
   readonly events = computed(() =>
     this.auditData.events().filter((event) => event.category === this.category()),
