@@ -80,9 +80,14 @@ export interface ApplicantRefereeRecord {
   relationship: string;
 }
 
+export interface AttachmentTypeRef {
+  id: number;
+  name: string;
+}
+
 export interface ApplicantOtherAttachmentRecord {
-  documentType: string;
-  fileId: string;
+  attachmentId: string;
+  attachmentType: AttachmentTypeRef | null;
 }
 
 export interface ApplicantRecord {

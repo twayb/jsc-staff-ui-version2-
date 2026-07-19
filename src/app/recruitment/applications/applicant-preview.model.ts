@@ -72,31 +72,33 @@ function statusFromRecord(record: ApplicationDetailRecord): ApplicantStatus {
 export function mapApplicantPreview(record: ApplicationDetailRecord): ApplicantPreview {
   const applicant = record.applicant;
 
-  const education: EducationEntry[] = applicant.applicantAcademic.map((entry) => ({
+  const education: EducationEntry[] = (applicant.applicantAcademic ?? []).map((entry) => ({
     degree: entry.course?.name ?? entry.level?.name ?? 'Unspecified',
     college: entry.institution?.name ?? entry.institutionName ?? 'Unspecified',
     startYear: entry.startYear,
     endYear: entry.endYear,
   }));
 
-  const professionalQualifications: ProfessionalQualificationEntry[] = applicant.applicantProfessions.map((entry) => ({
-    qualification: entry.profession?.name ?? entry.professionName ?? 'Unspecified',
-    awardingBody: entry.institution?.name ?? entry.institutionName ?? 'Unspecified',
-    year: entry.startDate?.slice(0, 4) ?? '',
-  }));
+  const professionalQualifications: ProfessionalQualificationEntry[] = (applicant.applicantProfessions ?? []).map(
+    (entry) => ({
+      qualification: entry.profession?.name ?? entry.professionName ?? 'Unspecified',
+      awardingBody: entry.institution?.name ?? entry.institutionName ?? 'Unspecified',
+      year: entry.startDate?.slice(0, 4) ?? '',
+    }),
+  );
 
-  const workExperience: WorkExperienceEntry[] = applicant.applicantExperiences.map((entry) => ({
+  const workExperience: WorkExperienceEntry[] = (applicant.applicantExperiences ?? []).map((entry) => ({
     position: entry.jobTitle,
     employer: entry.organisation,
     period: `${entry.startDate?.slice(0, 4) ?? ''} — ${entry.currentJob ? 'Present' : (entry.endDate?.slice(0, 4) ?? '')}`,
   }));
 
-  const languageProficiency: LanguageProficiencyEntry[] = applicant.applicantLanguages.map((entry) => ({
+  const languageProficiency: LanguageProficiencyEntry[] = (applicant.applicantLanguages ?? []).map((entry) => ({
     language: entry.language?.name ?? 'Unspecified',
     level: titleCase(entry.speak),
   }));
 
-  const referees: RefereeEntry[] = applicant.applicantReferees.map((entry) => ({
+  const referees: RefereeEntry[] = (applicant.applicantReferees ?? []).map((entry) => ({
     name: entry.name,
     position: entry.title,
     phone: entry.mobile,
@@ -104,12 +106,15 @@ export function mapApplicantPreview(record: ApplicationDetailRecord): ApplicantP
   }));
 
   const attachments: AttachmentEntry[] = [
-    ...applicant.applicantAcademic.flatMap((entry) =>
-      entry.documents.map((doc) => ({ label: titleCase(doc.documentType.replace(/_/g, ' ')), fileId: doc.fileId })),
+    ...(applicant.applicantAcademic ?? []).flatMap((entry) =>
+      (entry.documents ?? []).map((doc) => ({
+        label: titleCase(doc.documentType.replace(/_/g, ' ')),
+        fileId: doc.fileId,
+      })),
     ),
-    ...applicant.applicantOtherAttachments.map((doc) => ({
-      label: titleCase(doc.documentType.replace(/_/g, ' ')),
-      fileId: doc.fileId,
+    ...(applicant.applicantOtherAttachments ?? []).map((doc) => ({
+      label: doc.attachmentType?.name ?? 'Attachment',
+      fileId: doc.attachmentId,
     })),
     ...(record.applicationLetter ? [{ label: 'Application Letter', fileId: record.applicationLetter }] : []),
     ...(record.employerLetter ? [{ label: 'Employer Letter', fileId: record.employerLetter }] : []),
@@ -119,7 +124,7 @@ export function mapApplicantPreview(record: ApplicationDetailRecord): ApplicantP
     applicationId: record.id,
     applicantId: applicant.id,
     name: applicant.fullName,
-    position: record.advert.name,
+    position: record.advert?.name ?? 'Unspecified',
     nin: applicant.nin,
     email: applicant.email,
     gender: titleCase(applicant.gender),
