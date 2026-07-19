@@ -27,4 +27,8 @@ export class FileUploadApiService {
     formData.append('description', fileDescription);
     return this.http.post<ApiResponse<UploadedFile>>(`${this.apiUrl}uploads`, formData);
   }
+
+  download(fileId: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}download/${fileId}`, { responseType: 'blob' });
+  }
 }

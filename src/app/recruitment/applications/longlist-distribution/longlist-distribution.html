@@ -2,12 +2,12 @@
   [card]="false"
   title="Longlist Distribution"
   subtitle="Distribution of longlisted applicants to interview panels"
-  [data]="rows"
+  [data]="rows()"
   [loading]="loading()"
   [searchFields]="['name']"
   addLabel="Distribute Longlist"
   addIcon="pi pi-share-alt"
-  dataKey="name"
+  dataKey="userId"
   (add)="onDistribute()"
 >
   <ng-template #headerTpl>
@@ -45,3 +45,43 @@
     </tr>
   </ng-template>
 </app-data-table>
+
+<p-dialog
+  [(visible)]="showDistributeDialog"
+  header="Distribute Longlist"
+  [modal]="true"
+  [draggable]="false"
+  appendTo="body"
+  [style]="{ width: '26rem' }"
+>
+  <form [formGroup]="distributeForm" (ngSubmit)="onSubmitDistribute()" class="flex flex-col gap-4 pt-2">
+    <div class="flex flex-col gap-1.5">
+      <label for="userIds" class="text-sm font-medium text-heading">Staff</label>
+      <p-multiselect
+        inputId="userIds"
+        formControlName="userIds"
+        [options]="staffOptions()"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select staff"
+        display="chip"
+        appendTo="body"
+        class="w-full"
+      />
+      @if (distributeForm.controls.userIds.invalid && distributeForm.controls.userIds.touched) {
+        <span class="text-xs text-danger">At least one staff member is required</span>
+      }
+    </div>
+
+    <div class="flex justify-end gap-2 pt-2">
+      <p-button
+        label="Cancel"
+        severity="secondary"
+        [text]="true"
+        type="button"
+        (onClick)="showDistributeDialog.set(false)"
+      />
+      <p-button label="Distribute" type="submit" [loading]="distributing()" />
+    </div>
+  </form>
+</p-dialog>

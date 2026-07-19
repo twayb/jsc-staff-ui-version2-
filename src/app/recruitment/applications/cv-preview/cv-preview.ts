@@ -1,23 +1,8 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { LonglistDataService } from '../longlist-data.service';
-
-interface WorkExperience {
-  position: string;
-  employer: string;
-  period: string;
-}
-
-interface LanguageProficiency {
-  language: string;
-  level: string;
-}
-
-interface TrainingWorkshop {
-  title: string;
-  organizer: string;
-  year: number;
-}
+import { finalize } from 'rxjs';
+import { ApplicantPreviewApiService } from '../../../core/recruitment/applicant-preview-api.service';
+import { ApplicantPreview as ApplicantPreviewData, mapApplicantPreview } from '../applicant-preview.model';
 
 @Component({
   selector: 'app-cv-preview',
@@ -27,13 +12,20 @@ interface TrainingWorkshop {
 })
 export class CvPreview {
   private readonly route = inject(ActivatedRoute);
-  private readonly longlistData = inject(LonglistDataService);
+  private readonly applicantPreviewApi = inject(ApplicantPreviewApiService);
 
-  readonly referenceNo = this.route.snapshot.paramMap.get('referenceNo') ?? '';
+  readonly advertId = this.route.snapshot.paramMap.get('advertId') ?? '';
   readonly origin = this.route.snapshot.paramMap.get('origin') === 'assigned' ? 'assigned' : 'longlist';
-  readonly nin = this.route.snapshot.paramMap.get('nin') ?? '';
+  readonly applicationId = this.route.snapshot.paramMap.get('applicationId') ?? '';
 
-  readonly applicant = computed(() => this.longlistData.applicants().find((a) => a.nin === this.nin));
+  readonly loading = signal(true);
+  readonly applicant = signal<ApplicantPreviewData | null>(null);
+
+  readonly workExperience = computed(() => this.applicant()?.workExperience ?? []);
+  readonly languageProficiency = computed(() => this.applicant()?.languageProficiency ?? []);
+  // Training/workshop history isn't present in the API sample we've seen (applicantTrainings was
+  // empty) — kept empty here rather than guessing a shape.
+  readonly trainingWorkshops: { title: string; organizer: string; year: number }[] = [];
 
   readonly initials = computed(() =>
     (this.applicant()?.name ?? '')
@@ -44,22 +36,20 @@ export class CvPreview {
       .join(''),
   );
 
-  readonly workExperience: WorkExperience[] = [
-    { position: 'State Attorney', employer: 'Office of the Director of Public Prosecutions', period: '2018 — 2022' },
-    { position: 'Legal Officer', employer: 'Ministry of Constitutional and Legal Affairs', period: '2016 — 2018' },
-  ];
-
-  readonly languageProficiency: LanguageProficiency[] = [
-    { language: 'Kiswahili', level: 'Native' },
-    { language: 'English', level: 'Fluent' },
-    { language: 'French', level: 'Basic' },
-  ];
-
-  readonly trainingWorkshops: TrainingWorkshop[] = [
-    { title: 'Judicial Ethics and Conduct', organizer: 'Institute of Judicial Administration, Lushoto', year: 2023 },
-    { title: 'Case Management and Court Technology', organizer: 'Judiciary of Tanzania', year: 2022 },
-    { title: 'Human Rights and Access to Justice', organizer: 'Tanzania Human Rights Defenders Coalition', year: 2021 },
-  ];
+  constructor() {
+    this.loading.set(true);
+    this.applicantPreviewApi
+      .getApplication(this.applicationId)
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          if (response.data) {
+            this.applicant.set(mapApplicantPreview(response.data));
+          }
+        },
+        error: () => {},
+      });
+  }
 
   onPrint(): void {
     window.print();

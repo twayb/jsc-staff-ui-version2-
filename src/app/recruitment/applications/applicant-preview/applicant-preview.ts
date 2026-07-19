@@ -1,15 +1,19 @@
 import { Component, ElementRef, HostListener, QueryList, ViewChild, ViewChildren, computed, inject, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { Tag } from 'primeng/tag';
 import { Dialog } from 'primeng/dialog';
 import { Button } from 'primeng/button';
 import { Tooltip } from 'primeng/tooltip';
 import { Select } from 'primeng/select';
+import { finalize } from 'rxjs';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
-import { ApplicantStatus, LonglistDataService, NOT_SHORTLIST_REASONS, REVERT_REASONS } from '../longlist-data.service';
+import { NOT_SHORTLIST_REASONS, REVERT_REASONS } from '../longlist-data.service';
+import { ApplicantPreviewApiService } from '../../../core/recruitment/applicant-preview-api.service';
+import { FileUploadApiService } from '../../../core/files/file-upload-api.service';
+import { AttachmentEntry, mapApplicantPreview, ApplicantPreview as ApplicantPreviewData } from '../applicant-preview.model';
 
 type ApplicantStatusSeverity = 'warn' | 'success' | 'danger';
 
@@ -21,38 +25,38 @@ type ApplicantStatusSeverity = 'warn' | 'success' | 'danger';
 })
 export class ApplicantPreview {
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
-  private readonly longlistData = inject(LonglistDataService);
+  private readonly applicantPreviewApi = inject(ApplicantPreviewApiService);
+  private readonly fileUploadApi = inject(FileUploadApiService);
 
-  readonly referenceNo = this.route.snapshot.paramMap.get('referenceNo') ?? '';
+  readonly advertId = this.route.snapshot.paramMap.get('advertId') ?? '';
   readonly origin = this.route.snapshot.paramMap.get('origin') === 'assigned' ? 'assigned' : 'longlist';
+  readonly applicationId = this.route.snapshot.paramMap.get('applicationId') ?? '';
 
-  readonly applicants = this.longlistData.applicants;
+  readonly loading = signal(true);
+  readonly applicant = signal<ApplicantPreviewData | null>(null);
 
-  readonly currentIndex = signal(
-    Math.max(0, this.longlistData.getIndex(this.route.snapshot.paramMap.get('nin') ?? '')),
-  );
-
-  readonly total = computed(() => this.applicants().length);
-  readonly applicant = computed(() => this.applicants()[this.currentIndex()]);
-  readonly hasPrevious = computed(() => this.currentIndex() > 0);
-  readonly hasNext = computed(() => this.currentIndex() < this.total() - 1);
-  readonly progress = computed(() => ((this.currentIndex() + 1) / this.total()) * 100);
+  // Single-applicant preview for now — no shared list to page through yet, so this stays
+  // inert (1 of 1, both disabled) until real prev/next paging is wired to a list source.
+  readonly currentIndex = signal(0);
+  readonly total = computed(() => (this.applicant() ? 1 : 0));
+  readonly hasPrevious = computed(() => false);
+  readonly hasNext = computed(() => false);
+  readonly progress = computed(() => (this.applicant() ? 100 : 0));
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
     { label: 'Applications', routerLink: '/recruitment/applications' },
     {
       label: this.origin === 'assigned' ? 'Applicant Assigned' : 'Longlist',
-      routerLink: ['/recruitment/applications', this.origin, this.referenceNo],
+      routerLink: ['/recruitment/applications', this.origin, this.advertId],
     },
     { label: 'Applicant Preview' },
   ];
 
   showAttachmentsDialog = false;
-  selectedAttachment = '';
+  selectedAttachment: AttachmentEntry | null = null;
 
   showNotShortlistDialog = false;
   notShortlistReason: string | null = null;
@@ -79,44 +83,55 @@ export class ApplicantPreview {
     this.goToNext();
   }
 
-  statusSeverity(status: ApplicantStatus): ApplicantStatusSeverity {
-    if (status === 'Shortlisted') return 'success';
-    if (status === 'Not Shortlisted') return 'danger';
-    return 'warn';
+  constructor() {
+    this.loading.set(true);
+    this.applicantPreviewApi
+      .getApplication(this.applicationId)
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          if (response.data) {
+            this.applicant.set(mapApplicantPreview(response.data));
+          }
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Applicant',
+            detail: 'Could not load the applicant details. Please try again later.',
+          });
+        },
+      });
   }
 
   goToPrevious(): void {
     if (!this.hasPrevious()) {
       return;
     }
-    this.currentIndex.update((index) => index - 1);
-    this.syncUrl();
   }
 
   goToNext(): void {
     if (!this.hasNext()) {
       return;
     }
-    this.currentIndex.update((index) => index + 1);
-    this.syncUrl();
   }
 
-  private syncUrl(): void {
-    this.router.navigate(
-      ['/recruitment/applications', this.origin, this.referenceNo, 'applicant', this.applicant().nin],
-      { replaceUrl: true },
-    );
+  statusSeverity(status: ApplicantStatusSeverity | string): ApplicantStatusSeverity {
+    if (status === 'Shortlisted') return 'success';
+    if (status === 'Not Shortlisted') return 'danger';
+    return 'warn';
   }
 
   onPreviewAttachments(): void {
-    this.selectedAttachment = this.applicant().attachments[0];
+    const attachments = this.applicant()?.attachments ?? [];
+    this.selectedAttachment = attachments[0] ?? null;
     this.zoom.set(100);
     this.currentPage.set(1);
     this.showAttachmentsDialog = true;
     this.resetScroll();
   }
 
-  onSelectAttachment(file: string): void {
+  onSelectAttachment(file: AttachmentEntry): void {
     this.selectedAttachment = file;
     this.zoom.set(100);
     this.currentPage.set(1);
@@ -164,15 +179,32 @@ export class ApplicantPreview {
   }
 
   onDownloadAttachment(): void {
-    this.messageService.add({
-      severity: 'info',
-      summary: 'Download',
-      detail: `Download is not available in this demo.`,
+    const attachment = this.selectedAttachment;
+    if (!attachment) {
+      return;
+    }
+    this.fileUploadApi.download(attachment.fileId).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = attachment.label;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Download Failed',
+          detail: 'Could not download the attachment. Please try again later.',
+        });
+      },
     });
   }
 
   onShortlist(): void {
     const applicant = this.applicant();
+    if (!applicant) return;
     this.confirmationService.confirm({
       header: 'Shortlist Applicant',
       message: `Are you sure you want to shortlist "${applicant.name}"?`,
@@ -180,13 +212,12 @@ export class ApplicantPreview {
       acceptButtonProps: { label: 'Shortlist' },
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
       accept: () => {
-        this.longlistData.setStatus(applicant.nin, 'Shortlisted');
+        this.applicant.set({ ...applicant, status: 'Shortlisted' });
         this.messageService.add({
           severity: 'success',
           summary: 'Applicant Shortlisted',
           detail: `"${applicant.name}" was shortlisted successfully.`,
         });
-        this.advanceAfterDecision();
       },
     });
   }
@@ -197,18 +228,17 @@ export class ApplicantPreview {
   }
 
   onConfirmNotShortlist(): void {
-    if (!this.notShortlistReason) {
+    const applicant = this.applicant();
+    if (!this.notShortlistReason || !applicant) {
       return;
     }
-    const applicant = this.applicant();
-    this.longlistData.setNotShortlisted(applicant.nin, this.notShortlistReason);
+    this.applicant.set({ ...applicant, status: 'Not Shortlisted' });
     this.messageService.add({
       severity: 'success',
       summary: 'Applicant Not Shortlisted',
       detail: `"${applicant.name}" was marked as not shortlisted.`,
     });
     this.showNotShortlistDialog = false;
-    this.advanceAfterDecision();
   }
 
   onRevert(): void {
@@ -217,29 +247,16 @@ export class ApplicantPreview {
   }
 
   onConfirmRevert(): void {
-    if (!this.revertReason) {
+    const applicant = this.applicant();
+    if (!this.revertReason || !applicant) {
       return;
     }
-    const applicant = this.applicant();
-    this.longlistData.revertToPending(applicant.nin, this.revertReason);
+    this.applicant.set({ ...applicant, status: 'Pending' });
     this.messageService.add({
       severity: 'success',
       summary: 'Applicant Reverted',
       detail: `"${applicant.name}" was reverted to pending.`,
     });
     this.showRevertDialog = false;
-  }
-
-  private advanceAfterDecision(): void {
-    if (this.hasNext()) {
-      this.goToNext();
-      return;
-    }
-    this.messageService.add({
-      severity: 'info',
-      summary: 'Review Complete',
-      detail: 'You have reviewed all longlisted applicants.',
-    });
-    this.router.navigate(['/recruitment/applications', this.origin, this.referenceNo]);
   }
 }

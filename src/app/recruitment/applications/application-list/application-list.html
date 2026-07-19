@@ -8,7 +8,7 @@
     [data]="applications"
     [loading]="loading()"
     [searchFields]="['referenceNo', 'cadre']"
-    dataKey="referenceNo"
+    dataKey="id"
   >
     <ng-template #headerTpl>
       <tr>
@@ -28,7 +28,7 @@
         <td>{{ application.referenceNo }}</td>
         <td>{{ application.cadre }}</td>
         <td>{{ application.posts }}</td>
-        <td>{{ application.closingDate }}</td>
+        <td>{{ application.closingDate ?? '—' }}</td>
         <td>{{ application.applicants }}</td>
         <td class="text-center pr-6">
           <button

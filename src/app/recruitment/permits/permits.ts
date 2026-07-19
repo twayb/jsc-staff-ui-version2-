@@ -20,6 +20,7 @@ import { FileUploadApiService } from '../../core/files/file-upload-api.service';
 import { titleCase } from '../../core/utils';
 
 type PermitTypeSeverity = 'success' | 'warn' | 'info' | 'secondary';
+type PermitStatusSeverity = 'success' | 'warn' | 'info' | 'danger' | 'secondary';
 
 interface PermitScheme {
   schemeId: number;
@@ -182,6 +183,25 @@ export class Permits {
     return titleCase(permitType);
   }
 
+  formatPermitStatus(status: string): string {
+    return titleCase(status);
+  }
+
+  permitStatusSeverity(status: string): PermitStatusSeverity {
+    switch (status?.toUpperCase()) {
+      case 'NEW':
+        return 'info';
+      case 'APPROVED':
+        return 'success';
+      case 'REJECTED':
+        return 'danger';
+      case 'EXPIRED':
+        return 'warn';
+      default:
+        return 'secondary';
+    }
+  }
+
   permitTypeSeverity(permitType: string): PermitTypeSeverity {
     switch (permitType.toUpperCase()) {
       case 'NEW HIRE':
@@ -339,10 +359,20 @@ export class Permits {
             this.fetchPermits();
           },
           error: (error) => {
+            const message: string = error?.error?.message ?? '';
+            if (message.toLowerCase().includes('advert already exists')) {
+              this.messageService.add({
+                severity: 'warn',
+                summary: 'Permit Already Approved',
+                detail: `Permit for "${permit.name}" has already been approved.`,
+              });
+              this.fetchPermits();
+              return;
+            }
             this.messageService.add({
               severity: 'error',
               summary: 'Approval Failed',
-              detail: error?.error?.message ?? 'Could not approve the permit. Please try again later.',
+              detail: message || 'Could not approve the permit. Please try again later.',
             });
           },
         });

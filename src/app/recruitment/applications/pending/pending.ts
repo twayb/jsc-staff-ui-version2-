@@ -19,7 +19,7 @@ interface PendingApplicant {
 export class Pending implements OnInit {
   private readonly router = inject(Router);
 
-  @Input() referenceNo = '';
+  @Input() advertId = '';
   @Input() origin: 'longlist' | 'assigned' = 'assigned';
 
   readonly loading = signal(true);
@@ -35,6 +35,6 @@ export class Pending implements OnInit {
   ];
 
   onView(applicant: PendingApplicant): void {
-    this.router.navigate(['/recruitment/applications', this.origin, this.referenceNo, 'applicant', applicant.nin]);
+    this.router.navigate(['/recruitment/applications', this.origin, this.advertId, 'applicant', applicant.nin]);
   }
 }

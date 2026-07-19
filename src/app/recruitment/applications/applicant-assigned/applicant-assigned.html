@@ -59,15 +59,15 @@
         </p-tabpanel>
 
         <p-tabpanel value="pending" class="block animate-tab-slide">
-          <app-pending [referenceNo]="referenceNo" />
+          <app-pending [advertId]="advertId" />
         </p-tabpanel>
 
         <p-tabpanel value="shortlist" class="block animate-tab-slide">
-          <app-shortlist [showApproval]="false" [referenceNo]="referenceNo" origin="assigned" />
+          <app-shortlist [showApproval]="false" [advertId]="advertId" origin="assigned" />
         </p-tabpanel>
 
         <p-tabpanel value="not-shortlist" class="block animate-tab-slide">
-          <app-not-shortlist [referenceNo]="referenceNo" origin="assigned" />
+          <app-not-shortlist [advertId]="advertId" origin="assigned" />
         </p-tabpanel>
       </p-tabpanels>
     </p-tabs>

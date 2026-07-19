@@ -32,7 +32,7 @@
     </button>
   </div>
 
-  @for (a of [applicant()]; track a.nin) {
+  @if (applicant(); as a) {
     <div class="flex flex-col gap-6 animate-tab-slide">
       <div class="bg-card border border-border rounded-2xl p-6">
         <div class="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -94,7 +94,7 @@
             icon="pi pi-id-card"
             severity="secondary"
             [outlined]="true"
-            [routerLink]="['/recruitment/applications', origin, referenceNo, 'applicant', a.nin, 'cv']"
+            [routerLink]="['/recruitment/applications', origin, advertId, 'applicant', a.applicationId, 'cv']"
           />
         </div>
 
@@ -116,6 +116,10 @@
         }
       </div>
     </div>
+  } @else if (loading()) {
+    <div class="bg-card border border-border rounded-2xl p-6 text-sm text-value">Loading applicant…</div>
+  } @else {
+    <div class="bg-card border border-border rounded-2xl p-6 text-sm text-value">Applicant not found.</div>
   }
 </div>
 
@@ -127,7 +131,7 @@
   [style]="{ width: '26rem' }"
 >
   <div class="flex flex-col gap-4 pt-2">
-    <p class="text-sm text-value">Select a reason for not shortlisting "{{ applicant().name }}".</p>
+    <p class="text-sm text-value">Select a reason for not shortlisting "{{ applicant()?.name }}".</p>
 
     <div class="flex flex-col gap-1.5">
       <label class="text-sm font-medium text-heading">Reason</label>
@@ -168,7 +172,7 @@
   [style]="{ width: '26rem' }"
 >
   <div class="flex flex-col gap-4 pt-2">
-    <p class="text-sm text-value">Select a reason for reverting "{{ applicant().name }}" back to pending.</p>
+    <p class="text-sm text-value">Select a reason for reverting "{{ applicant()?.name }}" back to pending.</p>
 
     <div class="flex flex-col gap-1.5">
       <label class="text-sm font-medium text-heading">Reason</label>
@@ -211,19 +215,19 @@
 >
   <div class="flex h-full overflow-hidden">
     <div class="w-64 shrink-0 flex flex-col overflow-hidden border-r border-t border-border">
-      @for (file of applicant().attachments; track file) {
+      @for (file of applicant()?.attachments ?? []; track file.fileId) {
         <button
           type="button"
           (click)="onSelectAttachment(file)"
           [ngClass]="
-            file === selectedAttachment
+            file.fileId === selectedAttachment?.fileId
               ? 'bg-primary/10 text-primary'
               : 'text-value hover:bg-row-b hover:text-heading'
           "
           class="flex items-center gap-2 px-4 py-3 text-left text-sm transition-colors border-b border-border last:border-b-0"
         >
           <i class="pi pi-file-pdf text-danger shrink-0"></i>
-          <span class="truncate">{{ file }}</span>
+          <span class="truncate">{{ file.label }}</span>
         </button>
       }
     </div>
@@ -232,7 +236,7 @@
       <div class="shrink-0 flex items-center justify-between gap-3 border-t border-b border-border px-4 py-2.5">
         <div class="flex items-center gap-2 min-w-0">
           <i class="pi pi-file-pdf text-danger shrink-0"></i>
-          <span class="text-sm font-medium text-heading truncate">{{ selectedAttachment }}</span>
+          <span class="text-sm font-medium text-heading truncate">{{ selectedAttachment?.label }}</span>
         </div>
 
         <div class="flex items-center gap-1 shrink-0">

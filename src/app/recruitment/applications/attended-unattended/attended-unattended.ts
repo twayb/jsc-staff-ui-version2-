@@ -28,13 +28,13 @@ interface AttendanceApplicant {
 export class AttendedUnattended implements OnInit {
   private readonly route = inject(ActivatedRoute);
 
-  readonly referenceNo = this.route.snapshot.paramMap.get('referenceNo') ?? '';
+  readonly advertId = this.route.snapshot.paramMap.get('advertId') ?? '';
   readonly panel = this.route.snapshot.paramMap.get('panel') ?? '';
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
     { label: 'Applications', routerLink: '/recruitment/applications' },
-    { label: 'Longlist', routerLink: ['/recruitment/applications/longlist', this.referenceNo] },
+    { label: 'Longlist', routerLink: ['/recruitment/applications/longlist', this.advertId] },
     { label: 'Attend' },
   ];
 

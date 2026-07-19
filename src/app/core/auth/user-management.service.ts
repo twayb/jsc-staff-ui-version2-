@@ -44,6 +44,10 @@ export class UserManagementService {
     return this.http.get<ApiResponse<StaffRecord[]>>(`${this.apiUrl}users`);
   }
 
+  getStaffUsersByType(type: string): Observable<ApiResponse<StaffRecord[]>> {
+    return this.http.get<ApiResponse<StaffRecord[]>>(`${this.apiUrl}users/type/${type}`);
+  }
+
   getStaff(id: string): Observable<ApiResponse<StaffRecord>> {
     return this.http.get<ApiResponse<StaffRecord>>(`${this.apiUrl}users/${id}`);
   }

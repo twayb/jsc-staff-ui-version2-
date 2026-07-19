@@ -52,31 +52,31 @@ export const routes: Routes = [
           import('./recruitment/applications/application-list/application-list').then((m) => m.ApplicationList),
       },
       {
-        path: 'recruitment/applications/longlist/:referenceNo',
+        path: 'recruitment/applications/longlist/:advertId',
         loadComponent: () =>
           import('./recruitment/applications/longlist-list/longlist-list').then((m) => m.LonglistList),
       },
       {
-        path: 'recruitment/applications/longlist/:referenceNo/attended-unattended/:panel',
+        path: 'recruitment/applications/longlist/:advertId/attended-unattended/:panel',
         loadComponent: () =>
           import('./recruitment/applications/attended-unattended/attended-unattended').then(
             (m) => m.AttendedUnattended,
           ),
       },
       {
-        path: 'recruitment/applications/assigned/:referenceNo',
+        path: 'recruitment/applications/assigned/:advertId',
         loadComponent: () =>
           import('./recruitment/applications/applicant-assigned/applicant-assigned').then(
             (m) => m.ApplicantAssigned,
           ),
       },
       {
-        path: 'recruitment/applications/:origin/:referenceNo/applicant/:nin',
+        path: 'recruitment/applications/:origin/:advertId/applicant/:applicationId',
         loadComponent: () =>
           import('./recruitment/applications/applicant-preview/applicant-preview').then((m) => m.ApplicantPreview),
       },
       {
-        path: 'recruitment/applications/:origin/:referenceNo/applicant/:nin/cv',
+        path: 'recruitment/applications/:origin/:advertId/applicant/:applicationId/cv',
         loadComponent: () =>
           import('./recruitment/applications/cv-preview/cv-preview').then((m) => m.CvPreview),
       },

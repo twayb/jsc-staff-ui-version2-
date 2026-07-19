@@ -37,7 +37,7 @@ export class ApplicantAssigned implements OnInit {
   private readonly router = inject(Router);
   private readonly longlistData = inject(LonglistDataService);
 
-  readonly referenceNo = this.route.snapshot.paramMap.get('referenceNo') ?? '';
+  readonly advertId = this.route.snapshot.paramMap.get('advertId') ?? '';
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
@@ -61,6 +61,6 @@ export class ApplicantAssigned implements OnInit {
   }
 
   onView(applicant: LonglistApplicant): void {
-    this.router.navigate(['/recruitment/applications/assigned', this.referenceNo, 'applicant', applicant.nin]);
+    this.router.navigate(['/recruitment/applications/assigned', this.advertId, 'applicant', applicant.nin]);
   }
 }

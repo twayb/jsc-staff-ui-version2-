@@ -1,16 +1,30 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Menu } from 'primeng/menu';
-import { MenuItem } from 'primeng/api';
+import { MenuItem, MessageService } from 'primeng/api';
+import { finalize } from 'rxjs';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
+import { ApplicationApiService, ApplicationSummaryRecord } from '../../../core/recruitment/application-api.service';
 
 interface ApplicationListing {
+  id: number;
   referenceNo: string;
   cadre: string;
   posts: number;
-  closingDate: string;
+  closingDate: string | null;
   applicants: number;
+}
+
+function mapApplication(raw: ApplicationSummaryRecord): ApplicationListing {
+  return {
+    id: raw.id,
+    referenceNo: raw.advertReferenceNumber,
+    cadre: raw.schemeName,
+    posts: Number(raw.advertNumberOfPosts),
+    closingDate: raw.advertClosingDate,
+    applicants: Number(raw.advertTotalApplications),
+  };
 }
 
 @Component({
@@ -19,8 +33,10 @@ interface ApplicationListing {
   templateUrl: './application-list.html',
   styleUrl: './application-list.css',
 })
-export class ApplicationList implements OnInit {
+export class ApplicationList {
   private readonly router = inject(Router);
+  private readonly applicationApi = inject(ApplicationApiService);
+  private readonly messageService = inject(MessageService);
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
@@ -29,40 +45,30 @@ export class ApplicationList implements OnInit {
 
   readonly loading = signal(true);
 
-  ngOnInit(): void {
-    setTimeout(() => this.loading.set(false), 800);
+  constructor() {
+    this.fetchApplications();
   }
 
-  applications: ApplicationListing[] = [
-    {
-      referenceNo: 'ADV-2026-001',
-      cadre: 'Magistrate',
-      posts: 5,
-      closingDate: '2026-02-10',
-      applicants: 42,
-    },
-    {
-      referenceNo: 'ADV-2026-002',
-      cadre: 'Court Clerk',
-      posts: 8,
-      closingDate: '2026-03-01',
-      applicants: 76,
-    },
-    {
-      referenceNo: 'ADV-2026-003',
-      cadre: 'Legal Officer',
-      posts: 3,
-      closingDate: '2025-12-15',
-      applicants: 21,
-    },
-    {
-      referenceNo: 'ADV-2026-004',
-      cadre: 'Research Officer',
-      posts: 2,
-      closingDate: '2026-01-01',
-      applicants: 15,
-    },
-  ];
+  private fetchApplications(): void {
+    this.loading.set(true);
+    this.applicationApi
+      .getApplications()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.applications = (response.data?.content ?? []).map(mapApplication).sort((a, b) => b.id - a.id);
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Applications',
+            detail: 'Could not load the applications list. Please try again later.',
+          });
+        },
+      });
+  }
+
+  applications: ApplicationListing[] = [];
 
   actionMenuItems: MenuItem[] = [];
 
@@ -75,10 +81,10 @@ export class ApplicationList implements OnInit {
   }
 
   onLonglist(application: ApplicationListing): void {
-    this.router.navigate(['/recruitment/applications/longlist', application.referenceNo]);
+    this.router.navigate(['/recruitment/applications/longlist', application.id]);
   }
 
   onView(application: ApplicationListing): void {
-    this.router.navigate(['/recruitment/applications/assigned', application.referenceNo]);
+    this.router.navigate(['/recruitment/applications/assigned', application.id]);
   }
 }

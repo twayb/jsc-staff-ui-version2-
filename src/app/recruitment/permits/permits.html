@@ -51,10 +51,10 @@
         <th class="pl-6">No</th>
         <th>Name</th>
         <th>Permit Type</th>
-        <th>Permit No</th>
         <th>Posts</th>
         <th>Start Date</th>
         <th>End Date</th>
+        <th>Status</th>
         <th class="text-center pr-6">Action</th>
       </tr>
     </ng-template>
@@ -66,10 +66,12 @@
         <td>
           <p-tag [value]="formatPermitType(permit.permitType)" [severity]="permitTypeSeverity(permit.permitType)" />
         </td>
-        <td>{{ permit.permitNo }}</td>
         <td>{{ permit.numberOfPosts }}</td>
         <td>{{ permit.startDate }}</td>
         <td>{{ permit.endDate }}</td>
+        <td>
+          <p-tag [value]="formatPermitStatus(permit.status)" [severity]="permitStatusSeverity(permit.status)" />
+        </td>
         <td class="text-center pr-6">
           <button
             type="button"
@@ -130,11 +132,11 @@
       <div class="grid grid-cols-2 gap-4">
         <div class="flex flex-col gap-1.5">
           <label for="startDate" class="text-sm font-medium text-heading">Start Date</label>
-          <p-datepicker inputId="startDate" formControlName="startDate" dateFormat="yy-mm-dd" [showIcon]="true" class="w-full" />
+          <p-datepicker inputId="startDate" formControlName="startDate" dateFormat="yy-mm-dd" [showIcon]="true" appendTo="body" class="w-full" />
         </div>
         <div class="flex flex-col gap-1.5">
           <label for="endDate" class="text-sm font-medium text-heading">End Date</label>
-          <p-datepicker inputId="endDate" formControlName="endDate" dateFormat="yy-mm-dd" [showIcon]="true" class="w-full" />
+          <p-datepicker inputId="endDate" formControlName="endDate" dateFormat="yy-mm-dd" [showIcon]="true" appendTo="body" class="w-full" />
         </div>
       </div>
 
