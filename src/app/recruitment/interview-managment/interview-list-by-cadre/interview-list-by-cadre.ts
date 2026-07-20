@@ -74,7 +74,9 @@ export class InterviewListByCadre implements OnInit {
     this.router.navigate(['/recruitment/interview-management', cadre.advertId]);
   }
 
+  // Results are per interview type now, which this screen doesn't know yet — send the user to
+  // the interview list to pick one, rather than guessing an interviewTypeId.
   onResults(cadre: CadreInterviewListing): void {
-    this.router.navigate(['/recruitment/interview-management', cadre.advertId, 'results']);
+    this.router.navigate(['/recruitment/interview-management', cadre.advertId]);
   }
 }

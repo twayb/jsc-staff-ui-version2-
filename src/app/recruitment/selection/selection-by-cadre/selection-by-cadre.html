@@ -10,8 +10,8 @@
           <i class="pi pi-user-plus text-xl text-success"></i>
         </span>
         <div>
-          <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="totalHire"></p>
-          <p class="text-sm text-value">Total Hire</p>
+          <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="totalSelections()"></p>
+          <p class="text-sm text-value">Total Selections</p>
         </div>
       </div>
       <div class="bg-card border border-border rounded-2xl p-6 flex items-center gap-4 animate-fade-in-up stagger-2">
@@ -19,8 +19,8 @@
           <i class="pi pi-calendar text-xl text-info"></i>
         </span>
         <div>
-          <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="hireThisYear"></p>
-          <p class="text-sm text-value">Hire This Year</p>
+          <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="totalCadres()"></p>
+          <p class="text-sm text-value">Cadres with Selections</p>
         </div>
       </div>
     </div>
@@ -30,10 +30,10 @@
     class="block animate-fade-in-up stagger-1"
     title="Selection by Cadre"
     subtitle="Manage candidate selection per cadre"
-    [data]="cadres"
+    [data]="cadres()"
     [loading]="loading()"
     [searchFields]="['referenceNo', 'cadre']"
-    dataKey="referenceNo"
+    dataKey="advertId"
   >
     <ng-template #headerTpl>
       <tr>

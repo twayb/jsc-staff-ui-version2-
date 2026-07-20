@@ -263,9 +263,8 @@ export class InterviewList implements OnInit {
     this.showCutOffDialog = false;
   }
 
-  // Not wired yet: the old app's publishInterview() is GET admins/publish-applications/{advertId} —
-  // scoped to the whole advert, not a single interview row, so calling it per-row here would be wrong.
-  // Needs its own confirmation before wiring.
+  // Advert-scoped, not per-interview-row (matches the old app's publishInterview(advertId)) —
+  // publishing may affect more than just the clicked row, so the list is reloaded on success.
   onPublish(interview: CadreInterview): void {
     this.confirmationService.confirm({
       header: 'Publish Interview',
@@ -274,13 +273,22 @@ export class InterviewList implements OnInit {
       acceptButtonProps: { label: 'Publish' },
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
       accept: () => {
-        this.interviews.update((list) =>
-          list.map((item) => (item === interview ? { ...item, status: 'Published' } : item)),
-        );
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Interview Published',
-          detail: `"${interview.title}" was published successfully.`,
+        this.interviewApi.publishInterviews(Number(this.advertId)).subscribe({
+          next: (response) => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Interview Published',
+              detail: response.message,
+            });
+            this.loadInterviews();
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Publish Failed',
+              detail: 'Could not publish the interview. Please try again later.',
+            });
+          },
         });
       },
     });
@@ -316,13 +324,14 @@ export class InterviewList implements OnInit {
   }
 
   onResults(interview: CadreInterview): void {
-    this.router.navigate(['/recruitment/interview-management', this.advertId, 'results'], {
-      queryParams: { title: interview.title },
-    });
+    this.router.navigate(
+      ['/recruitment/interview-management', this.advertId, 'results', interview.interviewTypeId],
+      { queryParams: { title: interview.title, cutOff: interview.cutOff } },
+    );
   }
 
   onPanel(interview: CadreInterview): void {
-    this.router.navigate(['/recruitment/interview-management', this.advertId, 'panel'], {
+    this.router.navigate(['/recruitment/interview-management', this.advertId, 'panel', interview.id], {
       queryParams: { title: interview.title },
     });
   }

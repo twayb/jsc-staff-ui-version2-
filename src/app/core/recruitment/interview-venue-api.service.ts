@@ -11,13 +11,17 @@ export interface RegionShortlistStatRecord {
   advertId: string;
 }
 
+export interface InterviewVenueRegionLink {
+  regionId: number;
+}
+
 export interface InterviewVenueRecord {
   id: number;
   name: string;
-  regionId: number;
   districtId: number;
   venueCapacity: number;
   active: boolean;
+  setInterviewRegionVenues: InterviewVenueRegionLink[];
 }
 
 export interface SetInterviewVenueInput {
@@ -56,6 +60,14 @@ export interface VenueApplicantRecord {
   applicantPhoneNumber: string;
 }
 
+export interface InterviewVenueInput {
+  name: string;
+  regionIds: number[];
+  districtId: number;
+  venueCapacity: number;
+  active: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class InterviewVenueApiService {
   private readonly http = inject(HttpClient);
@@ -84,5 +96,21 @@ export class InterviewVenueApiService {
 
   getApplicantsByVenue(input: VenueApplicantLookup): Observable<ApiResponse<VenueApplicantRecord[]>> {
     return this.http.post<ApiResponse<VenueApplicantRecord[]>>(`${this.apiUrl}applicant-interview-venue`, input);
+  }
+
+  getInterviewVenues(): Observable<ApiResponse<InterviewVenueRecord[]>> {
+    return this.http.get<ApiResponse<InterviewVenueRecord[]>>(`${this.apiUrl}interview-venues`);
+  }
+
+  createInterviewVenue(input: InterviewVenueInput): Observable<ApiResponse<InterviewVenueRecord>> {
+    return this.http.post<ApiResponse<InterviewVenueRecord>>(`${this.apiUrl}interview-venues`, input);
+  }
+
+  updateInterviewVenue(id: number, input: InterviewVenueInput): Observable<ApiResponse<InterviewVenueRecord>> {
+    return this.http.put<ApiResponse<InterviewVenueRecord>>(`${this.apiUrl}interview-venues/${id}`, input);
+  }
+
+  deleteInterviewVenue(id: number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.apiUrl}interview-venues/${id}`);
   }
 }

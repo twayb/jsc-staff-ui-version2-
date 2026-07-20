@@ -1,29 +1,35 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { Menu } from 'primeng/menu';
-import { Dialog } from 'primeng/dialog';
-import { InputText } from 'primeng/inputtext';
-import { InputNumber } from 'primeng/inputnumber';
-import { Button } from 'primeng/button';
+import { finalize } from 'rxjs';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
+import { AcademicLevelApiService, AcademicLevelRecord } from '../../../core/masterdata/academic-level-api.service';
 
 interface AcademicLevel {
+  id: number;
   name: string;
   level: number;
 }
 
+function mapAcademicLevel(record: AcademicLevelRecord): AcademicLevel {
+  return {
+    id: record.id,
+    name: record.name,
+    level: record.level,
+  };
+}
+
 @Component({
   selector: 'app-academic-levels',
-  imports: [ReactiveFormsModule, Menu, Dialog, InputText, InputNumber, Button, AppBreadcrumb, AppDataTable],
+  imports: [Menu, AppBreadcrumb, AppDataTable],
   templateUrl: './academic-levels.html',
   styleUrl: './academic-levels.css',
 })
 export class AcademicLevels implements OnInit {
-  private readonly fb = inject(FormBuilder);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
+  private readonly academicLevelApi = inject(AcademicLevelApiService);
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
@@ -32,82 +38,35 @@ export class AcademicLevels implements OnInit {
   ];
 
   readonly loading = signal(true);
+  readonly academicLevels = signal<AcademicLevel[]>([]);
 
   ngOnInit(): void {
-    setTimeout(() => this.loading.set(false), 800);
+    this.loading.set(true);
+    this.academicLevelApi
+      .getAcademicLevels()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.academicLevels.set((response.data ?? []).map(mapAcademicLevel));
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Academic Levels',
+            detail: 'Could not load the academic levels. Please try again later.',
+          });
+        },
+      });
   }
-
-  academicLevels: AcademicLevel[] = [
-    { name: 'Certificate', level: 1 },
-    { name: 'Diploma', level: 2 },
-    { name: "Bachelor's Degree", level: 3 },
-    { name: "Master's Degree", level: 4 },
-    { name: 'PhD', level: 5 },
-  ];
 
   actionMenuItems: MenuItem[] = [];
 
-  showFormDialog = false;
-  dialogMode: 'add' | 'edit' = 'add';
-  editingAcademicLevel: AcademicLevel | null = null;
-
-  readonly form = this.fb.nonNullable.group({
-    name: ['', Validators.required],
-    level: this.fb.control<number | null>(null, [Validators.required, Validators.min(1)]),
-  });
-
   openActionMenu(event: Event, academicLevel: AcademicLevel, menu: Menu): void {
-    this.actionMenuItems = [
-      { label: 'Edit', icon: 'pi pi-pencil', command: () => this.onEdit(academicLevel) },
-      { separator: true },
-      { label: 'Delete', icon: 'pi pi-trash', command: () => this.onDelete(academicLevel) },
-    ];
+    this.actionMenuItems = [{ label: 'Delete', icon: 'pi pi-trash', command: () => this.onDelete(academicLevel) }];
     menu.toggle(event);
   }
 
-  openAddDialog(): void {
-    this.dialogMode = 'add';
-    this.editingAcademicLevel = null;
-    this.form.reset();
-    this.showFormDialog = true;
-  }
-
-  onEdit(academicLevel: AcademicLevel): void {
-    this.dialogMode = 'edit';
-    this.editingAcademicLevel = academicLevel;
-    this.form.reset({ name: academicLevel.name, level: academicLevel.level });
-    this.showFormDialog = true;
-  }
-
-  onSubmit(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-
-    const raw = this.form.getRawValue();
-    const academicLevel: AcademicLevel = { name: raw.name, level: raw.level! };
-
-    if (this.dialogMode === 'edit' && this.editingAcademicLevel) {
-      const target = this.editingAcademicLevel;
-      this.academicLevels = this.academicLevels.map((item) => (item === target ? academicLevel : item));
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Academic Level Updated',
-        detail: `"${academicLevel.name}" was updated successfully.`,
-      });
-    } else {
-      this.academicLevels = [...this.academicLevels, academicLevel];
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Academic Level Added',
-        detail: `"${academicLevel.name}" was added successfully.`,
-      });
-    }
-
-    this.showFormDialog = false;
-  }
-
+  // Not wired yet: no confirmed delete endpoint for academic levels — stays local-only for now.
   onDelete(academicLevel: AcademicLevel): void {
     this.confirmationService.confirm({
       header: 'Delete Academic Level',
@@ -116,7 +75,7 @@ export class AcademicLevels implements OnInit {
       acceptButtonProps: { label: 'Delete', severity: 'danger' },
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
       accept: () => {
-        this.academicLevels = this.academicLevels.filter((item) => item !== academicLevel);
+        this.academicLevels.update((list) => list.filter((item) => item !== academicLevel));
         this.messageService.add({
           severity: 'success',
           summary: 'Academic Level Deleted',

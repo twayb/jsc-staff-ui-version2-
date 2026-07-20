@@ -5,16 +5,18 @@
     class="block animate-fade-in-up stagger-1"
     title="Selection List"
     [subtitle]="cadre ? 'Selected candidates for ' + cadre : 'Selected candidates'"
-    [data]="candidates"
+    [data]="candidates()"
     [loading]="loading()"
-    [searchFields]="['name', 'status', 'remarks']"
-    dataKey="name"
+    [searchFields]="['name', 'interviewNo', 'status', 'remarks']"
+    dataKey="applicationId"
   >
     <ng-template #headerTpl>
       <tr>
         <th class="pl-6">No</th>
         <th>Name</th>
+        <th>Interview No</th>
         <th>Gender</th>
+        <th>Marks</th>
         <th>Status</th>
         <th>Remarks</th>
         <th class="text-center pr-6">Action</th>
@@ -25,18 +27,20 @@
       <tr>
         <td class="pl-6">{{ rowIndex + 1 }}</td>
         <td>{{ candidate.name }}</td>
+        <td>{{ candidate.interviewNo }}</td>
         <td>{{ candidate.gender }}</td>
+        <td>{{ candidate.marks }}%</td>
         <td>
-          <p-tag [value]="candidate.status" [severity]="statusSeverity(candidate.status)" />
+          <p-tag [value]="statusLabel(candidate.status)" [severity]="statusSeverity(candidate.status)" />
         </td>
         <td>
-          <p-tag [value]="candidate.remarks" [severity]="remarksSeverity(candidate.remarks)" />
+          <p-tag [value]="remarksLabel(candidate.remarks)" [severity]="remarksSeverity(candidate.remarks)" />
         </td>
         <td class="text-center pr-6">
           <button
             type="button"
             (click)="onApprove(candidate)"
-            [disabled]="candidate.status === 'Approved'"
+            [disabled]="candidate.status === 'APPROVED'"
             class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors mx-auto disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
             aria-label="Approve selection"
             pTooltip="Approve"

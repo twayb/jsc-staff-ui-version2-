@@ -7,22 +7,42 @@ import { Tag } from 'primeng/tag';
 import { Dialog } from 'primeng/dialog';
 import { Select } from 'primeng/select';
 import { InputText } from 'primeng/inputtext';
+import { InputNumber } from 'primeng/inputnumber';
 import { Button } from 'primeng/button';
+import { finalize } from 'rxjs';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
+import { AdvertApiService } from '../../../core/recruitment/advert-api.service';
+import { InterviewApiService, PanelMemberRecord } from '../../../core/recruitment/interview-api.service';
 
 type PanelMemberType = 'Chairman' | 'Secretary' | 'Member';
 type PanelMemberTypeSeverity = 'info' | 'warn' | 'secondary';
 
 interface PanelMember {
+  id: number;
   type: PanelMemberType;
   name: string;
   email: string;
 }
 
+function memberTypeFromApi(type: PanelMemberRecord['memberType']): PanelMemberType {
+  if (type === 'SECRETARY') return 'Secretary';
+  if (type === 'MEMBER') return 'Member';
+  return 'Chairman';
+}
+
+function mapPanelMember(record: PanelMemberRecord): PanelMember {
+  return {
+    id: record.id,
+    type: memberTypeFromApi(record.memberType),
+    name: record.name,
+    email: record.email,
+  };
+}
+
 @Component({
   selector: 'app-panelists',
-  imports: [ReactiveFormsModule, Menu, Tag, Dialog, Select, InputText, Button, AppBreadcrumb, AppDataTable],
+  imports: [ReactiveFormsModule, Menu, Tag, Dialog, Select, InputText, InputNumber, Button, AppBreadcrumb, AppDataTable],
   templateUrl: './panelists.html',
   styleUrl: './panelists.css',
 })
@@ -31,29 +51,53 @@ export class Panelists implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
+  private readonly advertApi = inject(AdvertApiService);
+  private readonly interviewApi = inject(InterviewApiService);
 
   readonly advertId = this.route.snapshot.paramMap.get('advertId') ?? '';
   readonly panel = this.route.snapshot.queryParamMap.get('panel') ?? '';
+  readonly panelId = this.route.snapshot.queryParamMap.get('panelId') ?? '';
+  readonly interviewId = this.route.snapshot.queryParamMap.get('interviewId') ?? '';
 
-  readonly breadcrumbItems: MenuItem[] = [
+  readonly breadcrumbItems = signal<MenuItem[]>([
     { label: 'Recruitment', routerLink: '/recruitment' },
     { label: 'Interview Management', routerLink: '/recruitment/interview-management' },
     { label: this.advertId, routerLink: `/recruitment/interview-management/${this.advertId}` },
-    { label: 'Panel', routerLink: `/recruitment/interview-management/${this.advertId}/panel` },
+    { label: 'Panel', routerLink: `/recruitment/interview-management/${this.advertId}/panel/${this.interviewId}` },
     { label: this.panel },
-  ];
+  ]);
 
   readonly loading = signal(true);
+  readonly members = signal<PanelMember[]>([]);
 
   ngOnInit(): void {
-    setTimeout(() => this.loading.set(false), 800);
-  }
+    this.advertApi.getAdvert(Number(this.advertId)).subscribe({
+      next: (response) => {
+        const name = response.data?.advertName;
+        if (name) {
+          this.breadcrumbItems.update((items) => items.map((item, index) => (index === 2 ? { ...item, label: name } : item)));
+        }
+      },
+      error: () => {},
+    });
 
-  members: PanelMember[] = [
-    { type: 'Chairman', name: 'Hon. Justice Mkude', email: 'mkude@jsc.go.tz' },
-    { type: 'Secretary', name: 'Hon. Justice Kimaro', email: 'kimaro@jsc.go.tz' },
-    { type: 'Member', name: 'Dr. Amina Juma', email: 'amina.juma@jsc.go.tz' },
-  ];
+    this.loading.set(true);
+    this.interviewApi
+      .getPanelMembers(Number(this.panelId))
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.members.set((response.data ?? []).map(mapPanelMember));
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Panelists',
+            detail: 'Could not load the panelists. Please try again later.',
+          });
+        },
+      });
+  }
 
   readonly memberTypeOptions = [
     { label: 'Chairman', value: 'Chairman' },
@@ -70,6 +114,14 @@ export class Panelists implements OnInit {
     type: this.fb.control<PanelMemberType | null>(null, Validators.required),
     name: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
+  });
+
+  showExportDialog = false;
+  exportMember: PanelMember | null = null;
+  readonly exportingFormat = signal(false);
+
+  readonly exportForm = this.fb.nonNullable.group({
+    numberOfQuestions: this.fb.control<number | null>(null, [Validators.required, Validators.min(1)]),
   });
 
   memberTypeSeverity(type: PanelMemberType): PanelMemberTypeSeverity {
@@ -93,6 +145,9 @@ export class Panelists implements OnInit {
     menu.toggle(event);
   }
 
+  // Not wired yet: editing/removing a single panelist would need to resubmit the full
+  // membership list via setPanelMembers (the only confirmed endpoint is bulk "set", not a
+  // single-member update/delete) — needs confirmation before wiring for real.
   onEdit(member: PanelMember): void {
     this.editingMember = member;
     this.editForm.reset({ type: member.type, name: member.name, email: member.email });
@@ -107,8 +162,8 @@ export class Panelists implements OnInit {
 
     const raw = this.editForm.getRawValue();
     const target = this.editingMember;
-    this.members = this.members.map((member) =>
-      member === target ? { type: raw.type!, name: raw.name, email: raw.email } : member,
+    this.members.update((list) =>
+      list.map((member) => (member === target ? { ...member, type: raw.type!, name: raw.name, email: raw.email } : member)),
     );
 
     this.messageService.add({
@@ -127,7 +182,7 @@ export class Panelists implements OnInit {
       acceptButtonProps: { label: 'Delete', severity: 'danger' },
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
       accept: () => {
-        this.members = this.members.filter((item) => item !== member);
+        this.members.update((list) => list.filter((item) => item !== member));
         this.messageService.add({
           severity: 'success',
           summary: 'Panelist Removed',
@@ -138,31 +193,41 @@ export class Panelists implements OnInit {
   }
 
   onPrintFormat(member: PanelMember): void {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+    this.exportMember = member;
+    this.exportForm.reset();
+    this.showExportDialog = true;
+  }
 
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>${member.name} - Panel Member Format</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 24px; }
-            h1 { font-size: 18px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-            th, td { border: 1px solid #ccc; padding: 8px; text-align: left; font-size: 13px; }
-          </style>
-        </head>
-        <body>
-          <h1>${this.panel} - Panel Member Format</h1>
-          <table>
-            <thead><tr><th>Member Type</th><th>Name</th><th>Email</th></tr></thead>
-            <tbody><tr><td>${member.type}</td><td>${member.name}</td><td>${member.email}</td></tr></tbody>
-          </table>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
+  onSubmitExport(): void {
+    if (this.exportForm.invalid || !this.exportMember) {
+      this.exportForm.markAllAsTouched();
+      return;
+    }
+
+    const raw = this.exportForm.getRawValue();
+    const target = this.exportMember;
+
+    this.exportingFormat.set(true);
+    this.interviewApi
+      .exportPanelistOralFormat(target.id, raw.numberOfQuestions!)
+      .pipe(finalize(() => this.exportingFormat.set(false)))
+      .subscribe({
+        next: (blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${target.name}-oral-interview-format.xlsx`;
+          link.click();
+          window.URL.revokeObjectURL(url);
+          this.showExportDialog = false;
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Export Failed',
+            detail: 'Could not export the oral interview format. Please try again later.',
+          });
+        },
+      });
   }
 }

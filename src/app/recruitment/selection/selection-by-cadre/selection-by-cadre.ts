@@ -1,19 +1,30 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { MenuItem } from 'primeng/api';
+import { MenuItem, MessageService } from 'primeng/api';
 import { Tooltip } from 'primeng/tooltip';
+import { finalize } from 'rxjs';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
 import { AppSkeleton } from '../../../shared/app-skeleton/app-skeleton';
 import { CountUp } from '../../../shared/count-up.directive';
+import { SelectedApplicationRecord, SelectionApiService } from '../../../core/recruitment/selection-api.service';
 
 interface SelectionCadre {
+  advertId: number;
   referenceNo: string;
   cadre: string;
   closeDate: string;
   totalSelection: number;
-  hired: number;
-  hireYear: number;
+}
+
+function mapSelectionCadre(record: SelectedApplicationRecord): SelectionCadre {
+  return {
+    advertId: record.advertId,
+    referenceNo: record.referenceNumber,
+    cadre: record.advertName,
+    closeDate: record.closingDate,
+    totalSelection: record.totalSelections,
+  };
 }
 
 @Component({
@@ -24,6 +35,8 @@ interface SelectionCadre {
 })
 export class SelectionByCadre implements OnInit {
   private readonly router = inject(Router);
+  private readonly messageService = inject(MessageService);
+  private readonly selectionApi = inject(SelectionApiService);
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
@@ -31,29 +44,32 @@ export class SelectionByCadre implements OnInit {
   ];
 
   readonly loading = signal(true);
+  readonly cadres = signal<SelectionCadre[]>([]);
+
+  readonly totalSelections = computed(() => this.cadres().reduce((sum, c) => sum + c.totalSelection, 0));
+  readonly totalCadres = computed(() => this.cadres().length);
 
   ngOnInit(): void {
-    setTimeout(() => this.loading.set(false), 800);
-  }
-
-  cadres: SelectionCadre[] = [
-    { referenceNo: 'ADV-2026-001', cadre: 'Afisa TEHAMA - Usimamizi wa Data za Kieletroniki (Database Administration) Daraja II', closeDate: '2026-02-10', totalSelection: 5, hired: 3, hireYear: 2026 },
-    { referenceNo: 'ADV-2026-002', cadre: 'Afisa Tehama - Usalama Wa Mifumo Ya Tehama (Ict Security) Daraja II', closeDate: '2026-03-01', totalSelection: 8, hired: 5, hireYear: 2026 },
-    { referenceNo: 'ADV-2026-003', cadre: 'Afisa Tehama Msaidizi Daraja II (Sehemu Ya Mifumo Ya Habari (Information Systems)', closeDate: '2025-12-15', totalSelection: 3, hired: 2, hireYear: 2025 },
-    { referenceNo: 'ADV-2026-004', cadre: 'Research Officer', closeDate: '2026-01-01', totalSelection: 2, hired: 1, hireYear: 2026 },
-  ];
-
-  get totalHire(): number {
-    return this.cadres.reduce((sum, c) => sum + c.hired, 0);
-  }
-
-  get hireThisYear(): number {
-    const currentYear = new Date().getFullYear();
-    return this.cadres.filter((c) => c.hireYear === currentYear).reduce((sum, c) => sum + c.hired, 0);
+    this.loading.set(true);
+    this.selectionApi
+      .getSelectedApplications()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.cadres.set((response.data ?? []).map(mapSelectionCadre));
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Selections',
+            detail: 'Could not load the selected applications. Please try again later.',
+          });
+        },
+      });
   }
 
   onView(cadre: SelectionCadre): void {
-    this.router.navigate(['/recruitment/selection', cadre.referenceNo], {
+    this.router.navigate(['/recruitment/selection', cadre.advertId], {
       queryParams: { cadre: cadre.cadre },
     });
   }

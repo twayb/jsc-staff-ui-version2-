@@ -5,12 +5,12 @@
     class="block animate-fade-in-up stagger-1"
     title="Interview Venues"
     subtitle="Manage interview venues"
-    [data]="venues"
+    [data]="venues()"
     [loading]="loading()"
-    [searchFields]="['name', 'region', 'district']"
+    [searchFields]="['name', 'regionNames', 'district']"
     addLabel="Add Venue"
     addIcon="pi pi-plus"
-    dataKey="name"
+    dataKey="id"
     (add)="openAddDialog()"
   >
     <ng-template #headerTpl>
@@ -29,7 +29,7 @@
       <tr>
         <td class="pl-6">{{ rowIndex + 1 }}</td>
         <td>{{ venue.name }}</td>
-        <td>{{ venue.region }}</td>
+        <td>{{ venue.regionNames }}</td>
         <td>{{ venue.district }}</td>
         <td>{{ venue.capacity }}</td>
         <td>
@@ -76,36 +76,41 @@
 
       <div class="grid grid-cols-2 gap-4">
         <div class="flex flex-col gap-1.5">
-          <label for="region" class="text-sm font-medium text-heading">Region</label>
-          <p-select
-            inputId="region"
-            formControlName="region"
-            [options]="regionOptions"
+          <label for="regionIds" class="text-sm font-medium text-heading">Region</label>
+          <p-multiselect
+            inputId="regionIds"
+            formControlName="regionIds"
+            [options]="regionOptions()"
             optionLabel="label"
             optionValue="value"
-            placeholder="Select region"
+            [filter]="true"
+            filterPlaceHolder="Search regions"
+            placeholder="Select region(s)"
+            display="chip"
             (onChange)="onRegionChange($event.value)"
             appendTo="body"
             class="w-full"
           />
-          @if (form.controls.region.invalid && form.controls.region.touched) {
+          @if (form.controls.regionIds.invalid && form.controls.regionIds.touched) {
             <span class="text-xs text-danger">Region is required</span>
           }
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <label for="district" class="text-sm font-medium text-heading">District</label>
+          <label for="districtId" class="text-sm font-medium text-heading">District</label>
           <p-select
-            inputId="district"
-            formControlName="district"
-            [options]="districtOptions"
+            inputId="districtId"
+            formControlName="districtId"
+            [options]="districtOptions()"
             optionLabel="label"
             optionValue="value"
+            [filter]="true"
+            filterPlaceholder="Search districts"
             placeholder="Select district"
             appendTo="body"
             class="w-full"
           />
-          @if (form.controls.district.invalid && form.controls.district.touched) {
+          @if (form.controls.districtId.invalid && form.controls.districtId.touched) {
             <span class="text-xs text-danger">District is required</span>
           }
         </div>
@@ -121,22 +126,17 @@
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <label for="status" class="text-sm font-medium text-heading">Status</label>
+          <label for="active" class="text-sm font-medium text-heading">Status</label>
           <div class="flex items-center gap-2 h-full ml-6">
-            <p-toggleswitch
-              inputId="status"
-              formControlName="status"
-              trueValue="Active"
-              falseValue="Not Active"
-            />
-            <span class="text-sm text-value">{{ form.controls.status.value }}</span>
+            <p-toggleswitch inputId="active" formControlName="active" />
+            <span class="text-sm text-value">{{ form.controls.active.value ? 'Active' : 'Not Active' }}</span>
           </div>
         </div>
       </div>
 
       <div class="flex justify-end gap-2 pt-2">
         <p-button label="Cancel" severity="secondary" [text]="true" type="button" (onClick)="showFormDialog = false" />
-        <p-button [label]="dialogMode === 'edit' ? 'Update' : 'Save'" type="submit" />
+        <p-button [label]="dialogMode === 'edit' ? 'Update' : 'Save'" type="submit" [loading]="submitting()" />
       </div>
     </form>
   </p-dialog>

@@ -5,11 +5,19 @@ import { Menu } from 'primeng/menu';
 import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { Button } from 'primeng/button';
+import { finalize } from 'rxjs';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
+import { LanguageApiService, LanguageRecord } from '../../../core/masterdata/language-api.service';
+import { titleCase } from '../../../core/utils';
 
 interface Language {
+  id: number;
   name: string;
+}
+
+function mapLanguage(record: LanguageRecord): Language {
+  return { id: record.id, name: titleCase(record.name) };
 }
 
 @Component({
@@ -22,6 +30,7 @@ export class Languages implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
+  private readonly languageApi = inject(LanguageApiService);
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
@@ -30,17 +39,31 @@ export class Languages implements OnInit {
   ];
 
   readonly loading = signal(true);
+  readonly submitting = signal(false);
+  readonly languages = signal<Language[]>([]);
 
   ngOnInit(): void {
-    setTimeout(() => this.loading.set(false), 800);
+    this.loadLanguages();
   }
 
-  languages: Language[] = [
-    { name: 'Swahili' },
-    { name: 'English' },
-    { name: 'French' },
-    { name: 'Arabic' },
-  ];
+  private loadLanguages(): void {
+    this.loading.set(true);
+    this.languageApi
+      .getLanguages()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.languages.set((response.data ?? []).map(mapLanguage));
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Languages',
+            detail: 'Could not load the languages. Please try again later.',
+          });
+        },
+      });
+  }
 
   actionMenuItems: MenuItem[] = [];
 
@@ -82,25 +105,30 @@ export class Languages implements OnInit {
     }
 
     const raw = this.form.getRawValue();
+    const request =
+      this.dialogMode === 'edit' && this.editingLanguage
+        ? this.languageApi.updateLanguage(this.editingLanguage.id, raw.name)
+        : this.languageApi.createLanguage(raw.name);
 
-    if (this.dialogMode === 'edit' && this.editingLanguage) {
-      const target = this.editingLanguage;
-      this.languages = this.languages.map((item) => (item === target ? { name: raw.name } : item));
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Language Updated',
-        detail: `"${raw.name}" was updated successfully.`,
-      });
-    } else {
-      this.languages = [...this.languages, { name: raw.name }];
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Language Added',
-        detail: `"${raw.name}" was added successfully.`,
-      });
-    }
-
-    this.showFormDialog = false;
+    this.submitting.set(true);
+    request.pipe(finalize(() => this.submitting.set(false))).subscribe({
+      next: (response) => {
+        this.messageService.add({
+          severity: 'success',
+          summary: this.dialogMode === 'edit' ? 'Language Updated' : 'Language Added',
+          detail: response.message,
+        });
+        this.showFormDialog = false;
+        this.loadLanguages();
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Save Failed',
+          detail: 'Could not save the language. Please try again later.',
+        });
+      },
+    });
   }
 
   onDelete(language: Language): void {
@@ -111,11 +139,22 @@ export class Languages implements OnInit {
       acceptButtonProps: { label: 'Delete', severity: 'danger' },
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
       accept: () => {
-        this.languages = this.languages.filter((item) => item !== language);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Language Deleted',
-          detail: `"${language.name}" was deleted successfully.`,
+        this.languageApi.deleteLanguage(language.id).subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Language Deleted',
+              detail: `"${language.name}" was deleted successfully.`,
+            });
+            this.loadLanguages();
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Delete Failed',
+              detail: 'Could not delete the language. Please try again later.',
+            });
+          },
         });
       },
     });

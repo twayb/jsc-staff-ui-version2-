@@ -16,19 +16,19 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
           <div>
             <p class="text-xs font-medium text-label">Full Name</p>
-            <p class="text-sm text-heading mt-0.5">{{ applicant.fullName }}</p>
+            <p class="text-sm text-heading mt-0.5">{{ applicant().fullName }}</p>
           </div>
           <div>
             <p class="text-xs font-medium text-label">NIN</p>
-            <p class="text-sm text-heading mt-0.5">{{ applicant.nin }}</p>
+            <p class="text-sm text-heading mt-0.5">{{ applicant().nin }}</p>
           </div>
           <div>
             <p class="text-xs font-medium text-label">Email</p>
-            <p class="text-sm text-heading mt-0.5">{{ applicant.email }}</p>
+            <p class="text-sm text-heading mt-0.5">{{ applicant().email }}</p>
           </div>
           <div>
             <p class="text-xs font-medium text-label">Mobile</p>
-            <p class="text-sm text-heading mt-0.5">{{ applicant.mobile }}</p>
+            <p class="text-sm text-heading mt-0.5">{{ applicant().mobile }}</p>
           </div>
         </div>
       </div>
@@ -53,7 +53,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (qualification of qualifications; track qualification.title; let i = $index) {
+            @for (qualification of qualifications(); track qualification.id; let i = $index) {
               <tr class="border-b border-border last:border-0">
                 <td class="pl-6 py-3 text-value">{{ i + 1 }}</td>
                 <td class="py-3">
@@ -62,14 +62,18 @@
                 <td class="py-3 text-value">{{ qualification.title }}</td>
                 <td class="py-3 text-value">{{ qualification.college }}</td>
                 <td class="py-3">
-                  <button
-                    type="button"
-                    (click)="onViewAttachment(qualification)"
-                    class="flex items-center gap-2 text-value hover:underline"
-                  >
-                    <i class="pi pi-file-pdf text-sm text-danger"></i>
-                    <span class="truncate max-w-[10rem]">{{ qualification.attachmentName }}</span>
-                  </button>
+                  @if (qualification.hasAttachment) {
+                    <button
+                      type="button"
+                      (click)="onViewAttachment(qualification)"
+                      class="flex items-center gap-2 text-value hover:underline"
+                    >
+                      <i class="pi pi-file-pdf text-sm text-danger"></i>
+                      <span class="truncate max-w-[10rem]">{{ qualification.attachmentName }}</span>
+                    </button>
+                  } @else {
+                    <span class="text-value">—</span>
+                  }
                 </td>
                 <td class="text-center pr-6 py-3">
                   <button
@@ -227,7 +231,7 @@
             type="button"
             (onClick)="showDeleteDialog = false"
           />
-          <p-button label="Delete" severity="danger" type="submit" />
+          <p-button label="Delete" severity="danger" type="submit" [loading]="deleting()" />
         </div>
       </form>
     }

@@ -5,11 +5,18 @@ import { Menu } from 'primeng/menu';
 import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { Button } from 'primeng/button';
+import { finalize } from 'rxjs';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
+import { ComputerSkillApiService, ComputerSkillRecord } from '../../../core/masterdata/computer-skill-api.service';
 
 interface ComputerSkill {
+  id: number;
   name: string;
+}
+
+function mapComputerSkill(record: ComputerSkillRecord): ComputerSkill {
+  return { id: record.id, name: record.name };
 }
 
 @Component({
@@ -22,6 +29,7 @@ export class ComputerSkills implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
+  private readonly computerSkillApi = inject(ComputerSkillApiService);
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
@@ -30,17 +38,31 @@ export class ComputerSkills implements OnInit {
   ];
 
   readonly loading = signal(true);
+  readonly submitting = signal(false);
+  readonly computerSkills = signal<ComputerSkill[]>([]);
 
   ngOnInit(): void {
-    setTimeout(() => this.loading.set(false), 800);
+    this.loadComputerSkills();
   }
 
-  computerSkills: ComputerSkill[] = [
-    { name: 'Microsoft Word' },
-    { name: 'Microsoft Excel' },
-    { name: 'Microsoft PowerPoint' },
-    { name: 'Database Management' },
-  ];
+  private loadComputerSkills(): void {
+    this.loading.set(true);
+    this.computerSkillApi
+      .getComputerSkills()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.computerSkills.set((response.data ?? []).map(mapComputerSkill));
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Computer Skills',
+            detail: 'Could not load the computer skills. Please try again later.',
+          });
+        },
+      });
+  }
 
   actionMenuItems: MenuItem[] = [];
 
@@ -82,25 +104,30 @@ export class ComputerSkills implements OnInit {
     }
 
     const raw = this.form.getRawValue();
+    const request =
+      this.dialogMode === 'edit' && this.editingComputerSkill
+        ? this.computerSkillApi.updateComputerSkill(this.editingComputerSkill.id, raw.name)
+        : this.computerSkillApi.createComputerSkill(raw.name);
 
-    if (this.dialogMode === 'edit' && this.editingComputerSkill) {
-      const target = this.editingComputerSkill;
-      this.computerSkills = this.computerSkills.map((item) => (item === target ? { name: raw.name } : item));
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Computer Skill Updated',
-        detail: `"${raw.name}" was updated successfully.`,
-      });
-    } else {
-      this.computerSkills = [...this.computerSkills, { name: raw.name }];
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Computer Skill Added',
-        detail: `"${raw.name}" was added successfully.`,
-      });
-    }
-
-    this.showFormDialog = false;
+    this.submitting.set(true);
+    request.pipe(finalize(() => this.submitting.set(false))).subscribe({
+      next: (response) => {
+        this.messageService.add({
+          severity: 'success',
+          summary: this.dialogMode === 'edit' ? 'Computer Skill Updated' : 'Computer Skill Added',
+          detail: response.message,
+        });
+        this.showFormDialog = false;
+        this.loadComputerSkills();
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Save Failed',
+          detail: 'Could not save the computer skill. Please try again later.',
+        });
+      },
+    });
   }
 
   onDelete(computerSkill: ComputerSkill): void {
@@ -111,11 +138,22 @@ export class ComputerSkills implements OnInit {
       acceptButtonProps: { label: 'Delete', severity: 'danger' },
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
       accept: () => {
-        this.computerSkills = this.computerSkills.filter((item) => item !== computerSkill);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Computer Skill Deleted',
-          detail: `"${computerSkill.name}" was deleted successfully.`,
+        this.computerSkillApi.deleteComputerSkill(computerSkill.id).subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Computer Skill Deleted',
+              detail: `"${computerSkill.name}" was deleted successfully.`,
+            });
+            this.loadComputerSkills();
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Delete Failed',
+              detail: 'Could not delete the computer skill. Please try again later.',
+            });
+          },
         });
       },
     });

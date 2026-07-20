@@ -112,11 +112,11 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'recruitment/interview-management/:advertId/results',
+        path: 'recruitment/interview-management/:advertId/results/:interviewTypeId',
         loadComponent: () => import('./recruitment/interview-managment/result/result').then((m) => m.Result),
       },
       {
-        path: 'recruitment/interview-management/:advertId/panel',
+        path: 'recruitment/interview-management/:advertId/panel/:interviewId',
         loadComponent: () => import('./recruitment/interview-managment/panel/panel').then((m) => m.Panel),
       },
       {
@@ -130,7 +130,7 @@ export const routes: Routes = [
           import('./recruitment/selection/selection-by-cadre/selection-by-cadre').then((m) => m.SelectionByCadre),
       },
       {
-        path: 'recruitment/selection/:referenceNo',
+        path: 'recruitment/selection/:advertId',
         loadComponent: () =>
           import('./recruitment/selection/selection-list/selection-list').then((m) => m.SelectionList),
       },
@@ -140,7 +140,7 @@ export const routes: Routes = [
           import('./recruitment/Databank/databank-by-cadre/databank-by-cadre').then((m) => m.DatabankByCadre),
       },
       {
-        path: 'recruitment/databank/:referenceNo',
+        path: 'recruitment/databank/:advertId',
         loadComponent: () =>
           import('./recruitment/Databank/databank-list/databank-list').then((m) => m.DatabankList),
       },
@@ -160,7 +160,7 @@ export const routes: Routes = [
           import('./recruitment/Applicants/applicant-list/applicant-list').then((m) => m.ApplicantList),
       },
       {
-        path: 'recruitment/applicants/:nin',
+        path: 'recruitment/applicants/:id',
         loadComponent: () =>
           import('./recruitment/Applicants/applicant-details/applicant-details').then((m) => m.ApplicantDetails),
       },

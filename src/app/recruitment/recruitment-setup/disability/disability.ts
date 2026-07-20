@@ -5,11 +5,18 @@ import { Menu } from 'primeng/menu';
 import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { Button } from 'primeng/button';
+import { finalize } from 'rxjs';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
+import { DisabilityApiService, DisabilityRecord } from '../../../core/masterdata/disability-api.service';
 
 interface DisabilityCategory {
+  id: number;
   name: string;
+}
+
+function mapDisability(record: DisabilityRecord): DisabilityCategory {
+  return { id: record.id, name: record.name };
 }
 
 @Component({
@@ -22,6 +29,7 @@ export class Disability implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
+  private readonly disabilityApi = inject(DisabilityApiService);
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
@@ -30,17 +38,31 @@ export class Disability implements OnInit {
   ];
 
   readonly loading = signal(true);
+  readonly submitting = signal(false);
+  readonly disabilities = signal<DisabilityCategory[]>([]);
 
   ngOnInit(): void {
-    setTimeout(() => this.loading.set(false), 800);
+    this.loadDisabilities();
   }
 
-  disabilities: DisabilityCategory[] = [
-    { name: 'Visual Impairment' },
-    { name: 'Hearing Impairment' },
-    { name: 'Physical Disability' },
-    { name: 'None' },
-  ];
+  private loadDisabilities(): void {
+    this.loading.set(true);
+    this.disabilityApi
+      .getDisabilities()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.disabilities.set((response.data ?? []).map(mapDisability));
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Disabilities',
+            detail: 'Could not load the disability categories. Please try again later.',
+          });
+        },
+      });
+  }
 
   actionMenuItems: MenuItem[] = [];
 
@@ -82,25 +104,30 @@ export class Disability implements OnInit {
     }
 
     const raw = this.form.getRawValue();
+    const request =
+      this.dialogMode === 'edit' && this.editingDisability
+        ? this.disabilityApi.updateDisability(this.editingDisability.id, raw.name)
+        : this.disabilityApi.createDisability(raw.name);
 
-    if (this.dialogMode === 'edit' && this.editingDisability) {
-      const target = this.editingDisability;
-      this.disabilities = this.disabilities.map((item) => (item === target ? { name: raw.name } : item));
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Disability Updated',
-        detail: `"${raw.name}" was updated successfully.`,
-      });
-    } else {
-      this.disabilities = [...this.disabilities, { name: raw.name }];
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Disability Added',
-        detail: `"${raw.name}" was added successfully.`,
-      });
-    }
-
-    this.showFormDialog = false;
+    this.submitting.set(true);
+    request.pipe(finalize(() => this.submitting.set(false))).subscribe({
+      next: (response) => {
+        this.messageService.add({
+          severity: 'success',
+          summary: this.dialogMode === 'edit' ? 'Disability Updated' : 'Disability Added',
+          detail: response.message,
+        });
+        this.showFormDialog = false;
+        this.loadDisabilities();
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Save Failed',
+          detail: 'Could not save the disability category. Please try again later.',
+        });
+      },
+    });
   }
 
   onDelete(disability: DisabilityCategory): void {
@@ -111,11 +138,22 @@ export class Disability implements OnInit {
       acceptButtonProps: { label: 'Delete', severity: 'danger' },
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
       accept: () => {
-        this.disabilities = this.disabilities.filter((item) => item !== disability);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Disability Deleted',
-          detail: `"${disability.name}" was deleted successfully.`,
+        this.disabilityApi.deleteDisability(disability.id).subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Disability Deleted',
+              detail: `"${disability.name}" was deleted successfully.`,
+            });
+            this.loadDisabilities();
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Delete Failed',
+              detail: 'Could not delete the disability category. Please try again later.',
+            });
+          },
         });
       },
     });

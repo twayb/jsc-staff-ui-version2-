@@ -16,27 +16,69 @@ import { Tooltip } from 'primeng/tooltip';
 import { Dialog } from 'primeng/dialog';
 import { Textarea } from 'primeng/textarea';
 import { Button } from 'primeng/button';
+import { finalize } from 'rxjs';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppSkeleton } from '../../../shared/app-skeleton/app-skeleton';
+import {
+  ApplicantApiService,
+  ApplicantAcademicRecord,
+  ApplicantDetailRecord,
+} from '../../../core/recruitment/applicant-api.service';
+import { titleCase } from '../../../core/utils';
 
-type Gender = 'Male' | 'Female';
-type QualificationLevel = 'Degree' | 'Diploma';
-type QualificationLevelSeverity = 'success' | 'info';
+type LevelSeverity = 'success' | 'info' | 'warn' | 'secondary';
 
 interface ApplicantProfile {
   fullName: string;
   nin: string;
-  gender: Gender;
+  gender: string;
   mobile: string;
   email: string;
 }
 
 interface Qualification {
-  level: QualificationLevel;
+  id: string;
+  level: string;
   title: string;
   college: string;
+  hasAttachment: boolean;
   attachmentName: string;
-  attachmentUrl: string;
+}
+
+function mapProfile(record: ApplicantDetailRecord): ApplicantProfile {
+  return {
+    fullName: record.fullName ? titleCase(record.fullName) : '—',
+    nin: record.nin ?? '—',
+    gender: record.gender ? titleCase(record.gender) : '—',
+    mobile: record.mobile ?? '—',
+    email: record.email ?? '—',
+  };
+}
+
+function mapQualification(record: ApplicantAcademicRecord): Qualification {
+  const documents = record.documents ?? [];
+  return {
+    id: record.id,
+    level: record.level?.name ?? '—',
+    title: record.course?.name ?? '—',
+    college: record.institutionName ?? '—',
+    hasAttachment: documents.length > 0,
+    attachmentName: documents.length > 0 ? 'Attachment' : '',
+  };
+}
+
+function levelSeverity(level: string): LevelSeverity {
+  const upper = level.toUpperCase();
+  if (upper.includes('DEGREE') || upper.includes('MASTER') || upper.includes('PHD')) {
+    return 'success';
+  }
+  if (upper.includes('DIPLOMA')) {
+    return 'info';
+  }
+  if (upper.includes('CERTIFICATE')) {
+    return 'warn';
+  }
+  return 'secondary';
 }
 
 @Component({
@@ -49,8 +91,9 @@ export class ApplicantDetails implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
+  private readonly applicantApi = inject(ApplicantApiService);
 
-  readonly nin = this.route.snapshot.paramMap.get('nin') ?? '';
+  readonly applicantId = this.route.snapshot.paramMap.get('id') ?? '';
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
@@ -59,44 +102,42 @@ export class ApplicantDetails implements OnInit {
   ];
 
   readonly loading = signal(true);
+  readonly applicant = signal<ApplicantProfile>({ fullName: '—', nin: '—', gender: '—', mobile: '—', email: '—' });
+  readonly qualifications = signal<Qualification[]>([]);
 
   ngOnInit(): void {
-    setTimeout(() => this.loading.set(false), 800);
+    this.loading.set(true);
+    this.applicantApi
+      .getApplicant(this.applicantId)
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          if (!response.data) {
+            return;
+          }
+          this.applicant.set(mapProfile(response.data));
+          this.qualifications.set((response.data.applicantAcademic ?? []).map(mapQualification));
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Applicant',
+            detail: 'Could not load the applicant details. Please try again later.',
+          });
+        },
+      });
   }
 
-  applicant: ApplicantProfile = {
-    fullName: 'John Mwangi',
-    nin: this.nin || '19900023456780000234',
-    gender: 'Male',
-    mobile: '0754123456',
-    email: 'john.mwangi@example.com',
-  };
-
-  qualifications: Qualification[] = [
-    {
-      level: 'Degree',
-      title: 'Bachelor of Computer Science',
-      college: 'University of Dar es Salaam',
-      attachmentName: 'bachelor-certificate.pdf',
-      attachmentUrl: '/assets/qualifications/bachelor-certificate.pdf',
-    },
-    {
-      level: 'Diploma',
-      title: 'Diploma in Information Technology',
-      college: 'Dar es Salaam Institute of Technology',
-      attachmentName: 'diploma-certificate.pdf',
-      attachmentUrl: '/assets/qualifications/diploma-certificate.pdf',
-    },
-  ];
-
   get initials(): string {
-    return this.applicant.fullName
-      .split(' ')
+    return this.applicant()
+      .fullName.split(' ')
       .map((part) => part.charAt(0))
       .join('')
       .slice(0, 2)
       .toUpperCase();
   }
+
+  levelSeverity = levelSeverity;
 
   showAttachmentDialog = false;
   viewingAttachment: Qualification | null = null;
@@ -107,10 +148,6 @@ export class ApplicantDetails implements OnInit {
 
   @ViewChild('docScroll') docScrollRef?: ElementRef<HTMLElement>;
   @ViewChildren('pageEl') pageEls?: QueryList<ElementRef<HTMLElement>>;
-
-  levelSeverity(level: QualificationLevel): QualificationLevelSeverity {
-    return level === 'Degree' ? 'success' : 'info';
-  }
 
   onViewAttachment(qualification: Qualification): void {
     this.viewingAttachment = qualification;
@@ -166,6 +203,7 @@ export class ApplicantDetails implements OnInit {
 
   showDeleteDialog = false;
   deletingQualification: Qualification | null = null;
+  readonly deleting = signal(false);
 
   readonly deleteForm = this.fb.nonNullable.group({
     reason: ['', Validators.required],
@@ -184,12 +222,29 @@ export class ApplicantDetails implements OnInit {
     }
 
     const target = this.deletingQualification;
-    this.qualifications = this.qualifications.filter((item) => item !== target);
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Qualification Deleted',
-      detail: `"${target.title}" was deleted successfully.`,
-    });
-    this.showDeleteDialog = false;
+    const raw = this.deleteForm.getRawValue();
+
+    this.deleting.set(true);
+    this.applicantApi
+      .deleteQualification(target.id, raw.reason)
+      .pipe(finalize(() => this.deleting.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.qualifications.update((items) => items.filter((item) => item.id !== target.id));
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Qualification Deleted',
+            detail: response.message,
+          });
+          this.showDeleteDialog = false;
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Delete Failed',
+            detail: 'Could not delete the qualification. Please try again later.',
+          });
+        },
+      });
   }
 }

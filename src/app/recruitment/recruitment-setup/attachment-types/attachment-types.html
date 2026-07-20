@@ -5,12 +5,12 @@
     class="block animate-fade-in-up stagger-1"
     title="Attachment Types"
     subtitle="Manage document attachment types"
-    [data]="attachmentTypes"
+    [data]="attachmentTypes()"
     [loading]="loading()"
     [searchFields]="['name']"
     addLabel="Add Attachment Type"
     addIcon="pi pi-plus"
-    dataKey="name"
+    dataKey="id"
     (add)="openAddDialog()"
   >
     <ng-template #headerTpl>
@@ -66,7 +66,7 @@
 
       <div class="flex justify-end gap-2 pt-2">
         <p-button label="Cancel" severity="secondary" [text]="true" type="button" (onClick)="showFormDialog = false" />
-        <p-button [label]="dialogMode === 'edit' ? 'Update' : 'Save'" type="submit" />
+        <p-button [label]="dialogMode === 'edit' ? 'Update' : 'Save'" type="submit" [loading]="submitting()" />
       </div>
     </form>
   </p-dialog>

@@ -5,12 +5,12 @@
     class="block animate-fade-in-up stagger-1"
     title="Institutions"
     subtitle="Manage academic institutions"
-    [data]="institutions"
+    [data]="institutions()"
     [loading]="loading()"
     [searchFields]="['name', 'type', 'country']"
     addLabel="Add Institution"
     addIcon="pi pi-plus"
-    dataKey="name"
+    dataKey="id"
     (add)="openAddDialog()"
   >
     <ng-template #headerTpl>
@@ -27,7 +27,7 @@
       <tr>
         <td class="pl-6">{{ rowIndex + 1 }}</td>
         <td>{{ institution.name }}</td>
-        <td>{{ institution.type }}</td>
+        <td>{{ typeLabel(institution.type) }}</td>
         <td>{{ institution.country }}</td>
         <td class="text-center pr-6">
           <button
@@ -85,24 +85,25 @@
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label for="country" class="text-sm font-medium text-heading">Country</label>
+        <label for="countryId" class="text-sm font-medium text-heading">Country</label>
         <p-select
-          inputId="country"
-          formControlName="country"
-          [options]="countryOptions"
+          inputId="countryId"
+          formControlName="countryId"
+          [options]="countryOptions()"
           optionLabel="label"
           optionValue="value"
           placeholder="Select country"
+          appendTo="body"
           class="w-full"
         />
-        @if (form.controls.country.invalid && form.controls.country.touched) {
+        @if (form.controls.countryId.invalid && form.controls.countryId.touched) {
           <span class="text-xs text-danger">Country is required</span>
         }
       </div>
 
       <div class="flex justify-end gap-2 pt-2">
         <p-button label="Cancel" severity="secondary" [text]="true" type="button" (onClick)="showFormDialog = false" />
-        <p-button [label]="dialogMode === 'edit' ? 'Update' : 'Save'" type="submit" />
+        <p-button [label]="dialogMode === 'edit' ? 'Update' : 'Save'" type="submit" [loading]="submitting()" />
       </div>
     </form>
   </p-dialog>

@@ -5,11 +5,18 @@ import { Menu } from 'primeng/menu';
 import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { Button } from 'primeng/button';
+import { finalize } from 'rxjs';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
+import { ProfessionApiService, ProfessionRecord } from '../../../core/masterdata/profession-api.service';
 
-interface ProfessionRecord {
+interface ProfessionRow {
+  id: number;
   name: string;
+}
+
+function mapProfession(record: ProfessionRecord): ProfessionRow {
+  return { id: record.id, name: record.name };
 }
 
 @Component({
@@ -22,6 +29,7 @@ export class Profession implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
+  private readonly professionApi = inject(ProfessionApiService);
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
@@ -30,29 +38,43 @@ export class Profession implements OnInit {
   ];
 
   readonly loading = signal(true);
+  readonly submitting = signal(false);
+  readonly professions = signal<ProfessionRow[]>([]);
 
   ngOnInit(): void {
-    setTimeout(() => this.loading.set(false), 800);
+    this.loadProfessions();
   }
 
-  professions: ProfessionRecord[] = [
-    { name: 'Procurement and Supplies Full Technician' },
-    { name: 'Graduate Procurement and Supplies Professionals' },
-    { name: 'Driving licence' },
-    { name: 'Management Development Program for Executive Assistants (MDEA I)' },
-  ];
+  private loadProfessions(): void {
+    this.loading.set(true);
+    this.professionApi
+      .getProfessions()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.professions.set((response.data ?? []).map(mapProfession));
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Professions',
+            detail: 'Could not load the professions. Please try again later.',
+          });
+        },
+      });
+  }
 
   actionMenuItems: MenuItem[] = [];
 
   showFormDialog = false;
   dialogMode: 'add' | 'edit' = 'add';
-  editingProfession: ProfessionRecord | null = null;
+  editingProfession: ProfessionRow | null = null;
 
   readonly form = this.fb.nonNullable.group({
     name: ['', Validators.required],
   });
 
-  openActionMenu(event: Event, profession: ProfessionRecord, menu: Menu): void {
+  openActionMenu(event: Event, profession: ProfessionRow, menu: Menu): void {
     this.actionMenuItems = [
       { label: 'Edit', icon: 'pi pi-pencil', command: () => this.onEdit(profession) },
       { separator: true },
@@ -68,7 +90,7 @@ export class Profession implements OnInit {
     this.showFormDialog = true;
   }
 
-  onEdit(profession: ProfessionRecord): void {
+  onEdit(profession: ProfessionRow): void {
     this.dialogMode = 'edit';
     this.editingProfession = profession;
     this.form.reset({ name: profession.name });
@@ -82,28 +104,33 @@ export class Profession implements OnInit {
     }
 
     const raw = this.form.getRawValue();
+    const request =
+      this.dialogMode === 'edit' && this.editingProfession
+        ? this.professionApi.updateProfession(this.editingProfession.id, raw.name)
+        : this.professionApi.createProfession(raw.name);
 
-    if (this.dialogMode === 'edit' && this.editingProfession) {
-      const target = this.editingProfession;
-      this.professions = this.professions.map((item) => (item === target ? { name: raw.name } : item));
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Profession Updated',
-        detail: `"${raw.name}" was updated successfully.`,
-      });
-    } else {
-      this.professions = [...this.professions, { name: raw.name }];
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Profession Added',
-        detail: `"${raw.name}" was added successfully.`,
-      });
-    }
-
-    this.showFormDialog = false;
+    this.submitting.set(true);
+    request.pipe(finalize(() => this.submitting.set(false))).subscribe({
+      next: (response) => {
+        this.messageService.add({
+          severity: 'success',
+          summary: this.dialogMode === 'edit' ? 'Profession Updated' : 'Profession Added',
+          detail: response.message,
+        });
+        this.showFormDialog = false;
+        this.loadProfessions();
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Save Failed',
+          detail: 'Could not save the profession. Please try again later.',
+        });
+      },
+    });
   }
 
-  onDelete(profession: ProfessionRecord): void {
+  onDelete(profession: ProfessionRow): void {
     this.confirmationService.confirm({
       header: 'Delete Profession',
       message: `Are you sure you want to delete "${profession.name}"? This action cannot be undone.`,
@@ -111,11 +138,22 @@ export class Profession implements OnInit {
       acceptButtonProps: { label: 'Delete', severity: 'danger' },
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
       accept: () => {
-        this.professions = this.professions.filter((item) => item !== profession);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Profession Deleted',
-          detail: `"${profession.name}" was deleted successfully.`,
+        this.professionApi.deleteProfession(profession.id).subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Profession Deleted',
+              detail: `"${profession.name}" was deleted successfully.`,
+            });
+            this.loadProfessions();
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Delete Failed',
+              detail: 'Could not delete the profession. Please try again later.',
+            });
+          },
         });
       },
     });

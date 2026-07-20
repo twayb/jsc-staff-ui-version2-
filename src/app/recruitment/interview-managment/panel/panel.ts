@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ReactiveFormsModule, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
@@ -8,8 +9,15 @@ import { Select } from 'primeng/select';
 import { InputText } from 'primeng/inputtext';
 import { FileUpload, FileSelectEvent } from 'primeng/fileupload';
 import { Button } from 'primeng/button';
+import { finalize } from 'rxjs';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
+import { AdvertApiService } from '../../../core/recruitment/advert-api.service';
+import {
+  InterviewApiService,
+  InterviewPanelRecord,
+  PanelMemberRecord,
+} from '../../../core/recruitment/interview-api.service';
 
 type PanelMemberType = 'Chairman' | 'Secretary' | 'Member';
 
@@ -20,8 +28,31 @@ interface PanelMember {
 }
 
 interface InterviewPanel {
+  id: number;
   panel: string;
   panelists: PanelMember[];
+}
+
+function mapPanel(record: InterviewPanelRecord): InterviewPanel {
+  return {
+    id: record.id,
+    panel: record.panelName,
+    panelists: [],
+  };
+}
+
+function memberTypeFromApi(type: PanelMemberRecord['memberType']): PanelMemberType {
+  if (type === 'SECRETARY') return 'Secretary';
+  if (type === 'MEMBER') return 'Member';
+  return 'Chairman';
+}
+
+function mapPanelMember(record: PanelMemberRecord): PanelMember {
+  return {
+    type: memberTypeFromApi(record.memberType),
+    name: record.name,
+    email: record.email,
+  };
 }
 
 @Component({
@@ -36,33 +67,58 @@ export class Panel implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
+  private readonly advertApi = inject(AdvertApiService);
+  private readonly interviewApi = inject(InterviewApiService);
 
   readonly advertId = this.route.snapshot.paramMap.get('advertId') ?? '';
+  readonly interviewId = this.route.snapshot.paramMap.get('interviewId') ?? '';
   readonly interviewTitle = this.route.snapshot.queryParamMap.get('title') ?? '';
 
-  readonly breadcrumbItems: MenuItem[] = [
+  readonly breadcrumbItems = signal<MenuItem[]>([
     { label: 'Recruitment', routerLink: '/recruitment' },
     { label: 'Interview Management', routerLink: '/recruitment/interview-management' },
     { label: this.advertId, routerLink: `/recruitment/interview-management/${this.advertId}` },
     { label: 'Panel' },
-  ];
+  ]);
 
   readonly loading = signal(true);
+  readonly panels = signal<InterviewPanel[]>([]);
+
+  readonly submittingPanel = signal(false);
+  readonly submittingPanelist = signal(false);
 
   ngOnInit(): void {
-    setTimeout(() => this.loading.set(false), 800);
+    this.advertApi.getAdvert(Number(this.advertId)).subscribe({
+      next: (response) => {
+        const name = response.data?.advertName;
+        if (name) {
+          this.breadcrumbItems.update((items) => items.map((item, index) => (index === 2 ? { ...item, label: name } : item)));
+        }
+      },
+      error: () => {},
+    });
+
+    this.loadPanels();
   }
 
-  panels: InterviewPanel[] = [
-    {
-      panel: 'Panel A',
-      panelists: [
-        { type: 'Chairman', name: 'Hon. Justice Mkude', email: 'mkude@jsc.go.tz' },
-        { type: 'Secretary', name: 'Hon. Justice Kimaro', email: 'kimaro@jsc.go.tz' },
-      ],
-    },
-    { panel: 'Panel B', panelists: [] },
-  ];
+  private loadPanels(): void {
+    this.loading.set(true);
+    this.interviewApi
+      .getInterviewPanels(Number(this.interviewId))
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.panels.set((response.data ?? []).map(mapPanel));
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Panels',
+            detail: 'Could not load the interview panels. Please try again later.',
+          });
+        },
+      });
+  }
 
   readonly memberTypeOptions = [
     { label: 'Chairman', value: 'Chairman' },
@@ -109,10 +165,21 @@ export class Panel implements OnInit {
       acceptButtonProps: { label: 'Distribute' },
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
       accept: () => {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Candidates Distributed',
-          detail: 'Candidates were distributed across the panels successfully.',
+        this.interviewApi.distributeToPanels(Number(this.advertId)).subscribe({
+          next: (response) => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Candidates Distributed',
+              detail: response.message,
+            });
+          },
+          error: (error: HttpErrorResponse) => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Distribution Failed',
+              detail: error.error?.message ?? 'Could not distribute candidates across the panels. Please try again later.',
+            });
+          },
         });
       },
     });
@@ -130,14 +197,29 @@ export class Panel implements OnInit {
     }
 
     const raw = this.addPanelForm.getRawValue();
-    this.panels = [...this.panels, { panel: raw.panel, panelists: [] }];
 
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Panel Added',
-      detail: `"${raw.panel}" was added successfully.`,
-    });
-    this.showAddPanelDialog = false;
+    this.submittingPanel.set(true);
+    this.interviewApi
+      .createInterviewPanel(Number(this.interviewId), raw.panel)
+      .pipe(finalize(() => this.submittingPanel.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Panel Added',
+            detail: response.message,
+          });
+          this.showAddPanelDialog = false;
+          this.loadPanels();
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Save Failed',
+            detail: 'Could not add the panel. Please try again later.',
+          });
+        },
+      });
   }
 
   onSetPanelist(panel: InterviewPanel): void {
@@ -173,20 +255,44 @@ export class Panel implements OnInit {
     }
 
     const target = this.panelistPanel;
-    const panelists = this.members.value as PanelMember[];
-    this.panels = this.panels.map((panel) => (panel === target ? { ...panel, panelists } : panel));
+    const rawMembers = this.members.value as PanelMember[];
 
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Panelists Saved',
-      detail: `Panelists for "${target.panel}" were saved successfully.`,
-    });
-    this.showPanelistDialog = false;
+    this.submittingPanelist.set(true);
+    this.interviewApi
+      .setPanelMembers({
+        panelId: target.id,
+        membersList: rawMembers.map((member) => ({
+          name: member.name,
+          email: member.email,
+          userId: '',
+          memberType: member.type.toUpperCase() as 'CHAIRMAN' | 'SECRETARY' | 'MEMBER',
+        })),
+      })
+      .pipe(finalize(() => this.submittingPanelist.set(false)))
+      .subscribe({
+        next: (response) => {
+          const panelists = (response.data ?? []).map(mapPanelMember);
+          this.panels.update((list) => list.map((panel) => (panel === target ? { ...panel, panelists } : panel)));
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Panelists Saved',
+            detail: response.message,
+          });
+          this.showPanelistDialog = false;
+        },
+        error: (error: HttpErrorResponse) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Save Failed',
+            detail: error.error?.message ?? 'Could not save the panelists. Please try again later.',
+          });
+        },
+      });
   }
 
   onViewPanelists(panel: InterviewPanel): void {
     this.router.navigate(['/recruitment/interview-management', this.advertId, 'panelists'], {
-      queryParams: { panel: panel.panel },
+      queryParams: { panel: panel.panel, panelId: panel.id, interviewId: this.interviewId, title: this.interviewTitle },
     });
   }
 

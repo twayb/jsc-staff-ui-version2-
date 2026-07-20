@@ -5,31 +5,35 @@ import { Menu } from 'primeng/menu';
 import { Tag } from 'primeng/tag';
 import { Dialog } from 'primeng/dialog';
 import { Select } from 'primeng/select';
+import { MultiSelect } from 'primeng/multiselect';
 import { InputText } from 'primeng/inputtext';
 import { InputNumber } from 'primeng/inputnumber';
 import { ToggleSwitch } from 'primeng/toggleswitch';
 import { Button } from 'primeng/button';
+import { finalize, forkJoin } from 'rxjs';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
+import {
+  InterviewVenueApiService,
+  InterviewVenueInput,
+  InterviewVenueRecord,
+} from '../../../core/recruitment/interview-venue-api.service';
+import { RegionApiService } from '../../../core/masterdata/region-api.service';
+import { DistrictApiService, DistrictRecord } from '../../../core/masterdata/district-api.service';
 
 type VenueStatus = 'Active' | 'Not Active';
 type VenueStatusSeverity = 'success' | 'danger';
 
 interface InterviewVenue {
+  id: number;
   name: string;
-  region: string;
+  regionIds: number[];
+  districtId: number;
+  regionNames: string;
   district: string;
   capacity: number;
   status: VenueStatus;
 }
-
-const DISTRICTS_BY_REGION: Record<string, string[]> = {
-  'Dar es Salaam': ['Ilala', 'Temeke', 'Ubungo', 'Kinondoni', 'Kigamboni'],
-  Arusha: ['Arusha City', 'Meru', 'Arumeru'],
-  Mwanza: ['Nyamagana', 'Ilemela', 'Sengerema'],
-  Dodoma: ['Dodoma City', 'Bahi', 'Chamwino'],
-  Mbeya: ['Mbeya City', 'Rungwe', 'Mbarali'],
-};
 
 @Component({
   selector: 'app-interview-venues',
@@ -39,6 +43,7 @@ const DISTRICTS_BY_REGION: Record<string, string[]> = {
     Tag,
     Dialog,
     Select,
+    MultiSelect,
     InputText,
     InputNumber,
     ToggleSwitch,
@@ -53,6 +58,9 @@ export class InterviewVenues implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
+  private readonly interviewVenueApi = inject(InterviewVenueApiService);
+  private readonly regionApi = inject(RegionApiService);
+  private readonly districtApi = inject(DistrictApiService);
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
@@ -61,26 +69,78 @@ export class InterviewVenues implements OnInit {
   ];
 
   readonly loading = signal(true);
+  readonly submitting = signal(false);
+  readonly venues = signal<InterviewVenue[]>([]);
+  readonly regionOptions = signal<{ label: string; value: number }[]>([]);
+  readonly districtOptions = signal<{ label: string; value: number }[]>([]);
+
+  private allDistricts: DistrictRecord[] = [];
+  private regionNamesById = new Map<number, string>();
+  private districtNamesById = new Map<number, string>();
 
   ngOnInit(): void {
-    setTimeout(() => this.loading.set(false), 800);
+    this.loading.set(true);
+    forkJoin({
+      venues: this.interviewVenueApi.getInterviewVenues(),
+      regions: this.regionApi.getRegions(),
+      districts: this.districtApi.getDistricts(),
+    })
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: ({ venues, regions, districts }) => {
+          const regionList = regions.data ?? [];
+          this.allDistricts = districts.data ?? [];
+          this.regionOptions.set(regionList.map((region) => ({ label: region.name, value: region.id })));
+          this.regionNamesById = new Map(regionList.map((region) => [region.id, region.name]));
+          this.districtNamesById = new Map(this.allDistricts.map((district) => [district.id, district.name]));
+
+          this.venues.set((venues.data ?? []).map((record) => this.toRow(record)));
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Interview Venues',
+            detail: 'Could not load the interview venues. Please try again later.',
+          });
+        },
+      });
   }
 
-  venues: InterviewVenue[] = [
-    { name: 'JSC Boardroom A', region: 'Dar es Salaam', district: 'Ilala', capacity: 50, status: 'Active' },
-    {
-      name: 'Arusha International Conference Centre',
-      region: 'Arusha',
-      district: 'Arusha City',
-      capacity: 120,
-      status: 'Active',
-    },
-    { name: 'Mwanza Regional Hall', region: 'Mwanza', district: 'Nyamagana', capacity: 80, status: 'Not Active' },
-  ];
+  private toRow(record: InterviewVenueRecord): InterviewVenue {
+    const regionIds = (record.setInterviewRegionVenues ?? []).map((link) => link.regionId);
+    return {
+      id: record.id,
+      name: record.name,
+      regionIds,
+      districtId: record.districtId,
+      regionNames: regionIds
+        .map((regionId) => this.regionNamesById.get(regionId) ?? '')
+        .filter(Boolean)
+        .join(', '),
+      district: this.districtNamesById.get(record.districtId) ?? '',
+      capacity: record.venueCapacity,
+      status: record.active ? 'Active' : 'Not Active',
+    };
+  }
 
-  readonly regionOptions = Object.keys(DISTRICTS_BY_REGION).map((region) => ({ label: region, value: region }));
-
-  districtOptions: { label: string; value: string }[] = [];
+  private loadVenues(): void {
+    this.loading.set(true);
+    this.interviewVenueApi
+      .getInterviewVenues()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.venues.set((response.data ?? []).map((record) => this.toRow(record)));
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Interview Venues',
+            detail: 'Could not load the interview venues. Please try again later.',
+          });
+        },
+      });
+  }
 
   actionMenuItems: MenuItem[] = [];
 
@@ -90,19 +150,23 @@ export class InterviewVenues implements OnInit {
 
   readonly form = this.fb.nonNullable.group({
     name: ['', Validators.required],
-    region: ['', Validators.required],
-    district: ['', Validators.required],
+    regionIds: this.fb.nonNullable.control<number[]>([], Validators.required),
+    districtId: this.fb.control<number | null>(null, Validators.required),
     capacity: this.fb.control<number | null>(null, [Validators.required, Validators.min(1)]),
-    status: this.fb.nonNullable.control<VenueStatus>('Active', Validators.required),
+    active: this.fb.nonNullable.control<boolean>(true, Validators.required),
   });
 
-  private getDistrictOptions(region: string): { label: string; value: string }[] {
-    return (DISTRICTS_BY_REGION[region] ?? []).map((district) => ({ label: district, value: district }));
+  private setDistrictOptions(regionIds: number[]): void {
+    this.districtOptions.set(
+      this.allDistricts
+        .filter((district) => regionIds.includes(district.regionId))
+        .map((district) => ({ label: district.name, value: district.id })),
+    );
   }
 
-  onRegionChange(region: string): void {
-    this.districtOptions = this.getDistrictOptions(region);
-    this.form.controls.district.reset('');
+  onRegionChange(regionIds: number[]): void {
+    this.setDistrictOptions(regionIds ?? []);
+    this.form.controls.districtId.reset(null);
   }
 
   statusSeverity(status: VenueStatus): VenueStatusSeverity {
@@ -121,21 +185,21 @@ export class InterviewVenues implements OnInit {
   openAddDialog(): void {
     this.dialogMode = 'add';
     this.editingVenue = null;
-    this.districtOptions = [];
-    this.form.reset({ status: 'Active' });
+    this.districtOptions.set([]);
+    this.form.reset({ active: true, regionIds: [] });
     this.showFormDialog = true;
   }
 
   onEdit(venue: InterviewVenue): void {
     this.dialogMode = 'edit';
     this.editingVenue = venue;
-    this.districtOptions = this.getDistrictOptions(venue.region);
+    this.setDistrictOptions(venue.regionIds);
     this.form.reset({
       name: venue.name,
-      region: venue.region,
-      district: venue.district,
+      regionIds: venue.regionIds,
+      districtId: venue.districtId,
       capacity: venue.capacity,
-      status: venue.status,
+      active: venue.status === 'Active',
     });
     this.showFormDialog = true;
   }
@@ -147,32 +211,38 @@ export class InterviewVenues implements OnInit {
     }
 
     const raw = this.form.getRawValue();
-    const venue: InterviewVenue = {
+    const input: InterviewVenueInput = {
       name: raw.name,
-      region: raw.region,
-      district: raw.district,
-      capacity: raw.capacity!,
-      status: raw.status,
+      regionIds: raw.regionIds,
+      districtId: raw.districtId!,
+      venueCapacity: raw.capacity!,
+      active: raw.active,
     };
 
-    if (this.dialogMode === 'edit' && this.editingVenue) {
-      const target = this.editingVenue;
-      this.venues = this.venues.map((item) => (item === target ? venue : item));
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Venue Updated',
-        detail: `"${venue.name}" was updated successfully.`,
-      });
-    } else {
-      this.venues = [...this.venues, venue];
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Venue Added',
-        detail: `"${venue.name}" was added successfully.`,
-      });
-    }
+    const request =
+      this.dialogMode === 'edit' && this.editingVenue
+        ? this.interviewVenueApi.updateInterviewVenue(this.editingVenue.id, input)
+        : this.interviewVenueApi.createInterviewVenue(input);
 
-    this.showFormDialog = false;
+    this.submitting.set(true);
+    request.pipe(finalize(() => this.submitting.set(false))).subscribe({
+      next: (response) => {
+        this.messageService.add({
+          severity: 'success',
+          summary: this.dialogMode === 'edit' ? 'Venue Updated' : 'Venue Added',
+          detail: response.message,
+        });
+        this.showFormDialog = false;
+        this.loadVenues();
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Save Failed',
+          detail: 'Could not save the venue. Please try again later.',
+        });
+      },
+    });
   }
 
   onDelete(venue: InterviewVenue): void {
@@ -183,11 +253,22 @@ export class InterviewVenues implements OnInit {
       acceptButtonProps: { label: 'Delete', severity: 'danger' },
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
       accept: () => {
-        this.venues = this.venues.filter((item) => item !== venue);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Venue Deleted',
-          detail: `"${venue.name}" was deleted successfully.`,
+        this.interviewVenueApi.deleteInterviewVenue(venue.id).subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Venue Deleted',
+              detail: `"${venue.name}" was deleted successfully.`,
+            });
+            this.loadVenues();
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Delete Failed',
+              detail: 'Could not delete the venue. Please try again later.',
+            });
+          },
         });
       },
     });

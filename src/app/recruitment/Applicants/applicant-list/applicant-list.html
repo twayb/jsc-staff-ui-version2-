@@ -5,10 +5,10 @@
     class="block animate-fade-in-up stagger-1"
     title="Applicants"
     subtitle="All registered applicants"
-    [data]="applicants"
+    [data]="applicants()"
     [loading]="loading()"
     [searchFields]="['fullName', 'mobile', 'email']"
-    dataKey="email"
+    dataKey="id"
   >
     <ng-template #headerTpl>
       <tr>

@@ -5,11 +5,18 @@ import { Menu } from 'primeng/menu';
 import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { Button } from 'primeng/button';
+import { finalize } from 'rxjs';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
+import { AttachmentTypeApiService, AttachmentTypeRecord } from '../../../core/masterdata/attachment-type-api.service';
 
 interface AttachmentType {
+  id: number;
   name: string;
+}
+
+function mapAttachmentType(record: AttachmentTypeRecord): AttachmentType {
+  return { id: record.id, name: record.name };
 }
 
 @Component({
@@ -22,6 +29,7 @@ export class AttachmentTypes implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
+  private readonly attachmentTypeApi = inject(AttachmentTypeApiService);
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
@@ -30,17 +38,31 @@ export class AttachmentTypes implements OnInit {
   ];
 
   readonly loading = signal(true);
+  readonly submitting = signal(false);
+  readonly attachmentTypes = signal<AttachmentType[]>([]);
 
   ngOnInit(): void {
-    setTimeout(() => this.loading.set(false), 800);
+    this.loadAttachmentTypes();
   }
 
-  attachmentTypes: AttachmentType[] = [
-    { name: 'Curriculum Vitae (CV)' },
-    { name: 'Deed poll/Affidavit' },
-    { name: 'Curriculum Vitae' },
-    { name: 'Birth Certificatewire ' },
-  ];
+  private loadAttachmentTypes(): void {
+    this.loading.set(true);
+    this.attachmentTypeApi
+      .getAttachmentTypes()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.attachmentTypes.set((response.data ?? []).map(mapAttachmentType));
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Attachment Types',
+            detail: 'Could not load the attachment types. Please try again later.',
+          });
+        },
+      });
+  }
 
   actionMenuItems: MenuItem[] = [];
 
@@ -82,25 +104,30 @@ export class AttachmentTypes implements OnInit {
     }
 
     const raw = this.form.getRawValue();
+    const request =
+      this.dialogMode === 'edit' && this.editingAttachmentType
+        ? this.attachmentTypeApi.updateAttachmentType(this.editingAttachmentType.id, raw.name)
+        : this.attachmentTypeApi.createAttachmentType(raw.name);
 
-    if (this.dialogMode === 'edit' && this.editingAttachmentType) {
-      const target = this.editingAttachmentType;
-      this.attachmentTypes = this.attachmentTypes.map((item) => (item === target ? { name: raw.name } : item));
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Attachment Type Updated',
-        detail: `"${raw.name}" was updated successfully.`,
-      });
-    } else {
-      this.attachmentTypes = [...this.attachmentTypes, { name: raw.name }];
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Attachment Type Added',
-        detail: `"${raw.name}" was added successfully.`,
-      });
-    }
-
-    this.showFormDialog = false;
+    this.submitting.set(true);
+    request.pipe(finalize(() => this.submitting.set(false))).subscribe({
+      next: (response) => {
+        this.messageService.add({
+          severity: 'success',
+          summary: this.dialogMode === 'edit' ? 'Attachment Type Updated' : 'Attachment Type Added',
+          detail: response.message,
+        });
+        this.showFormDialog = false;
+        this.loadAttachmentTypes();
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Save Failed',
+          detail: 'Could not save the attachment type. Please try again later.',
+        });
+      },
+    });
   }
 
   onDelete(attachmentType: AttachmentType): void {
@@ -111,11 +138,22 @@ export class AttachmentTypes implements OnInit {
       acceptButtonProps: { label: 'Delete', severity: 'danger' },
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
       accept: () => {
-        this.attachmentTypes = this.attachmentTypes.filter((item) => item !== attachmentType);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Attachment Type Deleted',
-          detail: `"${attachmentType.name}" was deleted successfully.`,
+        this.attachmentTypeApi.deleteAttachmentType(attachmentType.id).subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Attachment Type Deleted',
+              detail: `"${attachmentType.name}" was deleted successfully.`,
+            });
+            this.loadAttachmentTypes();
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Delete Failed',
+              detail: 'Could not delete the attachment type. Please try again later.',
+            });
+          },
         });
       },
     });

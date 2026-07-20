@@ -5,11 +5,21 @@ import { Menu } from 'primeng/menu';
 import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { Button } from 'primeng/button';
+import { finalize } from 'rxjs';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
+import {
+  ApplicationRemarkApiService,
+  ApplicationRemarkRecord,
+} from '../../../core/masterdata/application-remark-api.service';
 
 interface ShortlistRemark {
+  id: number;
   name: string;
+}
+
+function mapRemark(record: ApplicationRemarkRecord): ShortlistRemark {
+  return { id: record.id, name: record.remark };
 }
 
 @Component({
@@ -22,6 +32,7 @@ export class ShortlistRemarks implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
+  private readonly remarkApi = inject(ApplicationRemarkApiService);
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
@@ -30,19 +41,31 @@ export class ShortlistRemarks implements OnInit {
   ];
 
   readonly loading = signal(true);
+  readonly submitting = signal(false);
+  readonly remarks = signal<ShortlistRemark[]>([]);
 
   ngOnInit(): void {
-    setTimeout(() => this.loading.set(false), 800);
+    this.loadRemarks();
   }
 
-  remarks: ShortlistRemark[] = [
-    { name: 'Does not meet minimum qualification requirements' },
-    { name: 'Incomplete application documents' },
-    { name: 'Failed to meet age requirement' },
-    { name: 'Failed interview/assessment criteria' },
-    { name: 'Duplicate application' },
-    { name: 'Other' },
-  ];
+  private loadRemarks(): void {
+    this.loading.set(true);
+    this.remarkApi
+      .getRemarks()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.remarks.set((response.data ?? []).map(mapRemark));
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Remarks',
+            detail: 'Could not load the shortlist remarks. Please try again later.',
+          });
+        },
+      });
+  }
 
   actionMenuItems: MenuItem[] = [];
 
@@ -84,25 +107,30 @@ export class ShortlistRemarks implements OnInit {
     }
 
     const raw = this.form.getRawValue();
+    const request =
+      this.dialogMode === 'edit' && this.editingRemark
+        ? this.remarkApi.updateRemark(this.editingRemark.id, raw.name)
+        : this.remarkApi.createRemark(raw.name);
 
-    if (this.dialogMode === 'edit' && this.editingRemark) {
-      const target = this.editingRemark;
-      this.remarks = this.remarks.map((item) => (item === target ? { name: raw.name } : item));
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Remark Updated',
-        detail: `"${raw.name}" was updated successfully.`,
-      });
-    } else {
-      this.remarks = [...this.remarks, { name: raw.name }];
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Remark Added',
-        detail: `"${raw.name}" was added successfully.`,
-      });
-    }
-
-    this.showFormDialog = false;
+    this.submitting.set(true);
+    request.pipe(finalize(() => this.submitting.set(false))).subscribe({
+      next: (response) => {
+        this.messageService.add({
+          severity: 'success',
+          summary: this.dialogMode === 'edit' ? 'Remark Updated' : 'Remark Added',
+          detail: response.message,
+        });
+        this.showFormDialog = false;
+        this.loadRemarks();
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Save Failed',
+          detail: 'Could not save the remark. Please try again later.',
+        });
+      },
+    });
   }
 
   onDelete(remark: ShortlistRemark): void {
@@ -113,11 +141,22 @@ export class ShortlistRemarks implements OnInit {
       acceptButtonProps: { label: 'Delete', severity: 'danger' },
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
       accept: () => {
-        this.remarks = this.remarks.filter((item) => item !== remark);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Remark Deleted',
-          detail: `"${remark.name}" was deleted successfully.`,
+        this.remarkApi.deleteRemark(remark.id).subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Remark Deleted',
+              detail: `"${remark.name}" was deleted successfully.`,
+            });
+            this.loadRemarks();
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Delete Failed',
+              detail: 'Could not delete the remark. Please try again later.',
+            });
+          },
         });
       },
     });

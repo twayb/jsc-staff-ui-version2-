@@ -1,14 +1,14 @@
 <div class="w-full px-4 sm:px-6 py-10">
-  <app-breadcrumb [items]="breadcrumbItems" />
+  <app-breadcrumb [items]="breadcrumbItems()" />
 
   <app-data-table
     class="block animate-fade-in-up stagger-1"
     title="Interview Panels"
     [subtitle]="interviewTitle ? 'Panels for ' + interviewTitle : 'Panels for this interview'"
-    [data]="panels"
+    [data]="panels()"
     [loading]="loading()"
     [searchFields]="['panel']"
-    dataKey="panel"
+    dataKey="id"
   >
     <p-button
       tableAction
@@ -86,7 +86,7 @@
           type="button"
           (onClick)="showAddPanelDialog = false"
         />
-        <p-button label="Save" type="submit" />
+        <p-button label="Save" type="submit" [loading]="submittingPanel()" />
       </div>
     </form>
   </p-dialog>
@@ -160,7 +160,7 @@
             type="button"
             (onClick)="showPanelistDialog = false"
           />
-          <p-button label="Save" type="submit" />
+          <p-button label="Save" type="submit" [loading]="submittingPanelist()" />
         </div>
       </form>
     }

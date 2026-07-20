@@ -3,20 +3,35 @@ import { ActivatedRoute } from '@angular/router';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { Tag } from 'primeng/tag';
 import { Tooltip } from 'primeng/tooltip';
+import { finalize } from 'rxjs';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
+import { titleCase } from '../../../core/utils';
+import { SelectedApplicantRecord, SelectionApiService } from '../../../core/recruitment/selection-api.service';
 
 type Gender = 'Male' | 'Female';
-type SelectionStatus = 'Approved' | 'Not Approved';
-type SelectionStatusSeverity = 'success' | 'warn';
-type SelectionRemark = 'Confirm' | 'Reject';
-type SelectionRemarkSeverity = 'success' | 'danger';
+type Severity = 'success' | 'danger' | 'warn' | 'secondary';
 
 interface SelectionCandidate {
+  applicationId: string;
   name: string;
   gender: Gender;
-  status: SelectionStatus;
-  remarks: SelectionRemark;
+  interviewNo: string;
+  marks: number;
+  status: string;
+  remarks: string;
+}
+
+function mapSelectionCandidate(record: SelectedApplicantRecord): SelectionCandidate {
+  return {
+    applicationId: record.applicationId,
+    name: record.applicantName,
+    gender: record.gender.toUpperCase() === 'FEMALE' ? 'Female' : 'Male',
+    interviewNo: record.interviewNumber,
+    marks: record.marks,
+    status: record.status,
+    remarks: record.remarks,
+  };
 }
 
 @Component({
@@ -29,37 +44,64 @@ export class SelectionList implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
+  private readonly selectionApi = inject(SelectionApiService);
 
-  readonly referenceNo = this.route.snapshot.paramMap.get('referenceNo') ?? '';
+  readonly advertId = this.route.snapshot.paramMap.get('advertId') ?? '';
   readonly cadre = this.route.snapshot.queryParamMap.get('cadre') ?? '';
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
     { label: 'Selection', routerLink: '/recruitment/selection' },
-    { label: this.cadre || this.referenceNo },
+    { label: this.cadre || this.advertId },
   ];
 
   readonly loading = signal(true);
+  readonly candidates = signal<SelectionCandidate[]>([]);
 
   ngOnInit(): void {
-    setTimeout(() => this.loading.set(false), 800);
+    this.loading.set(true);
+    this.selectionApi
+      .getSelectedApplicants(Number(this.advertId))
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.candidates.set((response.data ?? []).map(mapSelectionCandidate));
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Selection',
+            detail: 'Could not load the selected candidates. Please try again later.',
+          });
+        },
+      });
   }
 
-  candidates: SelectionCandidate[] = [
-    { name: 'John Mwangi', gender: 'Male', status: 'Approved', remarks: 'Confirm' },
-    { name: 'Amina Hassan', gender: 'Female', status: 'Not Approved', remarks: 'Reject' },
-    { name: 'Fatma Salim', gender: 'Female', status: 'Not Approved', remarks: 'Confirm' },
-    { name: 'Juma Kessy', gender: 'Male', status: 'Approved', remarks: 'Confirm' },
-  ];
-
-  statusSeverity(status: SelectionStatus): SelectionStatusSeverity {
-    return status === 'Approved' ? 'success' : 'warn';
+  statusLabel(status: string): string {
+    return titleCase(status.replace(/_/g, ' '));
   }
 
-  remarksSeverity(remarks: SelectionRemark): SelectionRemarkSeverity {
-    return remarks === 'Confirm' ? 'success' : 'danger';
+  statusSeverity(status: string): Severity {
+    const upper = status.toUpperCase();
+    if (upper.includes('APPROV')) return 'success';
+    if (upper.includes('REJECT') || upper.includes('DECLIN')) return 'danger';
+    if (upper.includes('PENDING')) return 'warn';
+    return 'secondary';
   }
 
+  remarksLabel(remarks: string): string {
+    return titleCase(remarks.replace(/_/g, ' '));
+  }
+
+  remarksSeverity(remarks: string): Severity {
+    const upper = remarks.toUpperCase();
+    if (upper.includes('CONFIRM')) return 'success';
+    if (upper.includes('REJECT') || upper.includes('DECLIN')) return 'danger';
+    if (upper.includes('PENDING')) return 'warn';
+    return 'secondary';
+  }
+
+  // Not wired yet: no confirmed endpoint for approving a selection — stays local-only for now.
   onApprove(candidate: SelectionCandidate): void {
     this.confirmationService.confirm({
       header: 'Approve Selection',
@@ -68,8 +110,8 @@ export class SelectionList implements OnInit {
       acceptButtonProps: { label: 'Approve' },
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
       accept: () => {
-        this.candidates = this.candidates.map((item) =>
-          item === candidate ? { ...item, status: 'Approved' } : item,
+        this.candidates.update((list) =>
+          list.map((item) => (item === candidate ? { ...item, status: 'APPROVED' } : item)),
         );
         this.messageService.add({
           severity: 'success',
