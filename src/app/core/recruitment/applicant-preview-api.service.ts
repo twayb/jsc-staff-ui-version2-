@@ -125,6 +125,7 @@ export interface ApplicationDetailRecord {
   applicationLetter: string | null;
   employerLetter: string | null;
   shortlisted: 'SHORTLISTED' | 'NOT_SHORTLISTED' | null;
+  state: string | null;
   remarks: string | null;
 }
 

@@ -2,10 +2,10 @@
   [card]="false"
   title="Pending"
   subtitle="Applicants awaiting assignment"
-  [data]="applicants"
+  [data]="applicants()"
   [loading]="loading()"
   [searchFields]="['name', 'nin']"
-  dataKey="nin"
+  dataKey="applicationId"
 >
   <ng-template #headerTpl>
     <tr>

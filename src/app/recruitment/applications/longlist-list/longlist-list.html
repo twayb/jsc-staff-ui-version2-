@@ -16,10 +16,10 @@
             [card]="false"
             title="Longlisted Applicants"
             [subtitle]="advertName() ? 'Applicants who passed initial screening for ' + advertName() : 'Applicants who passed initial screening for this advert'"
-            [data]="applicants"
+            [data]="applicants()"
             [loading]="loading()"
             [searchFields]="['name', 'nin', 'status']"
-            dataKey="nin"
+            dataKey="applicationId"
           >
             <ng-template #headerTpl>
               <tr>

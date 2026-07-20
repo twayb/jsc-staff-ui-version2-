@@ -6,6 +6,7 @@ import { Tooltip } from 'primeng/tooltip';
 import { finalize } from 'rxjs';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
 import { ApplicationRecord, LonglistApiService } from '../../../core/recruitment/longlist-api.service';
+import { ApplicationDetailRecord } from '../../../core/recruitment/applicant-preview-api.service';
 
 type ApprovalState = 'Approved' | 'Not Approved';
 type ApprovalStateSeverity = 'success' | 'warn';
@@ -18,13 +19,27 @@ interface ShortlistedApplicant {
   state: ApprovalState;
 }
 
+function approvalStateOf(state: string | null): ApprovalState {
+  return (state ?? '').toUpperCase() === 'APPROVED' ? 'Approved' : 'Not Approved';
+}
+
 function mapShortlisted(raw: ApplicationRecord): ShortlistedApplicant {
   return {
     applicationId: raw.applicationId,
     name: raw.applicantName,
     nin: raw.nin,
-    applicationDate: raw.applicationDate.slice(0, 10),
-    state: (raw.state ?? '').toUpperCase() === 'APPROVED' ? 'Approved' : 'Not Approved',
+    applicationDate: raw.applicationDate?.slice(0, 10) ?? '',
+    state: approvalStateOf(raw.state),
+  };
+}
+
+function mapAssignedShortlisted(record: ApplicationDetailRecord): ShortlistedApplicant {
+  return {
+    applicationId: record.id,
+    name: record.applicant.fullName,
+    nin: record.applicant.nin,
+    applicationDate: record.createdAt?.slice(0, 10) ?? '',
+    state: approvalStateOf(record.state),
   };
 }
 
@@ -45,32 +60,41 @@ export class Shortlist implements OnInit {
   @Input() origin: 'longlist' | 'assigned' = 'longlist';
 
   readonly loading = signal(true);
-
-  applicants: ShortlistedApplicant[] = [];
+  readonly applicants = signal<ShortlistedApplicant[]>([]);
 
   ngOnInit(): void {
-    if (this.origin !== 'longlist') {
-      // Officer-assigned shortlist view isn't wired to the real API yet.
-      this.loading.set(false);
+    this.loading.set(true);
+
+    if (this.origin === 'longlist') {
+      this.longlistApi
+        .getShortlist(Number(this.advertId), 'SHORTLISTED')
+        .pipe(finalize(() => this.loading.set(false)))
+        .subscribe({
+          next: (response) => {
+            this.applicants.set((response.data?.content ?? []).map(mapShortlisted));
+          },
+          error: () => this.showLoadError(),
+        });
       return;
     }
 
-    this.loading.set(true);
     this.longlistApi
-      .getShortlist(Number(this.advertId), 'SHORTLISTED')
+      .getOfficerApplicationsShortlisted(Number(this.advertId))
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (response) => {
-          this.applicants = (response.data?.content ?? []).map(mapShortlisted);
+          this.applicants.set((response.data?.content ?? []).map(mapAssignedShortlisted));
         },
-        error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Failed to Load Shortlist',
-            detail: 'Could not load the shortlisted applicants. Please try again later.',
-          });
-        },
+        error: () => this.showLoadError(),
       });
+  }
+
+  private showLoadError(): void {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Failed to Load Shortlist',
+      detail: 'Could not load the shortlisted applicants. Please try again later.',
+    });
   }
 
   approvalStateSeverity(state: ApprovalState): ApprovalStateSeverity {
@@ -85,7 +109,7 @@ export class Shortlist implements OnInit {
       acceptButtonProps: { label: 'Approve' },
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
       accept: () => {
-        this.applicants = this.applicants.map((applicant) => ({ ...applicant, state: 'Approved' }));
+        this.applicants.update((list) => list.map((applicant) => ({ ...applicant, state: 'Approved' })));
         this.messageService.add({
           severity: 'success',
           summary: 'Shortlist Approved',

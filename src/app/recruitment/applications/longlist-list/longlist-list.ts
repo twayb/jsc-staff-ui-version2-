@@ -35,7 +35,7 @@ function mapApplicant(raw: ApplicationRecord): LonglistApplicantRow {
     applicationId: raw.applicationId,
     name: raw.applicantName,
     nin: raw.nin,
-    applicationDate: raw.applicationDate.slice(0, 10),
+    applicationDate: raw.applicationDate?.slice(0, 10) ?? '',
     status: statusFromShortlisted(raw.shortlisted),
   };
 }
@@ -78,7 +78,7 @@ export class LonglistList {
   readonly loading = signal(true);
   readonly advertName = signal<string | null>(null);
 
-  applicants: LonglistApplicantRow[] = [];
+  readonly applicants = signal<LonglistApplicantRow[]>([]);
 
   constructor() {
     const advertId = Number(this.advertId);
@@ -94,7 +94,7 @@ export class LonglistList {
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (response) => {
-          this.applicants = (response.data?.content ?? []).map(mapApplicant);
+          this.applicants.set((response.data?.content ?? []).map(mapApplicant));
         },
         error: () => {
           this.messageService.add({

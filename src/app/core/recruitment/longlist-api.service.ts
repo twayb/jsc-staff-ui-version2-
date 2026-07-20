@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, of, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../auth/auth.service';
+import { ApplicationDetailRecord } from './applicant-preview-api.service';
 
 export type ShortlistStatus = 'SHORTLISTED' | 'NOT_SHORTLISTED';
 
@@ -12,7 +13,7 @@ export interface ApplicationRecord {
   applicationId: string;
   applicantId: string | null;
   advertId: string;
-  applicationDate: string;
+  applicationDate: string | null;
   remarks: string | null;
   shortlisted: ShortlistStatus | null;
   state: string | null;
@@ -49,6 +50,14 @@ interface PageOf<T> {
   totalElements: number;
 }
 
+export interface ApplicationDetailPage {
+  content: ApplicationDetailRecord[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class LonglistApiService {
   private readonly http = inject(HttpClient);
@@ -74,6 +83,37 @@ export class LonglistApiService {
     });
   }
 
+  // All applications currently assigned to the requesting officer for this advert, any status
+  // mixed together. The endpoint takes no userId; the officer is derived from the session, so
+  // this can't be used to inspect another officer's queue (same limitation the old app had).
+  getOfficerApplications(advertId: number): Observable<ApiResponse<ApplicationDetailPage>> {
+    return this.fetchAll((page, size) => this.getOfficerApplicationsPage(advertId, page, size), 0);
+  }
+
+  // Status-scoped variants of the above — dedicated endpoints, not client-side filters.
+  getOfficerApplicationsPending(advertId: number): Observable<ApiResponse<ApplicationDetailPage>> {
+    return this.fetchAll((page, size) => this.getOfficerApplicationsByStatus('pending', advertId, page, size), 0);
+  }
+
+  getOfficerApplicationsShortlisted(advertId: number): Observable<ApiResponse<ApplicationDetailPage>> {
+    return this.fetchAll(
+      (page, size) => this.getOfficerApplicationsByStatus('short-listed', advertId, page, size),
+      0,
+    );
+  }
+
+  getOfficerApplicationsNotShortlisted(advertId: number): Observable<ApiResponse<ApplicationDetailPage>> {
+    return this.fetchAll(
+      (page, size) => this.getOfficerApplicationsByStatus('not-short-listed', advertId, page, size),
+      0,
+    );
+  }
+
+  // "Attended" — applications a specific officer has already decided on (shortlisted/not shortlisted).
+  getOfficerAttended(advertId: number, userId: string): Observable<ApiResponse<ApplicationDetailPage>> {
+    return this.fetchAll((page, size) => this.getOfficerAttendedPage(advertId, userId, page, size), 0);
+  }
+
   private getLonglistPage(advertId: number, page: number, size: number): Observable<ApiResponse<ApplicationPage>> {
     const params = new HttpParams().set('adverts', advertId).set('page', page).set('size', size);
     return this.http.get<ApiResponse<ApplicationPage>>(`${this.apiUrl}admins/applications`, { params });
@@ -91,6 +131,43 @@ export class LonglistApiService {
       .set('page', page)
       .set('size', size);
     return this.http.get<ApiResponse<ApplicationPage>>(`${this.apiUrl}applications/shortlists`, { params });
+  }
+
+  private getOfficerApplicationsPage(
+    advertId: number,
+    page: number,
+    size: number,
+  ): Observable<ApiResponse<ApplicationDetailPage>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<ApiResponse<ApplicationDetailPage>>(`${this.apiUrl}admins/officer-applications/${advertId}`, {
+      params,
+    });
+  }
+
+  private getOfficerApplicationsByStatus(
+    status: 'pending' | 'short-listed' | 'not-short-listed',
+    advertId: number,
+    page: number,
+    size: number,
+  ): Observable<ApiResponse<ApplicationDetailPage>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<ApiResponse<ApplicationDetailPage>>(
+      `${this.apiUrl}admins/officer-applications/${status}/${advertId}`,
+      { params },
+    );
+  }
+
+  private getOfficerAttendedPage(
+    advertId: number,
+    userId: string,
+    page: number,
+    size: number,
+  ): Observable<ApiResponse<ApplicationDetailPage>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    const body = { advertId, userId, status: ['SHORTLISTED', 'NOT_SHORTLISTED'] };
+    return this.http.post<ApiResponse<ApplicationDetailPage>>(`${this.apiUrl}admins/officer-applications`, body, {
+      params,
+    });
   }
 
   private getDistributionStatsPage(

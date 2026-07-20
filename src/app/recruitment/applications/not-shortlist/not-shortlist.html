@@ -2,10 +2,10 @@
   [card]="false"
   title="Not Shortlisted"
   subtitle="Applicants who did not make the shortlist"
-  [data]="applicants"
+  [data]="applicants()"
   [loading]="loading()"
   [searchFields]="['name', 'nin', 'remark']"
-  dataKey="nin"
+  dataKey="applicationId"
 >
   <ng-template #headerTpl>
     <tr>

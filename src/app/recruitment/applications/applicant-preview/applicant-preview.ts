@@ -1,7 +1,7 @@
 import { Component, ElementRef, HostListener, QueryList, ViewChild, ViewChildren, computed, inject, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { Tag } from 'primeng/tag';
 import { Dialog } from 'primeng/dialog';
@@ -13,6 +13,7 @@ import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { NOT_SHORTLIST_REASONS, REVERT_REASONS } from '../longlist-data.service';
 import { ApplicantPreviewApiService } from '../../../core/recruitment/applicant-preview-api.service';
 import { FileUploadApiService } from '../../../core/files/file-upload-api.service';
+import { LonglistApiService } from '../../../core/recruitment/longlist-api.service';
 import { AttachmentEntry, mapApplicantPreview, ApplicantPreview as ApplicantPreviewData } from '../applicant-preview.model';
 
 type ApplicantStatusSeverity = 'warn' | 'success' | 'danger';
@@ -25,25 +26,38 @@ type ApplicantStatusSeverity = 'warn' | 'success' | 'danger';
 })
 export class ApplicantPreview {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
   private readonly applicantPreviewApi = inject(ApplicantPreviewApiService);
   private readonly fileUploadApi = inject(FileUploadApiService);
+  private readonly longlistApi = inject(LonglistApiService);
 
+  // advertId/origin are stable across prev/next (only applicationId changes), so a one-time
+  // snapshot read is fine for these.
   readonly advertId = this.route.snapshot.paramMap.get('advertId') ?? '';
   readonly origin = this.route.snapshot.paramMap.get('origin') === 'assigned' ? 'assigned' : 'longlist';
-  readonly applicationId = this.route.snapshot.paramMap.get('applicationId') ?? '';
+
+  // applicationId must stay reactive: Angular reuses this component instance when navigating
+  // prev/next (same route, only the :applicationId param changes), so a snapshot read here
+  // would go stale after the first load.
+  readonly applicationId = signal(this.route.snapshot.paramMap.get('applicationId') ?? '');
 
   readonly loading = signal(true);
   readonly applicant = signal<ApplicantPreviewData | null>(null);
 
-  // Single-applicant preview for now — no shared list to page through yet, so this stays
-  // inert (1 of 1, both disabled) until real prev/next paging is wired to a list source.
-  readonly currentIndex = signal(0);
-  readonly total = computed(() => (this.applicant() ? 1 : 0));
-  readonly hasPrevious = computed(() => false);
-  readonly hasNext = computed(() => false);
-  readonly progress = computed(() => (this.applicant() ? 100 : 0));
+  // Ordered ids of every applicant in the same origin list (longlist or officer-assigned queue)
+  // for this advert — lets Previous/Next step through the full list, not just this one record.
+  readonly applicantIds = signal<string[]>([]);
+
+  readonly currentIndex = computed(() => this.applicantIds().indexOf(this.applicationId()));
+  readonly total = computed(() => this.applicantIds().length);
+  readonly hasPrevious = computed(() => this.currentIndex() > 0);
+  readonly hasNext = computed(() => {
+    const index = this.currentIndex();
+    return index >= 0 && index < this.total() - 1;
+  });
+  readonly progress = computed(() => (this.total() > 0 ? ((this.currentIndex() + 1) / this.total()) * 100 : 0));
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
@@ -84,9 +98,27 @@ export class ApplicantPreview {
   }
 
   constructor() {
+    this.loadApplicant(this.applicationId());
+    this.loadApplicantList();
+
+    this.route.paramMap.subscribe((params) => {
+      const applicationId = params.get('applicationId') ?? '';
+      if (applicationId && applicationId !== this.applicationId()) {
+        this.applicationId.set(applicationId);
+        this.loadApplicant(applicationId);
+      }
+    });
+  }
+
+  private loadApplicant(applicationId: string): void {
+    this.showAttachmentsDialog = false;
+    this.selectedAttachment = null;
+    this.zoom.set(100);
+    this.currentPage.set(1);
+
     this.loading.set(true);
     this.applicantPreviewApi
-      .getApplication(this.applicationId)
+      .getApplication(applicationId)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (response) => {
@@ -104,16 +136,43 @@ export class ApplicantPreview {
       });
   }
 
-  goToPrevious(): void {
-    if (!this.hasPrevious()) {
+  private loadApplicantList(): void {
+    const advertId = Number(this.advertId);
+
+    if (this.origin === 'longlist') {
+      this.longlistApi.getLonglist(advertId).subscribe({
+        next: (response) => {
+          this.applicantIds.set((response.data?.content ?? []).map((record) => record.applicationId));
+        },
+        error: () => {},
+      });
       return;
     }
+
+    this.longlistApi.getOfficerApplications(advertId).subscribe({
+      next: (response) => {
+        this.applicantIds.set((response.data?.content ?? []).map((record) => record.id));
+      },
+      error: () => {},
+    });
+  }
+
+  goToPrevious(): void {
+    this.navigateByOffset(-1);
   }
 
   goToNext(): void {
-    if (!this.hasNext()) {
+    this.navigateByOffset(1);
+  }
+
+  private navigateByOffset(offset: number): void {
+    const targetId = this.applicantIds()[this.currentIndex() + offset];
+    if (!targetId) {
       return;
     }
+    this.router
+      .navigate(['/recruitment/applications', this.origin, this.advertId, 'applicant', targetId])
+      .then(() => window.scrollTo(0, 0));
   }
 
   statusSeverity(status: ApplicantStatusSeverity | string): ApplicantStatusSeverity {

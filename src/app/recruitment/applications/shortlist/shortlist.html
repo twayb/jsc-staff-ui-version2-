@@ -2,12 +2,12 @@
   [card]="false"
   title="Shortlist"
   subtitle="Applicants shortlisted for interview"
-  [data]="applicants"
+  [data]="applicants()"
   [loading]="loading()"
   [searchFields]="['name', 'nin', 'state']"
   [addLabel]="showApproval ? 'Approve' : null"
   addIcon="pi pi-check-circle"
-  dataKey="nin"
+  dataKey="applicationId"
   (add)="onApprove()"
 >
   <ng-template #headerTpl>

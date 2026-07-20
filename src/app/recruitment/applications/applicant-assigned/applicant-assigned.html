@@ -15,11 +15,11 @@
           <app-data-table
             [card]="false"
             title="Applicant Assigned"
-            subtitle="Applicants assigned for this advert"
+            [subtitle]="advertName() ? 'Applicants assigned for ' + advertName() : 'Applicants assigned for this advert'"
             [data]="applicants()"
             [loading]="loading()"
             [searchFields]="['name', 'nin']"
-            dataKey="nin"
+            dataKey="applicationId"
           >
             <ng-template #headerTpl>
               <tr>

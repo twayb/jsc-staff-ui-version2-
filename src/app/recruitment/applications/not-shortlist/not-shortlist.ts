@@ -6,6 +6,7 @@ import { Tooltip } from 'primeng/tooltip';
 import { finalize } from 'rxjs';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
 import { ApplicationRecord, LonglistApiService } from '../../../core/recruitment/longlist-api.service';
+import { ApplicationDetailRecord } from '../../../core/recruitment/applicant-preview-api.service';
 
 interface NotShortlistedApplicant {
   applicationId: string;
@@ -20,8 +21,18 @@ function mapNotShortlisted(raw: ApplicationRecord): NotShortlistedApplicant {
     applicationId: raw.applicationId,
     name: raw.applicantName,
     nin: raw.nin,
-    applicationDate: raw.applicationDate.slice(0, 10),
+    applicationDate: raw.applicationDate?.slice(0, 10) ?? '',
     remark: raw.remarks ?? '',
+  };
+}
+
+function mapAssignedNotShortlisted(record: ApplicationDetailRecord): NotShortlistedApplicant {
+  return {
+    applicationId: record.id,
+    name: record.applicant.fullName,
+    nin: record.applicant.nin,
+    applicationDate: record.createdAt?.slice(0, 10) ?? '',
+    remark: record.remarks ?? '',
   };
 }
 
@@ -40,32 +51,41 @@ export class NotShortlist implements OnInit {
   @Input() origin: 'longlist' | 'assigned' = 'longlist';
 
   readonly loading = signal(true);
-
-  applicants: NotShortlistedApplicant[] = [];
+  readonly applicants = signal<NotShortlistedApplicant[]>([]);
 
   ngOnInit(): void {
-    if (this.origin !== 'longlist') {
-      // Officer-assigned not-shortlisted view isn't wired to the real API yet.
-      this.loading.set(false);
+    this.loading.set(true);
+
+    if (this.origin === 'longlist') {
+      this.longlistApi
+        .getShortlist(Number(this.advertId), 'NOT_SHORTLISTED')
+        .pipe(finalize(() => this.loading.set(false)))
+        .subscribe({
+          next: (response) => {
+            this.applicants.set((response.data?.content ?? []).map(mapNotShortlisted));
+          },
+          error: () => this.showLoadError(),
+        });
       return;
     }
 
-    this.loading.set(true);
     this.longlistApi
-      .getShortlist(Number(this.advertId), 'NOT_SHORTLISTED')
+      .getOfficerApplicationsNotShortlisted(Number(this.advertId))
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (response) => {
-          this.applicants = (response.data?.content ?? []).map(mapNotShortlisted);
+          this.applicants.set((response.data?.content ?? []).map(mapAssignedNotShortlisted));
         },
-        error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Failed to Load Not Shortlisted',
-            detail: 'Could not load the not-shortlisted applicants. Please try again later.',
-          });
-        },
+        error: () => this.showLoadError(),
       });
+  }
+
+  private showLoadError(): void {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Failed to Load Not Shortlisted',
+      detail: 'Could not load the not-shortlisted applicants. Please try again later.',
+    });
   }
 
   onView(applicant: NotShortlistedApplicant): void {
