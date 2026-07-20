@@ -1,14 +1,14 @@
 <div class="w-full px-4 sm:px-6 py-10">
-  <app-breadcrumb [items]="breadcrumbItems" />
+  <app-breadcrumb [items]="breadcrumbItems()" />
 
   <app-data-table
     class="block animate-fade-in-up stagger-1"
     title="Venue by Region"
     [subtitle]="interviewTitle ? 'Venues for ' + region + ' — ' + interviewTitle : 'Venues for ' + region"
-    [data]="venues"
+    [data]="venues()"
     [loading]="loading()"
     [searchFields]="['venueName']"
-    dataKey="venueName"
+    dataKey="venueId"
   >
     <ng-template #headerTpl>
       <tr>

@@ -88,39 +88,39 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'recruitment/interview-management/:permitNo',
+        path: 'recruitment/interview-management/:advertId',
         loadComponent: () =>
           import('./recruitment/interview-managment/interview-list/interview-list').then((m) => m.InterviewList),
       },
       {
-        path: 'recruitment/interview-management/:permitNo/distribute-by-region',
+        path: 'recruitment/interview-management/:advertId/distribute-by-region/:interviewTypeId',
         loadComponent: () =>
           import('./recruitment/interview-managment/distribute-by-region/distribute-by-region').then(
             (m) => m.DistributeByRegion,
           ),
       },
       {
-        path: 'recruitment/interview-management/:permitNo/venue-by-region',
+        path: 'recruitment/interview-management/:advertId/venue-by-region',
         loadComponent: () =>
           import('./recruitment/interview-managment/venue-by-region/venue-by-region').then((m) => m.VenueByRegion),
       },
       {
-        path: 'recruitment/interview-management/:permitNo/candidate-by-venue',
+        path: 'recruitment/interview-management/:advertId/candidate-by-venue',
         loadComponent: () =>
           import('./recruitment/interview-managment/candidate-by-venue/candidate-by-venue').then(
             (m) => m.CandidateByVenue,
           ),
       },
       {
-        path: 'recruitment/interview-management/:permitNo/results',
+        path: 'recruitment/interview-management/:advertId/results',
         loadComponent: () => import('./recruitment/interview-managment/result/result').then((m) => m.Result),
       },
       {
-        path: 'recruitment/interview-management/:permitNo/panel',
+        path: 'recruitment/interview-management/:advertId/panel',
         loadComponent: () => import('./recruitment/interview-managment/panel/panel').then((m) => m.Panel),
       },
       {
-        path: 'recruitment/interview-management/:permitNo/panelists',
+        path: 'recruitment/interview-management/:advertId/panelists',
         loadComponent: () =>
           import('./recruitment/interview-managment/panelists/panelists').then((m) => m.Panelists),
       },

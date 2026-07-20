@@ -33,13 +33,13 @@ export class Result implements OnInit {
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
 
-  readonly permitNo = this.route.snapshot.paramMap.get('permitNo') ?? '';
+  readonly advertId = this.route.snapshot.paramMap.get('advertId') ?? '';
   readonly interviewTitle = this.route.snapshot.queryParamMap.get('title') ?? '';
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Recruitment', routerLink: '/recruitment' },
     { label: 'Interview Management', routerLink: '/recruitment/interview-management' },
-    { label: this.permitNo, routerLink: `/recruitment/interview-management/${this.permitNo}` },
+    { label: this.advertId, routerLink: `/recruitment/interview-management/${this.advertId}` },
     { label: 'Results' },
   ];
 

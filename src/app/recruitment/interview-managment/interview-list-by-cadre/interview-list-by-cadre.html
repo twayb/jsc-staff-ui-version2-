@@ -5,10 +5,10 @@
     class="block animate-fade-in-up stagger-1"
     title="Interview List by Cadre"
     subtitle="Cadres with applicants ready for interview"
-    [data]="cadres"
+    [data]="cadres()"
     [loading]="loading()"
     [searchFields]="['permitNo', 'cadre']"
-    dataKey="permitNo"
+    dataKey="advertId"
   >
     <ng-template #headerTpl>
       <tr>

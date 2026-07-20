@@ -1,15 +1,28 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Menu } from 'primeng/menu';
-import { MenuItem } from 'primeng/api';
+import { MenuItem, MessageService } from 'primeng/api';
+import { finalize } from 'rxjs';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
+import { ApplicationApiService, ApplicationSummaryRecord } from '../../../core/recruitment/application-api.service';
 
 interface CadreInterviewListing {
+  advertId: number;
   permitNo: string;
   cadre: string;
   posts: number;
   applicants: number;
+}
+
+function mapCadre(record: ApplicationSummaryRecord): CadreInterviewListing {
+  return {
+    advertId: record.id,
+    permitNo: record.advertReferenceNumber,
+    cadre: record.schemeName,
+    posts: Number(record.advertNumberOfPosts),
+    applicants: Number(record.advertTotalApplications),
+  };
 }
 
 @Component({
@@ -20,21 +33,32 @@ interface CadreInterviewListing {
 })
 export class InterviewListByCadre implements OnInit {
   private readonly router = inject(Router);
+  private readonly messageService = inject(MessageService);
+  private readonly applicationApi = inject(ApplicationApiService);
 
   readonly breadcrumbItems: MenuItem[] = [{ label: 'Recruitment', routerLink: '/recruitment' }, { label: 'Interview Management' }];
 
   readonly loading = signal(true);
+  readonly cadres = signal<CadreInterviewListing[]>([]);
 
   ngOnInit(): void {
-    setTimeout(() => this.loading.set(false), 800);
+    this.loading.set(true);
+    this.applicationApi
+      .getApplications()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.cadres.set((response.data?.content ?? []).map(mapCadre));
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Cadres',
+            detail: 'Could not load the interview cadre list. Please try again later.',
+          });
+        },
+      });
   }
-
-  cadres: CadreInterviewListing[] = [
-    { permitNo: 'PR-2026-001', cadre: 'Afisa Tehama - Usimamizi Wa Data Za Kieletroniki (Database Administration) Daraja II', posts: 5, applicants: 42 },
-    { permitNo: 'PR-2026-002', cadre: 'Afisa Tehama - Usalama Wa Mifumo Ya Tehama (Ict Security) Daraja II', posts: 8, applicants: 76 },
-    { permitNo: 'PR-2026-003', cadre: 'Afisa Hesabu Daraja II', posts: 3, applicants: 21 },
-    { permitNo: 'PR-2026-004', cadre: 'Msaidizi wa Hesabu Daraja I', posts: 2, applicants: 15 },
-  ];
 
   actionMenuItems: MenuItem[] = [];
 
@@ -47,10 +71,10 @@ export class InterviewListByCadre implements OnInit {
   }
 
   onView(cadre: CadreInterviewListing): void {
-    this.router.navigate(['/recruitment/interview-management', cadre.permitNo]);
+    this.router.navigate(['/recruitment/interview-management', cadre.advertId]);
   }
 
   onResults(cadre: CadreInterviewListing): void {
-    this.router.navigate(['/recruitment/interview-management', cadre.permitNo, 'results']);
+    this.router.navigate(['/recruitment/interview-management', cadre.advertId, 'results']);
   }
 }

@@ -6,13 +6,17 @@ import { Menu } from 'primeng/menu';
 import { Dialog } from 'primeng/dialog';
 import { MultiSelect } from 'primeng/multiselect';
 import { Button } from 'primeng/button';
+import { finalize, forkJoin } from 'rxjs';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
+import { AdvertApiService } from '../../../core/recruitment/advert-api.service';
+import { RegionApiService } from '../../../core/masterdata/region-api.service';
+import { InterviewVenueApiService } from '../../../core/recruitment/interview-venue-api.service';
 
 interface RegionDistribution {
+  regionId: number;
   region: string;
   applicants: number;
-  venues: string[];
 }
 
 @Component({
@@ -26,41 +30,68 @@ export class DistributeByRegion implements OnInit {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
+  private readonly advertApi = inject(AdvertApiService);
+  private readonly regionApi = inject(RegionApiService);
+  private readonly interviewVenueApi = inject(InterviewVenueApiService);
 
-  readonly permitNo = this.route.snapshot.paramMap.get('permitNo') ?? '';
+  readonly advertId = this.route.snapshot.paramMap.get('advertId') ?? '';
+  readonly interviewTypeId = this.route.snapshot.paramMap.get('interviewTypeId') ?? '';
   readonly interviewTitle = this.route.snapshot.queryParamMap.get('title') ?? '';
 
-  readonly breadcrumbItems: MenuItem[] = [
+  readonly breadcrumbItems = signal<MenuItem[]>([
     { label: 'Recruitment', routerLink: '/recruitment' },
     { label: 'Interview Management', routerLink: '/recruitment/interview-management' },
-    { label: this.permitNo, routerLink: `/recruitment/interview-management/${this.permitNo}` },
+    { label: this.advertId, routerLink: `/recruitment/interview-management/${this.advertId}` },
     { label: 'Distribute by Region' },
-  ];
+  ]);
 
   readonly loading = signal(true);
+  readonly regions = signal<RegionDistribution[]>([]);
 
   ngOnInit(): void {
-    setTimeout(() => this.loading.set(false), 800);
+    this.advertApi.getAdvert(Number(this.advertId)).subscribe({
+      next: (response) => {
+        const name = response.data?.advertName;
+        if (name) {
+          this.breadcrumbItems.update((items) => items.map((item, index) => (index === 2 ? { ...item, label: name } : item)));
+        }
+      },
+      error: () => {},
+    });
+
+    this.loading.set(true);
+    forkJoin({
+      stats: this.interviewVenueApi.getShortlistedByRegion(Number(this.advertId), Number(this.interviewTypeId)),
+      regions: this.regionApi.getRegions(),
+    })
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: ({ stats, regions }) => {
+          const namesById = new Map((regions.data ?? []).map((region) => [region.id, region.name]));
+          this.regions.set(
+            (stats.data ?? []).map((stat) => {
+              const regionId = Number(stat.regionResidenceId);
+              return {
+                regionId,
+                region: namesById.get(regionId) ?? stat.regionResidenceId,
+                applicants: Number(stat.totalApplications),
+              };
+            }),
+          );
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Regions',
+            detail: 'Could not load the region distribution. Please try again later.',
+          });
+        },
+      });
   }
 
-  regions: RegionDistribution[] = [
-    { region: 'Dar es Salaam', applicants: 18, venues: ['JSC Boardroom A'] },
-    { region: 'Arusha', applicants: 9, venues: [] },
-    { region: 'Mwanza', applicants: 7, venues: [] },
-    { region: 'Dodoma', applicants: 5, venues: ['Dodoma Regional Hall'] },
-    { region: 'Mbeya', applicants: 3, venues: [] },
-  ];
-
-  readonly venueOptions = [
-    { label: 'University of Dar es Salaam', value: 'University of Dar es Salaam' },
-    { label: 'Dar es Salaam Institute of Technology', value: 'Dar es Salaam Institute of Technology' },
-    { label: 'JSC Boardroom A', value: 'JSC Boardroom A' },
-    { label: 'Arusha International Conference Centre', value: 'Arusha International Conference Centre' },
-    { label: 'Mwanza Regional Hall', value: 'Mwanza Regional Hall' },
-    { label: 'Dodoma Regional Hall', value: 'Dodoma Regional Hall' },
-    { label: 'Mbeya Hall', value: 'Mbeya Hall' },
-    { label: 'Institute of Judicial Administration, Lushoto', value: 'Institute of Judicial Administration, Lushoto' },
-  ];
+  readonly venueOptions = signal<{ label: string; value: number }[]>([]);
+  readonly loadingVenues = signal(false);
+  readonly submittingVenue = signal(false);
 
   actionMenuItems: MenuItem[] = [];
 
@@ -68,7 +99,7 @@ export class DistributeByRegion implements OnInit {
   venueRegion: RegionDistribution | null = null;
 
   readonly venueForm = this.fb.nonNullable.group({
-    venues: this.fb.nonNullable.control<string[]>([], Validators.required),
+    venues: this.fb.nonNullable.control<number[]>([], Validators.required),
   });
 
   openActionMenu(event: Event, region: RegionDistribution, menu: Menu): void {
@@ -81,8 +112,31 @@ export class DistributeByRegion implements OnInit {
 
   onSetVenue(region: RegionDistribution): void {
     this.venueRegion = region;
-    this.venueForm.reset({ venues: region.venues });
+    this.venueForm.reset({ venues: [] });
+    this.venueOptions.set([]);
     this.showVenueDialog = true;
+
+    this.loadingVenues.set(true);
+    this.interviewVenueApi
+      .getVenuesByRegion(region.regionId)
+      .pipe(finalize(() => this.loadingVenues.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.venueOptions.set(
+            (response.data ?? []).map((venue) => ({
+              label: `${venue.name} (capacity ${venue.venueCapacity})`,
+              value: venue.id,
+            })),
+          );
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Venues',
+            detail: 'Could not load venues for this region. Please try again later.',
+          });
+        },
+      });
   }
 
   onSaveVenue(): void {
@@ -93,19 +147,43 @@ export class DistributeByRegion implements OnInit {
 
     const raw = this.venueForm.getRawValue();
     const target = this.venueRegion;
-    this.regions = this.regions.map((region) => (region === target ? { ...region, venues: raw.venues } : region));
 
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Venue Saved',
-      detail: `Venue(s) for "${target.region}" was saved successfully.`,
-    });
-    this.showVenueDialog = false;
+    this.submittingVenue.set(true);
+    this.interviewVenueApi
+      .setInterviewVenues({
+        venueIds: raw.venues,
+        advertId: this.advertId,
+        interviewTypeId: this.interviewTypeId,
+        regionId: String(target.regionId),
+      })
+      .pipe(finalize(() => this.submittingVenue.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Venue Saved',
+            detail: response.message,
+          });
+          this.showVenueDialog = false;
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Save Failed',
+            detail: 'Could not save the venue. Please try again later.',
+          });
+        },
+      });
   }
 
   onViewVenue(region: RegionDistribution): void {
-    this.router.navigate(['/recruitment/interview-management', this.permitNo, 'venue-by-region'], {
-      queryParams: { region: region.region, title: this.interviewTitle },
+    this.router.navigate(['/recruitment/interview-management', this.advertId, 'venue-by-region'], {
+      queryParams: {
+        region: region.region,
+        regionId: region.regionId,
+        interviewTypeId: this.interviewTypeId,
+        title: this.interviewTitle,
+      },
     });
   }
 }
