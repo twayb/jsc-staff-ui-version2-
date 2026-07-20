@@ -8,7 +8,7 @@
         <p class="text-sm text-value mt-1">Total questions available in the bank, grouped by subject category</p>
       </div>
       @if (!loading()) {
-        <span class="text-sm font-medium text-heading shrink-0">{{ totalQuestions }} total</span>
+        <span class="text-sm font-medium text-heading shrink-0">{{ totalQuestions() }} total</span>
       }
     </div>
 
@@ -17,9 +17,9 @@
     } @else {
       <div #scrollArea class="max-h-[33rem] overflow-y-auto scrollbar-hide pr-1">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          @for (stat of categoryStats; track stat.category; let i = $index) {
+          @for (stat of categoryStats(); track stat.id; let i = $index) {
             <a
-              [routerLink]="['/question-bank/questions', stat.category]"
+              [routerLink]="['/question-bank/questions', stat.id]"
               class="bg-row-b rounded-2xl p-6 flex items-center gap-4 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer animate-fade-in-up"
               [class]="'stagger-' + (i + 1)"
             >

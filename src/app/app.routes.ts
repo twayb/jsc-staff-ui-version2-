@@ -281,14 +281,14 @@ export const routes: Routes = [
           import('./question-bank/question-list/question-list').then((m) => m.QuestionList),
       },
       {
-        path: 'question-bank/questions/:category',
+        path: 'question-bank/questions/:schemeCategoryId',
         loadComponent: () =>
           import('./question-bank/question-list-by-cadre/question-list-by-cadre').then(
             (m) => m.QuestionListByCadre,
           ),
       },
       {
-        path: 'question-bank/questions/:category/:cadre',
+        path: 'question-bank/questions/:schemeCategoryId/:schemeId',
         loadComponent: () =>
           import('./question-bank/question-list-per-cadre/question-list-per-cadre').then(
             (m) => m.QuestionListPerCadre,

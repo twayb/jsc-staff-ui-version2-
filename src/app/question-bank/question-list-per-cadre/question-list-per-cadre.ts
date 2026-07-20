@@ -62,8 +62,8 @@ export class QuestionListPerCadre {
   private readonly route = inject(ActivatedRoute);
   private readonly messageService = inject(MessageService);
 
-  readonly category = this.route.snapshot.paramMap.get('category') ?? '';
-  readonly cadre = this.route.snapshot.paramMap.get('cadre') ?? '';
+  readonly category = this.route.snapshot.paramMap.get('schemeCategoryId') ?? '';
+  readonly cadre = this.route.snapshot.paramMap.get('schemeId') ?? '';
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Question Bank', routerLink: '/question-bank' },

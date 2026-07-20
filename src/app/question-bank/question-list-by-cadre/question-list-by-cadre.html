@@ -1,5 +1,5 @@
 <div class="w-full px-4 sm:px-6 py-10">
-  <app-breadcrumb [items]="breadcrumbItems" />
+  <app-breadcrumb [items]="breadcrumbItems()" />
 
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
     <div class="bg-card border border-border rounded-2xl p-6 flex items-center gap-4 animate-fade-in-up stagger-1">
@@ -7,7 +7,7 @@
         <i class="pi pi-briefcase text-xl text-primary"></i>
       </span>
       <div>
-        <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="totalCadre"></p>
+        <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="totalCadre()"></p>
         <p class="text-sm text-value">Total Cadre</p>
       </div>
     </div>
@@ -16,7 +16,7 @@
         <i class="pi pi-book text-xl text-info"></i>
       </span>
       <div>
-        <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="totalQuestions"></p>
+        <p class="text-2xl font-semibold text-heading tabular-nums" [appCountUp]="totalQuestions()"></p>
         <p class="text-sm text-value">Total Questions</p>
       </div>
     </div>
@@ -24,12 +24,12 @@
 
   <app-data-table
     class="block animate-fade-in-up stagger-1"
-    [title]="category"
+    [title]="category()"
     subtitle="Questions available per cadre for this category"
-    [data]="cadres"
+    [data]="cadres()"
     [loading]="loading()"
     [searchFields]="['cadre']"
-    dataKey="cadre"
+    dataKey="schemeId"
   >
     <ng-template #headerTpl>
       <tr>
