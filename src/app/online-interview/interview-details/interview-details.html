@@ -1,6 +1,6 @@
 <div class="w-full px-4 sm:px-6 py-10 max-w-7xl mx-auto print:p-0 print:max-w-none">
   <div class="print:hidden">
-    <app-breadcrumb [items]="breadcrumbItems" />
+    <app-breadcrumb [items]="breadcrumbItems()" />
   </div>
 
   @if (loading()) {
@@ -27,7 +27,7 @@
         <p-skeleton height="2.25rem" width="6rem" borderRadius="0.5rem" />
       </div>
     </div>
-  } @else if (interview; as interview) {
+  } @else if (interview(); as interview) {
     <div class="bg-card border border-border rounded-2xl p-6 animate-fade-in-up print:shadow-none print:border-0">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -60,20 +60,30 @@
         </div>
         <div>
           <dt class="text-xs font-medium text-label uppercase tracking-wide">Duration</dt>
-          <dd class="text-heading font-medium mt-1">{{ formatDuration(interview.duration) }}</dd>
+          <dd class="text-heading font-medium mt-1">{{ formatDuration(interview.durationMinutes) }}</dd>
         </div>
       </dl>
 
       <div class="flex flex-wrap gap-2 mt-6 print:hidden">
         <p-button
-          label="Preview & Edit Questions"
+          label="View & Edit Questions"
           icon="pi pi-list-check"
           severity="secondary"
           [outlined]="true"
           type="button"
           (onClick)="onOpenQuestionsDialog()"
         />
-        <p-button label="Print" icon="pi pi-print" severity="secondary" [outlined]="true" type="button" (onClick)="onPrint()" />
+        @if (isOralInterview(interview.interviewType)) {
+          <p-button
+            label="Print"
+            icon="pi pi-print"
+            severity="secondary"
+            [outlined]="true"
+            type="button"
+            [loading]="printing()"
+            (onClick)="onPrint()"
+          />
+        }
       </div>
     </div>
   } @else {
@@ -83,38 +93,85 @@
 
 <p-dialog
   [(visible)]="showQuestionsDialog"
-  header="Preview & Edit Questions"
+  header="View & Edit Questions"
   [modal]="true"
   [draggable]="false"
-  [style]="{ width: '64rem' }"
+  [style]="{ width: '48rem' }"
 >
-  <div class="flex flex-col gap-4 pt-2">
-    <div class="flex flex-col gap-3 max-h-[28rem] overflow-y-auto pr-1">
-      @for (question of selectedQuestions(); track question.id) {
-        <div class="flex flex-col gap-2 rounded-xl border border-border p-4">
-          <p class="text-sm text-heading">{{ question.text }}</p>
-          <div class="flex items-center gap-2">
-            <span class="text-xs text-value shrink-0">Replace with</span>
-            <p-select
-              [ngModel]="question.id"
-              (ngModelChange)="onReplaceQuestion(question.id, $event)"
-              [options]="replacementOptions(question.id)"
-              optionLabel="label"
-              optionValue="value"
-              class="w-full"
-              appendTo="body"
-              [filter]="true"
-            />
+  <div class="flex flex-col gap-3 pt-2">
+    @if (!canEditQuestions()) {
+      <p class="text-xs text-value">
+        This interview has no recorded question type, so questions can be viewed but not edited here.
+      </p>
+    } @else {
+      <p class="text-xs text-value">Search and replace any question below with another from the question bank.</p>
+    }
+
+    <div class="flex flex-col gap-2 max-h-[26rem] overflow-y-auto pr-1">
+      @if (questionsLoading()) {
+        <p class="text-sm text-value">Loading questions…</p>
+      } @else {
+        @for (id of selectedQuestionIds(); track id; let i = $index) {
+          <div class="rounded-xl border border-border p-3 flex flex-col gap-2">
+            <span class="text-xs font-medium text-label">Question {{ i + 1 }}</span>
+            @if (canEditQuestions()) {
+              <p-select
+                [ngModel]="id"
+                (ngModelChange)="onReplaceQuestion(i, $event)"
+                [options]="questionOptionsForSlot(i)"
+                optionLabel="label"
+                optionValue="value"
+                [filter]="true"
+                filterPlaceholder="Search questions"
+                [virtualScroll]="true"
+                [virtualScrollItemSize]="38"
+                appendTo="body"
+                class="w-full"
+              />
+            } @else {
+              <p class="text-sm text-heading">{{ questionDetailFor(id)?.text }}</p>
+            }
+            @if (questionDetailFor(id); as detail) {
+              <div class="flex items-center gap-2 text-xs text-value">
+                <span>{{ detail.category }}</span>
+                <span>·</span>
+                <span>{{ detail.level }}</span>
+              </div>
+            }
           </div>
-        </div>
-      } @empty {
-        <p class="text-sm text-value">No questions selected for this interview.</p>
+        } @empty {
+          <p class="text-sm text-value">No questions selected for this interview.</p>
+        }
       }
     </div>
 
-    <div class="flex justify-end gap-2 pt-2">
-      <p-button label="Cancel" severity="secondary" [text]="true" type="button" (onClick)="showQuestionsDialog = false" />
-      <p-button label="Update" icon="pi pi-check" type="button" (onClick)="onUpdateQuestions()" />
-    </div>
+    @if (canEditQuestions()) {
+      <div class="flex justify-end gap-2 pt-2">
+        <p-button label="Cancel" severity="secondary" [text]="true" type="button" (onClick)="onCancelQuestionsDialog()" />
+        <p-button
+          label="Save"
+          icon="pi pi-check"
+          type="button"
+          [loading]="savingQuestions()"
+          (onClick)="onSaveQuestions()"
+        />
+      </div>
+    }
+  </div>
+</p-dialog>
+
+<p-dialog
+  [visible]="showPdfDialog"
+  (visibleChange)="!$event && onClosePdfDialog()"
+  header="Interview Questions"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: '52rem', maxWidth: '95vw', height: '85vh' }"
+  [contentStyle]="{ padding: '0', overflow: 'hidden', height: '100%' }"
+>
+  <div class="h-full">
+    @if (pdfUrl(); as url) {
+      <iframe [src]="url" class="w-full h-full border-0" title="Interview Questions PDF"></iframe>
+    }
   </div>
 </p-dialog>

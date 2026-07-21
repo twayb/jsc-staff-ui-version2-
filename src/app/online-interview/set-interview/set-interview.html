@@ -19,13 +19,16 @@
         <p-step-panel [value]="1">
           <ng-template #content let-activateCallback="activateCallback">
             @if (activeStep() === 1) {
+              @if (optionsLoading()) {
+                <p class="text-sm text-value pt-6">Loading form data…</p>
+              } @else {
               <form [formGroup]="setupForm" class="flex flex-col gap-4 pt-6 animate-tab-slide">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div class="flex flex-col gap-1.5">
                     <label class="text-sm font-medium text-heading">Advert</label>
                     <p-select
                       formControlName="advert"
-                      [options]="advertOptions"
+                      [options]="advertOptions()"
                       optionLabel="label"
                       optionValue="value"
                       placeholder="Select advert"
@@ -43,15 +46,31 @@
                     <label class="text-sm font-medium text-heading">Interview Type</label>
                     <p-select
                       formControlName="interviewType"
-                      [options]="interviewTypeOptions"
+                      [options]="interviewTypeOptions()"
                       optionLabel="label"
                       optionValue="value"
-                      placeholder="Select interview type"
+                      [placeholder]="loadingInterviewTypes() ? 'Loading…' : 'Select interview type'"
                       class="w-full"
                       appendTo="body"
                     />
                     @if (setupForm.controls.interviewType.invalid && setupForm.controls.interviewType.touched) {
                       <span class="text-xs text-danger">Interview type is required.</span>
+                    }
+                  </div>
+
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-heading">Question Type</label>
+                    <p-select
+                      formControlName="questionType"
+                      [options]="questionTypeOptions()"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Select question type"
+                      class="w-full"
+                      appendTo="body"
+                    />
+                    @if (setupForm.controls.questionType.invalid && setupForm.controls.questionType.touched) {
+                      <span class="text-xs text-danger">Question type is required.</span>
                     }
                   </div>
 
@@ -115,6 +134,7 @@
                   <p-button label="Next" icon="pi pi-arrow-right" iconPos="right" type="button" (onClick)="onGoToQuestionStep(activateCallback)" />
                 </div>
               </form>
+              }
             }
           </ng-template>
         </p-step-panel>
@@ -127,7 +147,8 @@
                 @if (selectionMode() === 'manual') {
                   <app-data-table
                     [card]="false"
-                    [data]="availableQuestions()"
+                    [data]="manualQuestions()"
+                    [loading]="loadingQuestions()"
                     [searchFields]="['text', 'category', 'level']"
                     dataKey="id"
                     [rows]="5"
@@ -206,7 +227,7 @@
                     <p class="text-sm text-value">Select an advert to load question categories.</p>
                   } @else {
                     <div class="flex flex-col gap-3">
-                      @for (row of randomAllocation(); track row.category; let i = $index) {
+                      @for (row of randomAllocation(); track row.categoryId; let i = $index) {
                         <div class="rounded-xl border border-border p-4">
                           <div class="flex items-center justify-between mb-3">
                             <span class="text-sm font-semibold text-heading">{{ row.category }}</span>
@@ -217,7 +238,7 @@
                             @for (level of levels; track level) {
                               @if (row.available[level] > 0) {
                                 <div class="flex flex-col gap-1.5">
-                                  <label class="text-xs font-medium text-heading">{{ level }}</label>
+                                  <label class="text-xs font-medium text-heading">{{ levelLabel(level) }}</label>
                                   <p-inputnumber
                                     [ngModel]="row.counts[level]"
                                     (ngModelChange)="setLevelCount(i, level, $event)"
@@ -387,11 +408,15 @@
                   <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
                     <div class="flex justify-between sm:justify-start sm:gap-2">
                       <dt class="text-value">Advert</dt>
-                      <dd class="text-heading font-medium">{{ setupForm.controls.advert.value || '—' }}</dd>
+                      <dd class="text-heading font-medium">{{ selectedAdvertLabel() }}</dd>
                     </div>
                     <div class="flex justify-between sm:justify-start sm:gap-2">
                       <dt class="text-value">Interview Type</dt>
-                      <dd class="text-heading font-medium">{{ setupForm.controls.interviewType.value || '—' }}</dd>
+                      <dd class="text-heading font-medium">{{ selectedInterviewTypeLabel() }}</dd>
+                    </div>
+                    <div class="flex justify-between sm:justify-start sm:gap-2">
+                      <dt class="text-value">Question Type</dt>
+                      <dd class="text-heading font-medium">{{ selectedQuestionTypeLabel() }}</dd>
                     </div>
                     <div class="flex justify-between sm:justify-start sm:gap-2">
                       <dt class="text-value">Number of Questions</dt>
@@ -415,16 +440,16 @@
                   </div>
                   @if (selectionMode() === 'random') {
                     <div class="flex flex-col gap-1">
-                      @for (row of randomAllocation(); track row.category) {
+                      @for (row of randomAllocation(); track row.categoryId) {
                         <p class="text-sm text-heading">
                           <strong>{{ row.category }}:</strong>
-                          {{ rowAllocatedTotal(row) }} total (Easy {{ row.counts.Easy }}, Medium {{ row.counts.Medium }}, Hard {{ row.counts.Hard }})
+                          {{ rowAllocatedTotal(row) }} total (Low {{ row.counts.LOW }}, Medium {{ row.counts.MEDIUM }}, High {{ row.counts.HIGH }})
                         </p>
                       }
                     </div>
                   } @else {
                     <ul class="list-disc pl-5 flex flex-col gap-1">
-                      @for (question of availableQuestions(); track question.id) {
+                      @for (question of manualQuestions(); track question.id) {
                         @if (isQuestionSelected(question.id)) {
                           <li class="text-sm text-heading">{{ question.text }}</li>
                         }
@@ -478,6 +503,7 @@
                     icon="pi pi-check"
                     type="button"
                     [disabled]="!confirmed()"
+                    [loading]="submitting()"
                     (onClick)="onSubmit()"
                   />
                 </div>

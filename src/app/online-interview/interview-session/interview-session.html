@@ -38,7 +38,7 @@
       <div tableAction class="flex items-center gap-1 bg-row-b rounded-lg p-1 shrink-0">
         <button
           type="button"
-          (click)="viewMode.set('table')"
+          (click)="setViewMode('table')"
           class="flex items-center justify-center w-8 h-8 rounded-md transition-colors"
           [class.bg-card]="viewMode() === 'table'"
           [class.shadow-sm]="viewMode() === 'table'"
@@ -50,7 +50,7 @@
         </button>
         <button
           type="button"
-          (click)="viewMode.set('card')"
+          (click)="setViewMode('card')"
           class="flex items-center justify-center w-8 h-8 rounded-md transition-colors"
           [class.bg-card]="viewMode() === 'card'"
           [class.shadow-sm]="viewMode() === 'card'"
@@ -67,6 +67,7 @@
           <th class="pl-6">No</th>
           <th>Cadre</th>
           <th>Interview Type</th>
+          <th>Status</th>
           <th>Candidates</th>
           <th>Start</th>
           <th>End</th>
@@ -82,39 +83,22 @@
           <td>
             <p-tag [value]="interview.interviewType" [severity]="interviewTypeSeverity(interview.interviewType)" />
           </td>
-          <td>{{ submittedCount(interview) }} / {{ interview.candidatesInvited }} submitted</td>
+          <td>
+            <p-tag [value]="interview.status" [severity]="statusSeverity(interview.status)" />
+          </td>
+          <td>{{ interview.submittedCandidates }} / {{ interview.totalCandidates }} submitted</td>
           <td>{{ interview.scheduledDate }} {{ interview.scheduledTime }}</td>
           <td>{{ interview.endDate }} {{ interview.endTime }}</td>
-          <td>{{ formatDuration(interview.duration) }}</td>
+          <td>{{ formatDuration(interview.durationMinutes) }}</td>
           <td class="text-center pr-6">
-            <div class="flex items-center justify-center gap-1">
-              <button
-                type="button"
-                (click)="onView(interview)"
-                class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors"
-                aria-label="View interview"
-              >
-                <i class="pi pi-eye text-sm"></i>
-              </button>
-              @if (canEnd(interview)) {
-                <button
-                  type="button"
-                  (click)="onEnd(interview)"
-                  class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-danger-bg hover:text-danger transition-colors"
-                  aria-label="End session"
-                >
-                  <i class="pi pi-stop-circle text-sm"></i>
-                </button>
-              }
-              <button
-                type="button"
-                (click)="onResults(interview)"
-                class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors"
-                aria-label="View results"
-              >
-                <i class="pi pi-chart-bar text-sm"></i>
-              </button>
-            </div>
+            <button
+              type="button"
+              (click)="onView(interview)"
+              class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors mx-auto"
+              aria-label="View interview"
+            >
+              <i class="pi pi-eye text-sm"></i>
+            </button>
           </td>
         </tr>
       </ng-template>
@@ -154,7 +138,7 @@
           <div class="flex items-center gap-1 bg-row-b rounded-lg p-1 shrink-0">
             <button
               type="button"
-              (click)="viewMode.set('table')"
+              (click)="setViewMode('table')"
               class="flex items-center justify-center w-8 h-8 rounded-md transition-colors"
               [class.bg-card]="viewMode() === 'table'"
               [class.shadow-sm]="viewMode() === 'table'"
@@ -166,7 +150,7 @@
             </button>
             <button
               type="button"
-              (click)="viewMode.set('card')"
+              (click)="setViewMode('card')"
               class="flex items-center justify-center w-8 h-8 rounded-md transition-colors"
               [class.bg-card]="viewMode() === 'card'"
               [class.shadow-sm]="viewMode() === 'card'"
@@ -191,7 +175,6 @@
                   <div class="flex items-start justify-between gap-2">
                     <div>
                       <p class="text-sm font-semibold text-heading">{{ interview.cadre }}</p>
-                      <p class="text-xs text-value mt-0.5">{{ interview.title }}</p>
                     </div>
                     <p-tag [value]="interview.status" [severity]="statusSeverity(interview.status)" />
                   </div>
@@ -200,7 +183,7 @@
 
                   <div>
                     <div class="flex items-center justify-between text-xs text-value mb-1.5">
-                      <span>{{ submittedCount(interview) }} / {{ interview.candidatesInvited }} submitted</span>
+                      <span>{{ interview.submittedCandidates }} / {{ interview.totalCandidates }} submitted</span>
                       <span>{{ submittedProgress(interview) }}%</span>
                     </div>
                     <div class="w-full h-1.5 rounded-full bg-card overflow-hidden">
@@ -219,16 +202,12 @@
                     </div>
                     <div>
                       <dt class="text-label uppercase tracking-wide">Duration</dt>
-                      <dd class="text-heading font-medium mt-0.5">{{ formatDuration(interview.duration) }}</dd>
+                      <dd class="text-heading font-medium mt-0.5">{{ formatDuration(interview.durationMinutes) }}</dd>
                     </div>
                   </dl>
 
                   <div class="flex items-center gap-2 mt-auto pt-2 border-t border-border">
                     <p-button label="View" icon="pi pi-eye" size="small" severity="secondary" [outlined]="true" type="button" (onClick)="onView(interview)" />
-                    @if (canEnd(interview)) {
-                      <p-button label="End" icon="pi pi-stop-circle" size="small" severity="danger" [outlined]="true" type="button" (onClick)="onEnd(interview)" />
-                    }
-                    <p-button label="Results" icon="pi pi-chart-bar" size="small" severity="secondary" [outlined]="true" type="button" (onClick)="onResults(interview)" />
                   </div>
                 </div>
               }
@@ -238,38 +217,4 @@
       </div>
     </div>
   }
-
-  <p-dialog
-    [(visible)]="showResultsDialog"
-    header="Session Results"
-    [modal]="true"
-    [draggable]="false"
-    [style]="{ width: '40rem' }"
-  >
-    @if (resultsInterview; as interview) {
-      <div class="flex flex-col gap-4 pt-2">
-        <p class="text-sm text-value">{{ interview.title }}</p>
-
-        @if (resultsFor(interview).length === 0) {
-          <p class="text-sm text-value">No candidate sessions recorded for this interview yet.</p>
-        } @else {
-          <div class="flex flex-col gap-2 max-h-96 overflow-y-auto pr-1">
-            @for (session of resultsFor(interview); track session.id) {
-              <div class="flex items-center justify-between gap-4 rounded-xl border border-border p-3">
-                <div class="min-w-0">
-                  <p class="text-sm font-medium text-heading truncate">{{ session.candidateName }}</p>
-                  <p class="text-xs text-value mt-0.5">{{ session.nin }}</p>
-                </div>
-                <div class="flex items-center gap-3 shrink-0">
-                  <span class="text-sm font-semibold text-heading">
-                    {{ session.score !== null ? session.score + '%' : '—' }}
-                  </span>
-                </div>
-              </div>
-            }
-          </div>
-        }
-      </div>
-    }
-  </p-dialog>
 </div>

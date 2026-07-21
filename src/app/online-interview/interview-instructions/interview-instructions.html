@@ -1,0 +1,88 @@
+<div class="w-full px-4 sm:px-6 py-10">
+  <app-breadcrumb [items]="breadcrumbItems" />
+
+  <app-data-table
+    class="block animate-fade-in-up stagger-1"
+    title="Interview Instructions"
+    subtitle="Manage the instructions shown to candidates before an online interview"
+    [data]="instructions()"
+    [loading]="loading()"
+    [searchFields]="['instruction']"
+    addLabel="Add Instruction"
+    addIcon="pi pi-plus"
+    dataKey="id"
+    (add)="openAddDialog()"
+  >
+    <ng-template #headerTpl>
+      <tr>
+        <th class="pl-6">No</th>
+        <th>Instruction</th>
+        <th>Status</th>
+        <th class="text-center pr-6">Action</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #bodyTpl let-instruction let-rowIndex="rowIndex">
+      <tr>
+        <td class="pl-6">{{ rowIndex + 1 }}</td>
+        <td class="max-w-lg truncate">{{ stripHtml(instruction.instruction) }}</td>
+        <td>
+          <p-tag [value]="instruction.status ? 'Active' : 'Inactive'" [severity]="statusSeverity(instruction.status)" />
+        </td>
+        <td class="text-center pr-6">
+          <button
+            type="button"
+            (click)="openActionMenu($event, instruction, actionMenu)"
+            class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:bg-row-b hover:text-heading transition-colors mx-auto"
+            aria-label="Row actions"
+          >
+            <i class="pi pi-ellipsis-v text-sm"></i>
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+  </app-data-table>
+
+  <p-menu
+    #actionMenu
+    class="text-sm"
+    [model]="actionMenuItems"
+    [popup]="true"
+    appendTo="body"
+    [motionOptions]="{ duration: { enter: 200, leave: 150 } }"
+  />
+
+  <p-dialog
+    [(visible)]="showFormDialog"
+    [header]="dialogMode === 'edit' ? 'Edit Instruction' : 'Add Instruction'"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '48rem', maxWidth: '95vw' }"
+  >
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4 pt-2">
+      <div class="flex flex-col gap-1.5">
+        <label for="instruction" class="text-sm font-medium text-heading">Instruction</label>
+        <app-rich-text-editor
+          formControlName="instruction"
+          placeholder="e.g. Ensure you are in a quiet room with a stable internet connection"
+        />
+        @if (form.controls.instruction.invalid && form.controls.instruction.touched) {
+          <span class="text-xs text-danger">Instruction is required</span>
+        }
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="status" class="text-sm font-medium text-heading">Status</label>
+        <div class="flex items-center gap-2 h-full">
+          <p-toggleswitch inputId="status" formControlName="status" />
+          <span class="text-sm text-value">{{ form.controls.status.value ? 'Active' : 'Inactive' }}</span>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <p-button label="Cancel" severity="secondary" [text]="true" type="button" (onClick)="showFormDialog = false" />
+        <p-button [label]="dialogMode === 'edit' ? 'Update' : 'Save'" type="submit" [loading]="submitting()" />
+      </div>
+    </form>
+  </p-dialog>
+</div>

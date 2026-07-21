@@ -34,6 +34,35 @@ export interface AdvertUpdateInput {
   closingDate: string;
 }
 
+export interface AdvertInterviewSchemeCategoryRef {
+  id: number;
+  name: string;
+}
+
+export interface AdvertInterviewSchemeRef {
+  id: number;
+  name: string;
+  schemeCategory: AdvertInterviewSchemeCategoryRef;
+}
+
+export interface AdvertInterviewAdvertRef {
+  id: number;
+  scheme: AdvertInterviewSchemeRef;
+}
+
+export interface AdvertInterviewTypeRef {
+  id: number;
+  name: string;
+  level: number;
+}
+
+export interface AdvertInterviewRecord {
+  id: number;
+  advert: AdvertInterviewAdvertRef;
+  interviewType: AdvertInterviewTypeRef;
+  status: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdvertApiService {
   private readonly http = inject(HttpClient);
@@ -53,5 +82,9 @@ export class AdvertApiService {
 
   approveAdvert(id: number): Observable<ApiResponse<AdvertRecord>> {
     return this.http.put<ApiResponse<AdvertRecord>>(`${this.apiUrl}adverts-approve/${id}`, null);
+  }
+
+  getAdvertInterviews(advertId: number): Observable<ApiResponse<AdvertInterviewRecord[]>> {
+    return this.http.get<ApiResponse<AdvertInterviewRecord[]>>(`${this.apiUrl}advert-interviews/${advertId}`);
   }
 }

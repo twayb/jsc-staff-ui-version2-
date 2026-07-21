@@ -371,6 +371,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./online-interview/setup/interview-types/interview-types').then((m) => m.InterviewTypes),
       },
+      {
+        path: 'online-interview/interview-instructions',
+        loadComponent: () =>
+          import('./online-interview/interview-instructions/interview-instructions').then(
+            (m) => m.InterviewInstructions,
+          ),
+      },
     ],
   },
 ];

@@ -1,40 +1,72 @@
 <div class="w-full px-4 sm:px-6 py-10">
   <app-breadcrumb [items]="breadcrumbItems" />
 
+  @if (loading()) {
+    <app-skeleton variant="cards" [count]="4" [cardCols]="4" class="block mb-6" />
+  } @else if (summary(); as summary) {
+    <div class="relative overflow-hidden bg-card border border-border rounded-2xl p-6 mb-6 animate-fade-in-up stagger-1">
+      <div class="flex flex-col lg:flex-row lg:items-center gap-6">
+        <div class="flex-1 min-w-0">
+          <h1 class="text-lg font-semibold text-heading truncate">{{ summary.advertName }}</h1>
+          <p class="text-xs text-value mt-1">{{ summary.interviewTypeName }} · Venues in {{ region }}</p>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-5">
+            <div class="flex items-center gap-3 rounded-xl bg-row-b p-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+              <span class="flex items-center justify-center w-9 h-9 rounded-lg bg-warning-bg text-warning shrink-0">
+                <i class="pi pi-clock"></i>
+              </span>
+              <div class="min-w-0">
+                <p class="text-lg font-semibold text-heading tabular-nums" [appCountUp]="summary.notStarted"></p>
+                <p class="text-[11px] text-value uppercase tracking-wide">Not Started</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 rounded-xl bg-row-b p-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+              <span class="flex items-center justify-center w-9 h-9 rounded-lg bg-info-bg text-info shrink-0">
+                <i class="pi pi-spin pi-spinner"></i>
+              </span>
+              <div class="min-w-0">
+                <p class="text-lg font-semibold text-heading tabular-nums" [appCountUp]="summary.inProgress"></p>
+                <p class="text-[11px] text-value uppercase tracking-wide">In Progress</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 rounded-xl bg-row-b p-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+              <span class="flex items-center justify-center w-9 h-9 rounded-lg bg-success-bg text-success shrink-0">
+                <i class="pi pi-check-circle"></i>
+              </span>
+              <div class="min-w-0">
+                <p class="text-lg font-semibold text-heading tabular-nums" [appCountUp]="summary.finished"></p>
+                <p class="text-[11px] text-value uppercase tracking-wide">Finished</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col items-center gap-2 shrink-0 mx-auto lg:mx-0">
+          <div
+            class="relative w-24 h-24 rounded-full grid place-items-center transition-transform duration-300 hover:scale-105"
+            [style.background]="'conic-gradient(var(--color-primary) ' + overallCompletion() * 3.6 + 'deg, var(--color-row-b) 0)'"
+          >
+            <div class="absolute inset-[6px] rounded-full bg-card grid place-items-center">
+              <span class="text-base font-semibold text-heading">{{ overallCompletion() }}%</span>
+            </div>
+          </div>
+          <p class="text-[11px] text-value uppercase tracking-wide">Finished Rate</p>
+        </div>
+      </div>
+    </div>
+  }
+
   @if (viewMode() === 'table') {
     <app-data-table
-      class="block animate-fade-in-up stagger-1"
+      class="block animate-fade-in-up stagger-2"
       title="Venue Session by Region"
-      [subtitle]="subtitle"
-      [data]="filteredVenues()"
+      subtitle="Venue-level breakdown of candidates for this region"
+      [data]="venues()"
       [loading]="loading()"
-      [searchFields]="['venue']"
+      [searchFields]="['name']"
       [scrollHeight]="'28rem'"
-      dataKey="venue"
+      dataKey="venueId"
     >
-      <div tableAction class="flex items-center gap-1 bg-row-b rounded-lg p-1 flex-wrap">
-        @for (filter of statusFilters; track filter.value) {
-          <button
-            type="button"
-            (click)="statusFilter.set(filter.value)"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-            [class.bg-card]="statusFilter() === filter.value"
-            [class.shadow-sm]="statusFilter() === filter.value"
-            [class.text-primary]="statusFilter() === filter.value"
-            [class.text-value]="statusFilter() !== filter.value"
-          >
-            {{ filter.label }}
-            <span
-              class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-              [class.bg-primary/10]="statusFilter() === filter.value"
-              [class.bg-card]="statusFilter() !== filter.value"
-            >
-              {{ filterCount(filter.value) }}
-            </span>
-          </button>
-        }
-      </div>
-
       <div tableAction class="flex items-center gap-1 bg-row-b rounded-lg p-1 shrink-0">
         <button
           type="button"
@@ -66,7 +98,6 @@
         <tr>
           <th class="pl-6">No</th>
           <th>Venue</th>
-          <th>Status</th>
           <th>Total Applicants</th>
           <th>In Progress</th>
           <th>Finished</th>
@@ -77,11 +108,8 @@
       <ng-template #bodyTpl let-venue let-rowIndex="rowIndex">
         <tr>
           <td class="pl-6">{{ rowIndex + 1 }}</td>
-          <td>{{ venue.venue }}</td>
-          <td>
-            <p-tag [value]="venueStatus(venue)" [severity]="venueStatusSeverity(venue)" />
-          </td>
-          <td>{{ venue.totalApplicants }}</td>
+          <td>{{ venue.name }}</td>
+          <td>{{ venue.totalCandidates }}</td>
           <td>{{ venue.inProgress }}</td>
           <td>{{ venue.finished }}</td>
           <td class="text-center pr-6">
@@ -98,37 +126,14 @@
       </ng-template>
     </app-data-table>
   } @else {
-    <div class="bg-card border border-border rounded-2xl animate-fade-in-up stagger-1">
+    <div class="bg-card border border-border rounded-2xl animate-fade-in-up stagger-2">
       <div role="toolbar" class="flex flex-wrap items-center justify-between gap-4 px-4 py-3 border-b border-border">
         <div>
           <h1 class="text-lg font-semibold text-heading">Venue Session by Region</h1>
-          <p class="text-xs text-value">{{ subtitle }}</p>
+          <p class="text-xs text-value">Venue-level breakdown of candidates for this region</p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2 ml-auto justify-end">
-          <div class="flex items-center gap-1 bg-row-b rounded-lg p-1 flex-wrap">
-            @for (filter of statusFilters; track filter.value) {
-              <button
-                type="button"
-                (click)="statusFilter.set(filter.value)"
-                class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-                [class.bg-card]="statusFilter() === filter.value"
-                [class.shadow-sm]="statusFilter() === filter.value"
-                [class.text-primary]="statusFilter() === filter.value"
-                [class.text-value]="statusFilter() !== filter.value"
-              >
-                {{ filter.label }}
-                <span
-                  class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                  [class.bg-primary/10]="statusFilter() === filter.value"
-                  [class.bg-card]="statusFilter() !== filter.value"
-                >
-                  {{ filterCount(filter.value) }}
-                </span>
-              </button>
-            }
-          </div>
-
           <div class="flex items-center gap-1 bg-row-b rounded-lg p-1 shrink-0">
             <button
               type="button"
@@ -164,16 +169,13 @@
         } @else {
           <div class="max-h-[28rem] overflow-y-auto scrollbar-auto pr-1">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              @for (venue of filteredVenues(); track venue.venue; let i = $index) {
+              @for (venue of venues(); track venue.venueId; let i = $index) {
                 <div class="bg-row-b rounded-2xl p-5 flex flex-col gap-4 animate-fade-in-up" [class]="'stagger-' + ((i % 6) + 1)">
-                  <div class="flex items-start justify-between gap-2">
-                    <p class="text-sm font-semibold text-heading">{{ venue.venue }}</p>
-                    <p-tag [value]="venueStatus(venue)" [severity]="venueStatusSeverity(venue)" />
-                  </div>
+                  <p class="text-sm font-semibold text-heading">{{ venue.name }}</p>
 
                   <div>
                     <div class="flex items-center justify-between text-xs text-value mb-1.5">
-                      <span>{{ venue.finished }} / {{ venue.totalApplicants }} finished</span>
+                      <span>{{ venue.finished }} / {{ venue.totalCandidates }} finished</span>
                       <span>{{ finishedProgress(venue) }}%</span>
                     </div>
                     <div class="w-full h-1.5 rounded-full bg-card overflow-hidden">
@@ -184,7 +186,7 @@
                   <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
                     <div>
                       <dt class="text-label uppercase tracking-wide">Total Applicants</dt>
-                      <dd class="text-heading font-medium mt-0.5">{{ venue.totalApplicants }}</dd>
+                      <dd class="text-heading font-medium mt-0.5">{{ venue.totalCandidates }}</dd>
                     </div>
                     <div>
                       <dt class="text-label uppercase tracking-wide">In Progress</dt>

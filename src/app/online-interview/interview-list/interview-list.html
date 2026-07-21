@@ -5,7 +5,7 @@
     class="block animate-fade-in-up stagger-1"
     title="Interview List"
     subtitle="Online interviews scheduled across all cadres"
-    [data]="interviews"
+    [data]="interviews()"
     [loading]="loading()"
     [searchFields]="['cadre', 'interviewType']"
     addLabel="Schedule Interview"

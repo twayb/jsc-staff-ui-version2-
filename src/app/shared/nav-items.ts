@@ -86,15 +86,7 @@ const ONLINE_INTERVIEW_NAV_ITEMS: NavItem[] = [
   { label: 'Set Interview', icon: 'pi-plus-circle', route: '/online-interview/set-interview' },
   { label: 'Interview List', icon: 'pi-list', route: '/online-interview/interview-list' },
   { label: 'Interview Session', icon: 'pi-desktop', route: '/online-interview/interview-session' },
-  {
-    label: 'Setup',
-    icon: 'pi-cog',
-    route: null,
-    children: [
-      { label: 'Interview Categories', icon: 'pi-tags', route: '/online-interview/setup/interview-categories' },
-      { label: 'Interview Types', icon: 'pi-list-check', route: '/online-interview/setup/interview-types' },
-    ],
-  },
+  { label: 'Interview Instructions', icon: 'pi-info-circle', route: '/online-interview/interview-instructions' },
 ];
 
 const NAV_ITEMS_BY_SERVICE: Record<string, NavItem[]> = {
