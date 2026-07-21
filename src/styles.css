@@ -39,6 +39,12 @@
   --funnel-3: #2a78d6;
   --funnel-4: #1c5cab;
   --funnel-5: #104281;
+
+  /* Fixed hero banner gradient — deliberately NOT theme-adaptive like --btn/--btn-hover,
+     which flip to much lighter tones in dark mode for button legibility. A hero surface
+     with white overlay text needs to stay a rich, deep tone in both themes. */
+  --hero-from: #56687f;
+  --hero-to: #475670;
 }
 
 :root.dark {
@@ -331,6 +337,14 @@ quill-editor {
 
 @utility animate-arrow-nudge-reverse {
   animation: arrow-nudge-x-reverse 1.2s ease-in-out infinite;
+}
+
+@utility bg-hero-gradient {
+  background-image: linear-gradient(to right, var(--hero-from), var(--hero-to));
+}
+
+@utility bg-hero-gradient-b {
+  background-image: linear-gradient(to bottom, var(--hero-from), var(--hero-to));
 }
 
 @media print {
