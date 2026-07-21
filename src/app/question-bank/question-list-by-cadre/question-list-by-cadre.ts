@@ -72,6 +72,8 @@ export class QuestionListByCadre implements OnInit {
   }
 
   onView(cadre: CadreQuestionCount): void {
-    this.router.navigate(['/question-bank/questions', this.schemeCategoryId, cadre.schemeId]);
+    this.router.navigate(['/question-bank/questions', this.schemeCategoryId, cadre.schemeId], {
+      state: { cadreName: cadre.cadre },
+    });
   }
 }

@@ -5,12 +5,12 @@
     class="block animate-fade-in-up stagger-1"
     title="Question Categories"
     subtitle="Manage question category types used across the question bank"
-    [data]="categories"
+    [data]="categories()"
     [loading]="loading()"
     [searchFields]="['category']"
     addLabel="Add Category"
     addIcon="pi pi-plus"
-    dataKey="category"
+    dataKey="id"
     (add)="openAddDialog()"
   >
     <ng-template #headerTpl>
@@ -27,7 +27,7 @@
         <td class="pl-6">{{ rowIndex + 1 }}</td>
         <td>{{ category.category }}</td>
         <td>
-          <p-tag [value]="category.status" [severity]="statusSeverity(category.status)" />
+          <p-tag [value]="category.status ? 'Active' : 'Inactive'" [severity]="statusSeverity(category.status)" />
         </td>
         <td class="text-center pr-6">
           <button
@@ -62,16 +62,7 @@
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4 pt-2">
       <div class="flex flex-col gap-1.5">
         <label for="category" class="text-sm font-medium text-heading">Category</label>
-        <p-select
-          inputId="category"
-          formControlName="category"
-          [options]="categoryOptions"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Select category"
-          class="w-full"
-          appendTo="body"
-        />
+        <input pInputText id="category" formControlName="category" fluid placeholder="e.g. General" />
         @if (form.controls.category.invalid && form.controls.category.touched) {
           <span class="text-xs text-danger">Category is required</span>
         }
@@ -79,21 +70,15 @@
 
       <div class="flex flex-col gap-1.5">
         <label for="status" class="text-sm font-medium text-heading">Status</label>
-        <p-select
-          inputId="status"
-          formControlName="status"
-          [options]="statusOptions"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Select status"
-          class="w-full"
-          appendTo="body"
-        />
+        <div class="flex items-center gap-2 h-full">
+          <p-toggleswitch inputId="status" formControlName="status" />
+          <span class="text-sm text-value">{{ form.controls.status.value ? 'Active' : 'Inactive' }}</span>
+        </div>
       </div>
 
       <div class="flex justify-end gap-2 pt-2">
         <p-button label="Cancel" severity="secondary" [text]="true" type="button" (onClick)="showFormDialog = false" />
-        <p-button [label]="dialogMode === 'edit' ? 'Update' : 'Save'" type="submit" />
+        <p-button [label]="dialogMode === 'edit' ? 'Update' : 'Save'" type="submit" [loading]="submitting()" />
       </div>
     </form>
   </p-dialog>

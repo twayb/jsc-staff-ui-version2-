@@ -1,69 +1,55 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { MenuItem, MessageService } from 'primeng/api';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { Button } from 'primeng/button';
 import { Dialog } from 'primeng/dialog';
 import { Tag } from 'primeng/tag';
 import { Menu } from 'primeng/menu';
 import { NgClass } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { InputText } from 'primeng/inputtext';
-import { Textarea } from 'primeng/textarea';
-import { RadioButton } from 'primeng/radiobutton';
-import { Select } from 'primeng/select';
+import { finalize, forkJoin } from 'rxjs';
 import { AppBreadcrumb } from '../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../shared/app-data-table/app-data-table';
 import { CountUp } from '../../shared/count-up.directive';
+import { titleCase } from '../../core/utils';
+import {
+  AnswerOption,
+  QuestionBankApiService,
+  QuestionRecord,
+  QuestionTypeRecord,
+} from '../../core/question-bank/question-bank-api.service';
 
-type QuestionType = 'Multiple Choice' | 'True/False' | 'Short Answer' | 'Essay';
-type QuestionStatus = 'Active' | 'Inactive';
+type QuestionStatus = 'ACTIVE' | 'INACTIVE';
 type QuestionApproval = 'Pending' | 'Approved';
+type KpiFilter = 'pending' | 'approved' | 'used' | 'unused' | null;
 
 interface QuestionRow {
+  id: number;
   question: string;
-  type: QuestionType;
+  type: string;
   status: QuestionStatus;
   approval: QuestionApproval;
-  options?: string[];
-  correctOptionIndex?: number;
-  correctAnswer?: string;
-  modelAnswer?: string;
-}
-
-interface QuestionDraft {
-  questionText: string;
-  options: string[];
-  correctOptionIndex: number | null;
+  answerOptions: AnswerOption[];
   correctAnswer: string;
-  modelAnswer: string;
+  expectedAnswer: string;
+  questionLevel: string;
+  pointAllocation: number;
 }
 
 @Component({
   selector: 'app-question-list-per-cadre',
-  imports: [
-    FormsModule,
-    NgClass,
-    Button,
-    Dialog,
-    Tag,
-    Menu,
-    InputText,
-    Textarea,
-    RadioButton,
-    Select,
-    AppBreadcrumb,
-    AppDataTable,
-    CountUp,
-  ],
+  imports: [NgClass, Button, Dialog, Tag, Menu, AppBreadcrumb, AppDataTable, CountUp],
   templateUrl: './question-list-per-cadre.html',
   styleUrl: './question-list-per-cadre.css',
 })
-export class QuestionListPerCadre {
+export class QuestionListPerCadre implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly questionBankApi = inject(QuestionBankApiService);
 
   readonly category = this.route.snapshot.paramMap.get('schemeCategoryId') ?? '';
-  readonly cadre = this.route.snapshot.paramMap.get('schemeId') ?? '';
+  readonly schemeId = Number(this.route.snapshot.paramMap.get('schemeId'));
+  readonly cadre = (history.state as { cadreName?: string })?.cadreName ?? '';
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Question Bank', routerLink: '/question-bank' },
@@ -74,105 +60,100 @@ export class QuestionListPerCadre {
 
   readonly loading = signal(true);
 
-  constructor() {
-    setTimeout(() => this.loading.set(false), 800);
+  private questionTypes: QuestionTypeRecord[] = [];
+  readonly questions = signal<QuestionRow[]>([]);
+
+  readonly pendingCount = computed(() => this.questions().filter((q) => q.approval === 'Pending').length);
+  readonly approvedCount = computed(() => this.questions().filter((q) => q.approval === 'Approved').length);
+  readonly usedCount = computed(() => this.questions().filter((q) => q.status === 'ACTIVE').length);
+  readonly unusedCount = computed(() => this.questions().filter((q) => q.status === 'INACTIVE').length);
+
+  readonly activeFilter = signal<KpiFilter>(null);
+
+  readonly filteredQuestions = computed(() => {
+    const filter = this.activeFilter();
+    const all = this.questions();
+    switch (filter) {
+      case 'pending':
+        return all.filter((q) => q.approval === 'Pending');
+      case 'approved':
+        return all.filter((q) => q.approval === 'Approved');
+      case 'used':
+        return all.filter((q) => q.status === 'ACTIVE');
+      case 'unused':
+        return all.filter((q) => q.status === 'INACTIVE');
+      default:
+        return all;
+    }
+  });
+
+  toggleFilter(filter: KpiFilter): void {
+    this.activeFilter.update((current) => (current === filter ? null : filter));
+    this.selection = [];
   }
 
-  readonly trueFalseOptions = [
-    { label: 'True', value: 'True' },
-    { label: 'False', value: 'False' },
-  ];
-
-  questions: QuestionRow[] = [
-    {
-      question: 'What is the primary function of a firewall in network security?',
-      type: 'Multiple Choice',
-      status: 'Active',
-      approval: 'Approved',
-      options: [
-        'To encrypt data during transmission',
-        'To monitor and control incoming and outgoing network traffic',
-        'To increase internet connection speed',
-        'To provide backup power during outages',
-      ],
-      correctOptionIndex: 1,
-    },
-    {
-      question: 'A database index always improves write performance.',
-      type: 'True/False',
-      status: 'Active',
-      approval: 'Approved',
-      correctAnswer: 'False',
-    },
-    {
-      question: 'Explain the difference between TCP and UDP protocols.',
-      type: 'Short Answer',
-      status: 'Inactive',
-      approval: 'Pending',
-      modelAnswer:
-        'TCP is connection-oriented and guarantees ordered delivery, while UDP is connectionless and faster but does not guarantee delivery.',
-    },
-    {
-      question: 'Describe the process of normalizing a relational database, with examples.',
-      type: 'Essay',
-      status: 'Active',
-      approval: 'Pending',
-      modelAnswer:
-        'Normalization organizes data to reduce redundancy, typically progressing through 1NF, 2NF, and 3NF, e.g. splitting a customer-orders table so repeating groups are moved into their own related table.',
-    },
-    {
-      question: 'Which of the following best describes cloud elasticity?',
-      type: 'Multiple Choice',
-      status: 'Inactive',
-      approval: 'Pending',
-      options: [
-        'The ability to run without internet access',
-        'The ability to automatically scale resources based on demand',
-        'A fixed allocation of server resources',
-        'The physical location of data centers',
-      ],
-      correctOptionIndex: 1,
-    },
-    {
-      question: 'HTTPS uses port 443 by default.',
-      type: 'True/False',
-      status: 'Active',
-      approval: 'Pending',
-      correctAnswer: 'True',
-    },
-    {
-      question: 'What are the key responsibilities of a Database Administrator?',
-      type: 'Short Answer',
-      status: 'Active',
-      approval: 'Approved',
-      modelAnswer: 'Managing database security, performance tuning, backups, and ensuring data integrity.',
-    },
-    {
-      question: 'Discuss the advantages and disadvantages of microservices architecture.',
-      type: 'Essay',
-      status: 'Inactive',
-      approval: 'Pending',
-      modelAnswer:
-        'Advantages include independent scalability and deployability; disadvantages include increased operational complexity and network latency.',
-    },
-  ];
-
-  selection: QuestionRow[] = [];
-
-  get pendingCount(): number {
-    return this.questions.filter((q) => q.approval === 'Pending').length;
+  ngOnInit(): void {
+    this.loading.set(true);
+    forkJoin({
+      types: this.questionBankApi.getQuestionTypes(),
+      questions: this.questionBankApi.getQuestionsByScheme(this.schemeId),
+    })
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: ({ types, questions }) => {
+          this.questionTypes = types.data?.content ?? [];
+          this.questions.set((questions.data?.content ?? []).map((record) => this.toRow(record)));
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Questions',
+            detail: 'Could not load questions for this cadre. Please try again later.',
+          });
+        },
+      });
   }
 
-  get approvedCount(): number {
-    return this.questions.filter((q) => q.approval === 'Approved').length;
+  private toRow(record: QuestionRecord): QuestionRow {
+    return {
+      id: record.id,
+      question: record.question.replace(/<[^>]*>/g, ''),
+      type: this.questionTypes.find((type) => type.id === record.questionTypeId)?.name ?? '—',
+      status: record.status === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE',
+      approval: record.state === 'APPROVED' ? 'Approved' : 'Pending',
+      answerOptions: record.answerOptions ?? [],
+      correctAnswer: record.correctAnswer,
+      expectedAnswer: record.expectedAnswer,
+      questionLevel: record.questionLevel,
+      pointAllocation: record.pointAllocation,
+    };
   }
 
-  get usedCount(): number {
-    return this.questions.filter((q) => q.status === 'Active').length;
+  private reloadQuestions(): void {
+    this.questionBankApi.getQuestionsByScheme(this.schemeId).subscribe({
+      next: (response) => {
+        this.questions.set((response.data?.content ?? []).map((record) => this.toRow(record)));
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Failed to Reload Questions',
+          detail: 'Could not refresh the questions list. Please try again later.',
+        });
+      },
+    });
   }
 
-  get unusedCount(): number {
-    return this.questions.filter((q) => q.status === 'Inactive').length;
+  isMultipleChoice(row: QuestionRow): boolean {
+    return row.type === 'Multiple Choice';
+  }
+
+  isTrueFalse(row: QuestionRow): boolean {
+    return row.type === 'True or False';
+  }
+
+  optionLetter(index: number): string {
+    return String.fromCharCode(65 + index);
   }
 
   approvalSeverity(approval: QuestionApproval): 'success' | 'warn' {
@@ -180,12 +161,14 @@ export class QuestionListPerCadre {
   }
 
   statusSeverity(status: QuestionStatus): 'success' | 'secondary' {
-    return status === 'Active' ? 'success' : 'secondary';
+    return status === 'ACTIVE' ? 'success' : 'secondary';
   }
 
-  optionLetter(index: number): string {
-    return String.fromCharCode(65 + index);
+  statusLabel(status: QuestionStatus): string {
+    return titleCase(status);
   }
+
+  selection: QuestionRow[] = [];
 
   isSelected(question: QuestionRow): boolean {
     return this.selection.includes(question);
@@ -198,57 +181,95 @@ export class QuestionListPerCadre {
   }
 
   isAllSelected(): boolean {
-    return this.questions.length > 0 && this.selection.length === this.questions.length;
+    return this.filteredQuestions().length > 0 && this.selection.length === this.filteredQuestions().length;
   }
 
   toggleSelectAll(event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
-    this.selection = checked ? [...this.questions] : [];
+    this.selection = checked ? [...this.filteredQuestions()] : [];
   }
 
   onApproveSelected(): void {
-    const count = this.selection.length;
-    this.questions = this.questions.map((q) =>
-      this.selection.includes(q) ? { ...q, approval: 'Approved' } : q,
-    );
-    this.selection = [];
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Questions Approved',
-      detail: `${count} question${count === 1 ? '' : 's'} approved successfully.`,
+    const ids = this.selection.map((q) => q.id);
+    if (ids.length === 0) {
+      return;
+    }
+
+    this.confirmationService.confirm({
+      header: 'Approve Selected Questions',
+      message: `Are you sure you want to approve all ${ids.length} selected question${ids.length === 1 ? '' : 's'}?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonProps: { label: 'Approve', severity: 'success' },
+      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      accept: () => {
+        this.questionBankApi.approveQuestions(ids).subscribe({
+          next: () => {
+            this.selection = [];
+            this.reloadQuestions();
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Questions Approved',
+              detail: `${ids.length} question${ids.length === 1 ? '' : 's'} approved successfully.`,
+            });
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Approve Failed',
+              detail: 'Could not approve the selected questions. Please try again later.',
+            });
+          },
+        });
+      },
     });
   }
 
   onActivateSelected(): void {
-    const count = this.selection.length;
-    this.questions = this.questions.map((q) =>
-      this.selection.includes(q) ? { ...q, status: 'Active' } : q,
-    );
-    this.selection = [];
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Questions Activated',
-      detail: `${count} question${count === 1 ? '' : 's'} activated successfully.`,
-    });
+    this.bulkUpdateStatus('ACTIVE');
   }
 
   onDeactivateSelected(): void {
-    const count = this.selection.length;
-    this.questions = this.questions.map((q) =>
-      this.selection.includes(q) ? { ...q, status: 'Inactive' } : q,
-    );
-    this.selection = [];
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Questions Deactivated',
-      detail: `${count} question${count === 1 ? '' : 's'} deactivated successfully.`,
-    });
+    this.bulkUpdateStatus('INACTIVE');
   }
 
-  showViewDialog = false;
-  viewingQuestion: QuestionRow | null = null;
-  editMode = false;
-  draft: QuestionDraft = { questionText: '', options: [], correctOptionIndex: null, correctAnswer: '', modelAnswer: '' };
+  private bulkUpdateStatus(status: QuestionStatus): void {
+    const ids = this.selection.map((q) => q.id);
+    if (ids.length === 0) {
+      return;
+    }
+
+    const verb = status === 'ACTIVE' ? 'activate' : 'deactivate';
+    this.confirmationService.confirm({
+      header: status === 'ACTIVE' ? 'Activate Selected Questions' : 'Deactivate Selected Questions',
+      message: `Are you sure you want to ${verb} all ${ids.length} selected question${ids.length === 1 ? '' : 's'}?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonProps: {
+        label: status === 'ACTIVE' ? 'Activate' : 'Deactivate',
+        severity: status === 'ACTIVE' ? 'info' : 'secondary',
+      },
+      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      accept: () => {
+        this.questionBankApi.updateQuestionsStatus(ids, status).subscribe({
+          next: () => {
+            this.selection = [];
+            this.reloadQuestions();
+            this.messageService.add({
+              severity: 'success',
+              summary: status === 'ACTIVE' ? 'Questions Activated' : 'Questions Deactivated',
+              detail: `${ids.length} question${ids.length === 1 ? '' : 's'} ${verb}d successfully.`,
+            });
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Update Failed',
+              detail: `Could not ${verb} the selected questions. Please try again later.`,
+            });
+          },
+        });
+      },
+    });
+  }
 
   actionMenuItems: MenuItem[] = [];
 
@@ -259,88 +280,79 @@ export class QuestionListPerCadre {
         ? [{ label: 'Approve', icon: 'pi pi-check', command: () => this.onApprove(question) }]
         : []),
       {
-        label: question.status === 'Active' ? 'Deactivate' : 'Activate',
-        icon: question.status === 'Active' ? 'pi pi-ban' : 'pi pi-bolt',
+        label: question.status === 'ACTIVE' ? 'Deactivate' : 'Activate',
+        icon: question.status === 'ACTIVE' ? 'pi pi-ban' : 'pi pi-bolt',
         command: () => this.onToggleStatus(question),
       },
     ];
     menu.toggle(event);
   }
 
+  showViewDialog = false;
+  viewingQuestion: QuestionRow | null = null;
+
   onView(question: QuestionRow): void {
     this.viewingQuestion = question;
-    this.editMode = false;
     this.showViewDialog = true;
   }
 
-  onEdit(): void {
-    const question = this.viewingQuestion;
-    if (!question) return;
-
-    this.draft = {
-      questionText: question.question,
-      options: [...(question.options ?? [])],
-      correctOptionIndex: question.correctOptionIndex ?? null,
-      correctAnswer: question.correctAnswer ?? '',
-      modelAnswer: question.modelAnswer ?? '',
-    };
-    this.editMode = true;
-  }
-
-  onCancelEdit(): void {
-    this.editMode = false;
-  }
-
-  onSaveEdit(): void {
-    const target = this.viewingQuestion;
-    if (!target) return;
-
-    const updated: QuestionRow = {
-      ...target,
-      question: this.draft.questionText,
-      options: target.type === 'Multiple Choice' ? this.draft.options : target.options,
-      correctOptionIndex:
-        target.type === 'Multiple Choice' ? (this.draft.correctOptionIndex ?? undefined) : target.correctOptionIndex,
-      correctAnswer: target.type === 'True/False' ? this.draft.correctAnswer : target.correctAnswer,
-      modelAnswer:
-        target.type === 'Short Answer' || target.type === 'Essay' ? this.draft.modelAnswer : target.modelAnswer,
-    };
-
-    this.questions = this.questions.map((q) => (q === target ? updated : q));
-    this.viewingQuestion = updated;
-    this.editMode = false;
-
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Question Updated',
-      detail: 'The question was updated successfully.',
-    });
-  }
-
-  onApproveInDialog(): void {
-    const question = this.viewingQuestion;
-    if (!question) return;
-
-    this.onApprove(question);
-    this.viewingQuestion = { ...question, approval: 'Approved' };
-  }
-
   onApprove(question: QuestionRow): void {
-    this.questions = this.questions.map((q) => (q === question ? { ...q, approval: 'Approved' } : q));
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Question Approved',
-      detail: 'The question was approved successfully.',
+    this.confirmationService.confirm({
+      header: 'Approve Question',
+      message: `Are you sure you want to approve "${question.question}"?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonProps: { label: 'Approve', severity: 'success' },
+      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      accept: () => {
+        this.questionBankApi.approveQuestion(question.id).subscribe({
+          next: () => {
+            this.reloadQuestions();
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Question Approved',
+              detail: 'The question was approved successfully.',
+            });
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Approve Failed',
+              detail: 'Could not approve the question. Please try again later.',
+            });
+          },
+        });
+      },
     });
   }
 
   onToggleStatus(question: QuestionRow): void {
-    const nextStatus: QuestionStatus = question.status === 'Active' ? 'Inactive' : 'Active';
-    this.questions = this.questions.map((q) => (q === question ? { ...q, status: nextStatus } : q));
-    this.messageService.add({
-      severity: 'success',
-      summary: nextStatus === 'Active' ? 'Question Activated' : 'Question Deactivated',
-      detail: `The question was ${nextStatus === 'Active' ? 'activated' : 'deactivated'} successfully.`,
+    const nextStatus: QuestionStatus = question.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    const verb = nextStatus === 'ACTIVE' ? 'activate' : 'deactivate';
+    this.confirmationService.confirm({
+      header: nextStatus === 'ACTIVE' ? 'Activate Question' : 'Deactivate Question',
+      message: `Are you sure you want to ${verb} "${question.question}"?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonProps: { label: nextStatus === 'ACTIVE' ? 'Activate' : 'Deactivate', severity: nextStatus === 'ACTIVE' ? 'info' : 'secondary' },
+      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      accept: () => {
+        this.questionBankApi.updateQuestionStatus(question.id, nextStatus).subscribe({
+          next: () => {
+            this.reloadQuestions();
+            this.messageService.add({
+              severity: 'success',
+              summary: nextStatus === 'ACTIVE' ? 'Question Activated' : 'Question Deactivated',
+              detail: `The question was ${verb}d successfully.`,
+            });
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Update Failed',
+              detail: `Could not ${verb} the question. Please try again later.`,
+            });
+          },
+        });
+      },
     });
   }
 }

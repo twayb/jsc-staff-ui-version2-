@@ -62,6 +62,27 @@ export interface SchemeQuestionCountRecord {
   total: number;
 }
 
+export interface QuestionRecord {
+  id: number;
+  educationLevelId: number;
+  schemeId: number;
+  selectedSchemeIds: number[];
+  schemeCategoryId: number | null;
+  selectedSchemeCategoryId: number[];
+  interviewTypeId: number;
+  questionTypeId: number;
+  questionCategoryId: number;
+  question: string;
+  frequencyUsed: number;
+  answerOptions: AnswerOption[];
+  correctAnswer: string;
+  expectedAnswer: string;
+  questionLevel: string;
+  pointAllocation: number;
+  state: string;
+  status: string;
+}
+
 export interface ImportFailedRow {
   questionNumber: number;
   reason: string;
@@ -95,8 +116,35 @@ export class QuestionBankApiService {
     return this.http.get<ApiResponse<PagedContent<QuestionTypeRecord>>>(`${this.baseUrl}question-types`);
   }
 
+  createQuestionType(name: string): Observable<ApiResponse<QuestionTypeRecord>> {
+    return this.http.post<ApiResponse<QuestionTypeRecord>>(`${this.baseUrl}question-types`, { name });
+  }
+
+  updateQuestionType(id: number, name: string): Observable<ApiResponse<QuestionTypeRecord>> {
+    return this.http.put<ApiResponse<QuestionTypeRecord>>(`${this.baseUrl}question-types/${id}`, { name });
+  }
+
+  deleteQuestionType(id: number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.baseUrl}question-types/${id}`);
+  }
+
   getQuestionCategories(): Observable<ApiResponse<PagedContent<QuestionCategoryRecord>>> {
     return this.http.get<ApiResponse<PagedContent<QuestionCategoryRecord>>>(`${this.baseUrl}api/question-category`);
+  }
+
+  createQuestionCategory(payload: { category: string; status: boolean }): Observable<ApiResponse<QuestionCategoryRecord>> {
+    return this.http.post<ApiResponse<QuestionCategoryRecord>>(`${this.baseUrl}api/question-category`, payload);
+  }
+
+  updateQuestionCategory(
+    id: number,
+    payload: { category: string; status: boolean },
+  ): Observable<ApiResponse<QuestionCategoryRecord>> {
+    return this.http.put<ApiResponse<QuestionCategoryRecord>>(`${this.baseUrl}api/question-category/${id}`, payload);
+  }
+
+  deleteQuestionCategory(id: number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.baseUrl}api/question-category/${id}`);
   }
 
   addQuestion(payload: AddQuestionPayload): Observable<ApiResponse<unknown>> {
@@ -111,6 +159,32 @@ export class QuestionBankApiService {
     return this.http.get<ApiResponse<SchemeQuestionCountRecord[]>>(
       `${this.questionUrl}group-by-scheme/${schemeCategoryId}`,
     );
+  }
+
+  getQuestionsByScheme(
+    schemeId: number,
+    page = 0,
+    size = 1000,
+  ): Observable<ApiResponse<PagedContent<QuestionRecord>>> {
+    return this.http.get<ApiResponse<PagedContent<QuestionRecord>>>(`${this.questionUrl}by/scheme/${schemeId}`, {
+      params: { page, size },
+    });
+  }
+
+  approveQuestion(id: number): Observable<ApiResponse<unknown>> {
+    return this.http.put<ApiResponse<unknown>>(`${this.questionUrl}state`, { questionIds: [id], state: 'APPROVED' });
+  }
+
+  approveQuestions(ids: number[]): Observable<ApiResponse<unknown>> {
+    return this.http.put<ApiResponse<unknown>>(`${this.questionUrl}state`, { questionIds: ids, state: 'APPROVED' });
+  }
+
+  updateQuestionStatus(id: number, status: 'ACTIVE' | 'INACTIVE'): Observable<ApiResponse<unknown>> {
+    return this.http.put<ApiResponse<unknown>>(`${this.questionUrl}status`, { questionIds: [id], status });
+  }
+
+  updateQuestionsStatus(ids: number[], status: 'ACTIVE' | 'INACTIVE'): Observable<ApiResponse<unknown>> {
+    return this.http.put<ApiResponse<unknown>>(`${this.questionUrl}status`, { questionIds: ids, status });
   }
 
   exportTemplate(payload: ExportTemplatePayload): Observable<ApiResponse<string>> {

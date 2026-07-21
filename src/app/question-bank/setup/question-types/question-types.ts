@@ -5,22 +5,31 @@ import { Menu } from 'primeng/menu';
 import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { Button } from 'primeng/button';
+import { finalize } from 'rxjs';
 import { AppBreadcrumb } from '../../../shared/app-breadcrumb/app-breadcrumb';
 import { AppDataTable } from '../../../shared/app-data-table/app-data-table';
+import { QuestionBankApiService, QuestionTypeRecord } from '../../../core/question-bank/question-bank-api.service';
 
 interface QuestionTypeItem {
+  id: number;
   name: string;
 }
+
+function mapQuestionType(record: QuestionTypeRecord): QuestionTypeItem {
+  return { id: record.id, name: record.name };
+}
+
 @Component({
   selector: 'app-question-types',
   imports: [ReactiveFormsModule, Menu, Dialog, InputText, Button, AppBreadcrumb, AppDataTable],
   templateUrl: './question-types.html',
   styleUrl: './question-types.css',
 })
-export class QuestionTypes implements OnInit { 
+export class QuestionTypes implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
+  private readonly questionBankApi = inject(QuestionBankApiService);
 
   readonly breadcrumbItems: MenuItem[] = [
     { label: 'Question Bank', routerLink: '/question-bank' },
@@ -29,17 +38,31 @@ export class QuestionTypes implements OnInit {
   ];
 
   readonly loading = signal(true);
+  readonly submitting = signal(false);
+  readonly types = signal<QuestionTypeItem[]>([]);
 
   ngOnInit(): void {
-    setTimeout(() => this.loading.set(false), 800);
+    this.loadTypes();
   }
 
-  types: QuestionTypeItem[] = [
-    { name: 'Multiple Choice' },
-    { name: 'True/False' },
-    { name: 'Short Answer' },
-    { name: 'Essay' },
-  ];
+  private loadTypes(): void {
+    this.loading.set(true);
+    this.questionBankApi
+      .getQuestionTypes()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.types.set((response.data?.content ?? []).map(mapQuestionType));
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to Load Question Types',
+            detail: 'Could not load the question types. Please try again later.',
+          });
+        },
+      });
+  }
 
   actionMenuItems: MenuItem[] = [];
 
@@ -81,26 +104,30 @@ export class QuestionTypes implements OnInit {
     }
 
     const raw = this.form.getRawValue();
-    const type: QuestionTypeItem = { name: raw.name };
+    const request =
+      this.dialogMode === 'edit' && this.editingType
+        ? this.questionBankApi.updateQuestionType(this.editingType.id, raw.name)
+        : this.questionBankApi.createQuestionType(raw.name);
 
-    if (this.dialogMode === 'edit' && this.editingType) {
-      const target = this.editingType;
-      this.types = this.types.map((item) => (item === target ? type : item));
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Question Type Updated',
-        detail: `"${type.name}" was updated successfully.`,
-      });
-    } else {
-      this.types = [...this.types, type];
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Question Type Added',
-        detail: `"${type.name}" was added successfully.`,
-      });
-    }
-
-    this.showFormDialog = false;
+    this.submitting.set(true);
+    request.pipe(finalize(() => this.submitting.set(false))).subscribe({
+      next: (response) => {
+        this.messageService.add({
+          severity: 'success',
+          summary: this.dialogMode === 'edit' ? 'Question Type Updated' : 'Question Type Added',
+          detail: response.message,
+        });
+        this.showFormDialog = false;
+        this.loadTypes();
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Save Failed',
+          detail: 'Could not save the question type. Please try again later.',
+        });
+      },
+    });
   }
 
   onDelete(type: QuestionTypeItem): void {
@@ -111,11 +138,22 @@ export class QuestionTypes implements OnInit {
       acceptButtonProps: { label: 'Delete', severity: 'danger' },
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
       accept: () => {
-        this.types = this.types.filter((item) => item !== type);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Question Type Deleted',
-          detail: `"${type.name}" was deleted successfully.`,
+        this.questionBankApi.deleteQuestionType(type.id).subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Question Type Deleted',
+              detail: `"${type.name}" was deleted successfully.`,
+            });
+            this.loadTypes();
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Delete Failed',
+              detail: 'Could not delete the question type. Please try again later.',
+            });
+          },
         });
       },
     });
