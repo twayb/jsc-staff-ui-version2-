@@ -20,6 +20,7 @@ export class AppHeader {
   @Input() showLogo = true;
   @Input() showSidebarToggle = false;
   @Output() sidebarToggle = new EventEmitter<void>();
+  @Output() wellnessTrigger = new EventEmitter<void>();
 
   readonly theme = inject(ThemeService);
   readonly layout = inject(LayoutService);

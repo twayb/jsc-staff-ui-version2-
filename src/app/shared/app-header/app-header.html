@@ -80,6 +80,17 @@
       <i class="pi text-sm" [class]="theme.isDark() ? 'pi-moon' : 'pi-sun'"></i>
     </button>
 
+    <button
+      type="button"
+      (click)="wellnessTrigger.emit()"
+      pTooltip="Show wellness reminder"
+      tooltipPosition="bottom"
+      class="flex items-center justify-center w-8 h-8 rounded-lg text-value hover:scale-110 transition-transform"
+      aria-label="Show wellness reminder"
+    >
+      <i class="pi pi-heart text-sm"></i>
+    </button>
+
     <div class="w-px h-5 bg-border mx-1"></div>
 
     <button

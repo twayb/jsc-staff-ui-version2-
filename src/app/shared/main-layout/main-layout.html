@@ -8,6 +8,7 @@
       [showLogo]="layout.mode() === 'horizontal'"
       [showSidebarToggle]="layout.mode() === 'vertical'"
       (sidebarToggle)="toggleSidebar()"
+      (wellnessTrigger)="onWellnessTrigger()"
       class="print:hidden"
     />
 
@@ -24,4 +25,5 @@
 
   <p-toast class="print:hidden" />
   <p-confirmdialog class="print:hidden" />
+  <app-wellness-buddy class="print:hidden" />
 </div>

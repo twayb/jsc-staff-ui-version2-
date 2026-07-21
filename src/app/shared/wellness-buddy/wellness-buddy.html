@@ -1,0 +1,25 @@
+@if (state() !== 'hidden') {
+  <div
+    class="buddy-root"
+    [class.enter]="state() === 'enter'"
+    [class.leave]="state() === 'leave'"
+    (animationend)="onAnimationEnd()"
+  >
+    <div class="buddy-bubble" [class.fade-swap]="!greeting()">
+      <button class="dismiss" type="button" aria-label="Dismiss" (click)="hide()">✕</button>
+      @if (greeting()) {
+        <span class="eyebrow">{{ greetingMessage.eyebrow }}</span>
+        <span>{{ greetingMessage.text }}</span>
+      } @else {
+        <span class="eyebrow">{{ current().eyebrow }}</span>
+        <span>{{ current().text }}</span>
+      }
+    </div>
+
+    <div class="buddy-avatar-wrap" aria-hidden="true">
+      <span class="buddy-emoji" [class.pop]="popping()" [class.wave]="greeting()">
+        {{ greeting() ? greetingMessage.emoji : current().emoji }}
+      </span>
+    </div>
+  </div>
+}

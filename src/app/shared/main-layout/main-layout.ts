@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Toast } from 'primeng/toast';
 import { ConfirmDialog } from 'primeng/confirmdialog';
@@ -6,13 +6,14 @@ import { AppHeader } from '../app-header/app-header';
 import { AppSidebar } from '../app-sidebar/app-sidebar';
 import { AppTopNav } from '../app-topnav/app-topnav';
 import { AppFooter } from '../app-footer/app-footer';
+import { WellnessBuddy } from '../wellness-buddy/wellness-buddy';
 import { SessionLockService } from '../../core/session-lock/session-lock.service';
 import { LayoutService } from '../../core/layout/layout.service';
 import { TextSizeService } from '../../core/text-size/text-size.service';
 
 @Component({
   selector: 'app-main-layout',
-  imports: [RouterOutlet, AppHeader, AppSidebar, AppTopNav, AppFooter, Toast, ConfirmDialog],
+  imports: [RouterOutlet, AppHeader, AppSidebar, AppTopNav, AppFooter, Toast, ConfirmDialog, WellnessBuddy],
   templateUrl: './main-layout.html',
 })
 export class MainLayout implements OnInit, OnDestroy {
@@ -21,6 +22,12 @@ export class MainLayout implements OnInit, OnDestroy {
   readonly textSize = inject(TextSizeService);
 
   readonly sidebarCollapsed = signal(false);
+
+  @ViewChild(WellnessBuddy) wellnessBuddy?: WellnessBuddy;
+
+  onWellnessTrigger(): void {
+    this.wellnessBuddy?.trigger();
+  }
 
   ngOnInit(): void {
     this.sessionLock.startWatching();

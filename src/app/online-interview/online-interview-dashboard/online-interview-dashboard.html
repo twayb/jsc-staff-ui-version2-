@@ -10,7 +10,7 @@
     <app-skeleton variant="cards" [count]="4" [cardCols]="4" />
   } @else {
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      @for (stat of stats; track stat.label; let i = $index) {
+      @for (stat of stats(); track stat.label; let i = $index) {
         <a
           [routerLink]="stat.route"
           class="bg-card border border-border rounded-2xl p-6 flex items-center gap-4 transition-all duration-200 animate-fade-in-up"
@@ -49,9 +49,9 @@
       <app-skeleton variant="cards" [count]="6" [cardCols]="3" />
     } @else {
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        @for (interview of upcomingInterviews; track interview.id; let i = $index) {
+        @for (interview of upcomingInterviews(); track interview.id; let i = $index) {
           <a
-            routerLink="/online-interview/interview-list"
+            [routerLink]="['/online-interview/interview-list', interview.id]"
             class="bg-row-b rounded-2xl p-6 flex items-center gap-4 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer animate-fade-in-up"
             [class]="'stagger-' + (i + 1)"
           >
